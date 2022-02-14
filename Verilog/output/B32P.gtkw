@@ -1,20 +1,23 @@
 [*]
-[*] GTKWave Analyzer v3.3.105 (w)1999-2020 BSI
-[*] Sun Jun 27 13:27:24 2021
+[*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
+[*] Mon Feb 14 16:08:30 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Sun Jun 27 12:45:46 2021"
-[dumpfile_size] 175312
+[dumpfile_mtime] "Mon Feb 14 16:07:58 2022"
+[dumpfile_size] 4703
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
 [timestart] 0
-[size] 1920 1027
-[pos] -1 -1
-*-9.415580 2783 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-[treeopen] B323_tb.
-[treeopen] B323_tb.cpu.
+[size] 1920 1054
+[pos] -1 -1108
+*-6.415580 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] B32P_tb.
 [sst_width] 254
-[signals_width] 487
+[signals_width] 426
 [sst_expanded] 1
-[sst_vpaned_height] 296
+[sst_vpaned_height] 306
+@28
+B32P_tb.cpu.clk
+@29
+B32P_tb.cpu.reset
 [pattern_trace] 1
 [pattern_trace] 0

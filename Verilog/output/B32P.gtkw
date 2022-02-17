@@ -1,23 +1,205 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Mon Feb 14 16:08:30 2022
+[*] Thu Feb 17 19:24:45 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Mon Feb 14 16:07:58 2022"
-[dumpfile_size] 4703
+[dumpfile_mtime] "Thu Feb 17 19:24:42 2022"
+[dumpfile_size] 176778
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
 [timestart] 0
 [size] 1920 1054
-[pos] -1 -1108
-*-6.415580 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-5.415580 66 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] B32P_tb.
+[treeopen] B32P_tb.cpu.
 [sst_width] 254
 [signals_width] 426
 [sst_expanded] 1
 [sst_vpaned_height] 306
 @28
 B32P_tb.cpu.clk
-@29
 B32P_tb.cpu.reset
+@200
+-
+-Fetch
+@28
+B32P_tb.cpu.clk
+B32P_tb.cpu.flush_FE
+B32P_tb.cpu.stall_FE
+@24
+B32P_tb.cpu.pc_FE[31:0]
+B32P_tb.cpu.pc4_FE[31:0]
+@28
+B32P_tb.cpu.instr_FE[31:0]
+@200
+-
+-Decode
+@28
+B32P_tb.cpu.clk
+B32P_tb.cpu.flush_DE
+B32P_tb.cpu.stall_DE
+@24
+B32P_tb.cpu.pc4_DE[31:0]
+@28
+B32P_tb.cpu.instr_DE[31:0]
+@200
+-
+@28
+B32P_tb.cpu.instrOP_DE[3:0]
+@420
+B32P_tb.cpu.alu_const16_EX[31:0]
+@28
+B32P_tb.cpu.he_DE
+B32P_tb.cpu.alu_use_const_DE
+B32P_tb.cpu.dreg_we_DE
+B32P_tb.cpu.dreg_we_high_DE
+B32P_tb.cpu.push_DE
+B32P_tb.cpu.pop_DE
+B32P_tb.cpu.mem_write_DE
+B32P_tb.cpu.mem_read_DE
+B32P_tb.cpu.loadConst_DE
+B32P_tb.cpu.getIntID_DE
+@29
+B32P_tb.cpu.getPC_DE
+@28
+B32P_tb.cpu.jumpc_DE
+B32P_tb.cpu.jumpr_DE
+@200
+-
+@22
+B32P_tb.cpu.areg_DE[3:0]
+@24
+B32P_tb.cpu.data_a_DE[31:0]
+@22
+B32P_tb.cpu.breg_DE[3:0]
+@24
+B32P_tb.cpu.data_b_DE[31:0]
+@200
+-
+@22
+B32P_tb.cpu.regbank.addr_a[3:0]
+@24
+B32P_tb.cpu.regbank.data_a[31:0]
+@22
+B32P_tb.cpu.regbank.addr_d[3:0]
+@24
+B32P_tb.cpu.regbank.data_b[31:0]
+B32P_tb.cpu.regbank.data_d[31:0]
+@28
+B32P_tb.cpu.regbank.we
+B32P_tb.cpu.regbank.we_high
+@200
+-
+-Execute
+@28
+B32P_tb.cpu.clk
+B32P_tb.cpu.flush_EX
+B32P_tb.cpu.stall_EX
+@24
+B32P_tb.cpu.pc4_EX[31:0]
+@28
+B32P_tb.cpu.instr_EX[31:0]
+@200
+-
+@28
+B32P_tb.cpu.aluOP_EX[3:0]
+@24
+B32P_tb.cpu.alu_const16_EX[31:0]
+B32P_tb.cpu.data_a_EX[31:0]
+B32P_tb.cpu.data_b_EX[31:0]
+B32P_tb.cpu.alu_input_b_EX[31:0]
+B32P_tb.cpu.alu_result_EX[31:0]
+@200
+-
+@28
+B32P_tb.cpu.dreg_we_EX
+B32P_tb.cpu.dreg_we_high_EX
+B32P_tb.cpu.push_EX
+B32P_tb.cpu.pop_EX
+B32P_tb.cpu.mem_read_EX
+B32P_tb.cpu.mem_write_EX
+B32P_tb.cpu.getIntID_EX
+B32P_tb.cpu.getPC_EX
+B32P_tb.cpu.loadConst_EX
+B32P_tb.cpu.jumpr_EX
+B32P_tb.cpu.jumpc_EX
+@200
+-
+-Memory
+@28
+B32P_tb.cpu.clk
+B32P_tb.cpu.flush_MEM
+B32P_tb.cpu.stall_MEM
+@24
+B32P_tb.cpu.pc4_MEM[31:0]
+@28
+B32P_tb.cpu.instr_MEM[31:0]
+@200
+-
+@28
+B32P_tb.cpu.push_MEM
+@24
+B32P_tb.cpu.data_b_MEM[31:0]
+@28
+B32P_tb.cpu.pop_MEM
+@24
+B32P_tb.cpu.stack_q_MEM[31:0]
+@200
+-
+@24
+B32P_tb.cpu.const16_MEM[31:0]
+@28
+B32P_tb.cpu.mem_write_MEM
+@24
+B32P_tb.cpu.dataMem_addr_MEM[31:0]
+B32P_tb.cpu.dataMem_q_MEM[31:0]
+@28
+B32P_tb.cpu.mem_read_MEM
+@200
+-
+@28
+B32P_tb.cpu.dreg_we_MEM
+B32P_tb.cpu.dreg_we_high_MEM
+B32P_tb.cpu.loadConst_MEM
+B32P_tb.cpu.getIntID_MEM
+B32P_tb.cpu.getPC_MEM
+B32P_tb.cpu.jumpc_MEM
+B32P_tb.cpu.jumpr_MEM
+@200
+-
+-Write Back
+@28
+B32P_tb.cpu.clk
+B32P_tb.cpu.flush_WB
+B32P_tb.cpu.stall_WB
+@24
+B32P_tb.cpu.pc4_WB[31:0]
+@28
+B32P_tb.cpu.instr_WB[31:0]
+@200
+-
+@24
+B32P_tb.cpu.dreg_WB[3:0]
+B32P_tb.cpu.data_d_WB[31:0]
+@28
+B32P_tb.cpu.dreg_we_WB
+B32P_tb.cpu.dreg_we_high_WB
+@200
+-
+@24
+B32P_tb.cpu.stack_q_WB[31:0]
+B32P_tb.cpu.dataMem_q_WB[31:0]
+B32P_tb.cpu.alu_result_WB[31:0]
+@200
+-
+@28
+B32P_tb.cpu.loadConst_WB
+B32P_tb.cpu.mem_read_WB
+B32P_tb.cpu.pop_WB
+B32P_tb.cpu.getIntID_WB
+B32P_tb.cpu.getPC_WB
+@200
+-
+-
 [pattern_trace] 1
 [pattern_trace] 0

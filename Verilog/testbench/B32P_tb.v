@@ -8,14 +8,15 @@
 
 // Include modules
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/CPU.v"
-/*
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/ALU.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/ControlUnit.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/InstructionDecoder.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/Regbank.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/Stack.v"
-`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/Timer.v"
-*/
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/InstrMem.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/DataMem.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/Regr.v"
+
 
 // Define testmodule
 module B32P_tb;

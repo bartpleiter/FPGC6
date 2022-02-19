@@ -28,8 +28,11 @@ assign const16  = {{16{instr[27]}}, instr[27:12]}; // sign extend to 32 bit
 assign const16u = instr[27:12];
 assign const27  = instr[27:1];
 
-assign areg     = instr[11:8];
-assign breg     = instr[7:4];
+// areg is at a different position during anarithc instruction,
+//  because const16 must be used as inputb for many operations to make sense
+//  and because of forwarding, breg should then be 0
+assign areg     = (instrOP == 4'b0001) ? instr[7:4] : instr[11:8];
+assign breg     = (instrOP == 4'b0001) ? 4'd0 : instr[7:4];
 assign dreg     = instr[3:0];
 
 assign he       = instr[8];     // high-enable (loadhi)

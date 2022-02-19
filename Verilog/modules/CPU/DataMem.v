@@ -12,11 +12,11 @@ always @(posedge clk)
 begin
     if (we)
     begin
-        mem[addr[6:0]] <= data;
+        mem[addr] <= data;
     end
 end
 
-assign q = we ? data : mem[addr[6:0]][31:0];
+assign q = we ? data : mem[addr];
 // During a write, avoid the one cycle delay by reading from 'wdata'
 
 integer i;

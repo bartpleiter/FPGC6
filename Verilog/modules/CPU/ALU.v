@@ -22,14 +22,10 @@ localparam
     OP_MULTU    = 4'b1001, // Multiplication unsigned
     OP_SLT      = 4'b1010, // Set on less than signed
     OP_SLTU     = 4'b1011, // Set on less than unsigned
-    OP_U4       = 4'b1100, // Unimplemented
-    OP_U5       = 4'b1101, // Unimplemented
+    OP_LOAD     = 4'b1100, // Load input B ( y := b )
+    OP_LOADHI   = 4'b1101, // Loadhi input B ( y := {(b<<16), a} )
     OP_U6       = 4'b1110, // Unimplemented
     OP_U7       = 4'b1111; // Unimplemented
-
-// Flags
-//assign bga  = (sig) ? ($signed(b) >  $signed(a)) : (b >  a);
-//assign bea  = (b == a);
 
 always @ (*) 
 begin
@@ -46,6 +42,8 @@ begin
         OP_MULTU:   y <= a * b;
         OP_SLT:     y <= {{31{1'b0}}, ($signed(a) < $signed(b))};
         OP_SLTU:    y <= {{31{1'b0}}, (a < b)};
+        OP_LOAD:    y <= b;
+        OP_LOADHI:  y <= {b[15:0], a[15:0]};
         default:    y <= 32'd0;
     endcase
 end

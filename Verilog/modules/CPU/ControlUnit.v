@@ -8,10 +8,10 @@ module ControlUnit(
 
     output reg          alu_use_const,
     output reg          push, pop,
-    output reg          dreg_we, dreg_we_high,
+    output reg          dreg_we,
     output reg          mem_write, mem_read,
     output reg          jumpc, jumpr, branch, halt,
-    output reg          getIntID, getPC, loadConst
+    output reg          getIntID, getPC
 );
 
 // Instruction Opcodes
@@ -24,12 +24,12 @@ localparam
     OP_POP      = 4'b1010,
     OP_JUMP     = 4'b1001,
     OP_JUMPR    = 4'b1000,
-    OP_LOAD     = 4'b0111,
+    OP_UNDEF1   = 4'b0111, // undefined
     OP_BRANCH   = 4'b0110,
     OP_SAVPC    = 4'b0101,
     OP_RETI     = 4'b0100,
-    OP_UNDEF1   = 4'b0011, // undefined
-    OP_UNDEF2   = 4'b0010, // undefined
+    OP_UNDEF2   = 4'b0011, // undefined
+    OP_UNDEF3   = 4'b0010, // undefined
     OP_ARITHC   = 4'b0001,
     OP_ARITH    = 4'b0000;
 
@@ -40,14 +40,12 @@ always @(*) begin
     push            <= 1'b0;
     pop             <= 1'b0;
     dreg_we         <= 1'b0;
-    dreg_we_high    <= 1'b0;
     mem_write       <= 1'b0;
     mem_read        <= 1'b0;
     jumpc           <= 1'b0;
     jumpr           <= 1'b0;
     getIntID        <= 1'b0;
     getPC           <= 1'b0;
-    loadConst       <= 1'b0;
     branch          <= 1'b0;
     halt            <= 1'b0;
 
@@ -93,21 +91,6 @@ always @(*) begin
         OP_JUMPR:
         begin
             jumpr <= 1'b1;
-        end
-
-        OP_LOAD:
-        begin
-            loadConst <= 1'b1;
-
-            if (he)
-            begin
-                dreg_we <= 1'b1;
-                dreg_we_high <= 1'b1;
-            end
-            else
-            begin
-                dreg_we <= 1'b1;
-            end
         end
 
         OP_BRANCH:

@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Sat Feb 19 17:26:33 2022
+[*] Sat Feb 19 19:01:33 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Sat Feb 19 17:26:21 2022"
-[dumpfile_size] 32413
+[dumpfile_mtime] "Sat Feb 19 19:01:18 2022"
+[dumpfile_size] 63606
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
 [timestart] 0
 [size] 1920 1054
 [pos] -1 -1
-*-6.415580 41 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-6.415580 182 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] B32P_tb.
 [treeopen] B32P_tb.cpu.
 [sst_width] 254
@@ -122,9 +122,7 @@ B32P_tb.cpu.fw_data_b_EX[31:0]
 -
 @28
 B32P_tb.cpu.dreg_we_EX
-@29
 B32P_tb.cpu.push_EX
-@28
 B32P_tb.cpu.pop_EX
 B32P_tb.cpu.mem_read_EX
 B32P_tb.cpu.mem_write_EX
@@ -161,8 +159,9 @@ B32P_tb.cpu.stack_q_MEM[31:0]
 B32P_tb.cpu.const16_MEM[31:0]
 @28
 B32P_tb.cpu.mem_write_MEM
-@24
+@25
 B32P_tb.cpu.dataMem_addr_MEM[31:0]
+@24
 B32P_tb.cpu.dataMem_q_MEM[31:0]
 @28
 B32P_tb.cpu.mem_read_MEM

@@ -13,6 +13,7 @@ begin
     if (we)
     begin
         mem[addr] <= data;
+        $display("%d: addr%d := %d", $time, addr[7:0], data);
     end
 end
 

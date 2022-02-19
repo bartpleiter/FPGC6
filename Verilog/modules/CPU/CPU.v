@@ -289,7 +289,7 @@ Regr #(.N(64)) regr_regdata_EX_MEM(
 .clk(clk),
 .hold(stall_EX),
 .clear(flush_EX),
-.in({data_a_EX, data_b_EX}),
+.in({fw_data_a_EX, fw_data_b_EX}), // forwarded data
 .out({data_a_MEM, data_b_MEM})
 );
 
@@ -638,7 +638,7 @@ always @(*) begin
     begin
         forward_a <= 2'd1;  // priority 1: forward from MEM to EX
     end
-    else if (dreg_we_EX && (dreg_WB == areg_EX) && (areg_EX != 4'd0))
+    else if (dreg_we_WB && (dreg_WB == areg_EX) && (areg_EX != 4'd0))
     begin
         forward_a <= 2'd2;  // priority 2: forward from WB to EX
     end
@@ -649,7 +649,7 @@ always @(*) begin
     begin
         forward_b <= 2'd1;  // priority 1: forward from MEM to EX
     end
-    else if (dreg_we_EX && (dreg_WB == breg_EX) && (breg_EX != 4'd0))
+    else if (dreg_we_WB && (dreg_WB == breg_EX) && (breg_EX != 4'd0))
     begin
         forward_b <= 2'd2;  // priority 2: forward from WB to EX
     end

@@ -10,9 +10,26 @@ module Regbank(
 
     input   [3:0]   addr_d,
     input   [31:0]  data_d,
-    input           we, we_high
+    input           we, we_high,
+
+    output wire [31:0] r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15
 );
 
+assign r1 = {regsH[1], regsL[1]};
+assign r2 = {regsH[2], regsL[2]};
+assign r3 = {regsH[3], regsL[3]};
+assign r4 = {regsH[4], regsL[4]};
+assign r5 = {regsH[5], regsL[5]};
+assign r6 = {regsH[6], regsL[6]};
+assign r7 = {regsH[7], regsL[7]};
+assign r8 = {regsH[8], regsL[8]};
+assign r9 = {regsH[9], regsL[9]};
+assign r10 = {regsH[10], regsL[10]};
+assign r11 = {regsH[11], regsL[11]};
+assign r12 = {regsH[12], regsL[12]};
+assign r13 = {regsH[13], regsL[13]};
+assign r14 = {regsH[14], regsL[14]};
+assign r15 = {regsH[15], regsL[15]};
 
 assign data_a = {data_a_h, data_a_l};
 assign data_b = {data_b_h, data_b_l};

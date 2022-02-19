@@ -1,21 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Thu Feb 17 19:24:45 2022
+[*] Sat Feb 19 13:20:08 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Thu Feb 17 19:24:42 2022"
-[dumpfile_size] 176778
+[dumpfile_mtime] "Fri Feb 18 18:53:17 2022"
+[dumpfile_size] 31803
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
 [timestart] 0
-[size] 1920 1054
-[pos] -1 -1
-*-5.415580 66 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 1920 1027
+[pos] -1 26
+*-6.415580 279 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] B32P_tb.
 [treeopen] B32P_tb.cpu.
 [sst_width] 254
-[signals_width] 426
+[signals_width] 485
 [sst_expanded] 1
-[sst_vpaned_height] 306
+[sst_vpaned_height] 297
 @28
 B32P_tb.cpu.clk
 B32P_tb.cpu.reset
@@ -33,6 +33,10 @@ B32P_tb.cpu.pc4_FE[31:0]
 B32P_tb.cpu.instr_FE[31:0]
 @200
 -
+@29
+B32P_tb.cpu.regr_instr_FE_DE.in[31:0]
+B32P_tb.cpu.regr_instr_FE_DE.out[31:0]
+@200
 -Decode
 @28
 B32P_tb.cpu.clk
@@ -50,6 +54,7 @@ B32P_tb.cpu.instrOP_DE[3:0]
 B32P_tb.cpu.alu_const16_EX[31:0]
 @28
 B32P_tb.cpu.he_DE
+B32P_tb.cpu.sig_DE
 B32P_tb.cpu.alu_use_const_DE
 B32P_tb.cpu.dreg_we_DE
 B32P_tb.cpu.dreg_we_high_DE
@@ -59,11 +64,11 @@ B32P_tb.cpu.mem_write_DE
 B32P_tb.cpu.mem_read_DE
 B32P_tb.cpu.loadConst_DE
 B32P_tb.cpu.getIntID_DE
-@29
 B32P_tb.cpu.getPC_DE
-@28
 B32P_tb.cpu.jumpc_DE
 B32P_tb.cpu.jumpr_DE
+B32P_tb.cpu.branch_DE
+B32P_tb.cpu.halt_DE
 @200
 -
 @22
@@ -76,6 +81,7 @@ B32P_tb.cpu.breg_DE[3:0]
 B32P_tb.cpu.data_b_DE[31:0]
 @200
 -
+-Regbank
 @22
 B32P_tb.cpu.regbank.addr_a[3:0]
 @24
@@ -123,6 +129,8 @@ B32P_tb.cpu.getPC_EX
 B32P_tb.cpu.loadConst_EX
 B32P_tb.cpu.jumpr_EX
 B32P_tb.cpu.jumpc_EX
+B32P_tb.cpu.branch_EX
+B32P_tb.cpu.halt_EX
 @200
 -
 -Memory
@@ -163,8 +171,17 @@ B32P_tb.cpu.dreg_we_high_MEM
 B32P_tb.cpu.loadConst_MEM
 B32P_tb.cpu.getIntID_MEM
 B32P_tb.cpu.getPC_MEM
+@200
+-
+@28
+B32P_tb.cpu.halt_MEM
 B32P_tb.cpu.jumpc_MEM
 B32P_tb.cpu.jumpr_MEM
+B32P_tb.cpu.branch_MEM
+B32P_tb.cpu.branch_passed_MEM
+B32P_tb.cpu.branchOP_MEM[2:0]
+@24
+B32P_tb.cpu.jump_addr_MEM[31:0]
 @200
 -
 -Write Back

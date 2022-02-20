@@ -12,7 +12,7 @@
 
 - Hazard detection:
     - flush
-    - stall
+    - stall (MEM to reg)
     - forward
 */
 
@@ -54,28 +54,20 @@ end
 
 // Instruction Memory
 //  should eventually become a memory with variable latency
-wire [31:0] instr_FE;
+// writes directly to next stage
+wire [31:0] instr_DE;
 
 InstrMem instrMem(
 .clk(clk), 
 .reset(reset),
 .addr(pc_FE),
-.q(instr_FE)
+.q(instr_DE),
+.hold(stall_FE),
+.clear(flush_FE)
 );
 
 
 // Pass data from FE to DE
-
-wire [31:0] instr_DE;
-Regr #(.N(32)) regr_instr_FE_DE(
-.clk(clk),
-.hold(stall_FE),
-.clear(flush_FE),
-.in(instr_FE),
-.out(instr_DE)
-);
-
-
 wire [31:0] pc4_DE;
 Regr #(.N(32)) regr_pc4_FE_DE(
 .clk(clk),
@@ -142,10 +134,11 @@ ControlUnit controlUnit(
 
 
 // Register Bank
+// writes directly to next stage
+wire [31:0] data_a_EX, data_b_EX;
 wire [3:0] dreg_WB;
 wire dreg_we_WB;
 reg [31:0] data_d_WB;
-wire [31:0] data_a_DE, data_b_DE;
 
 Regbank regbank(
 .clk(clk),
@@ -153,34 +146,29 @@ Regbank regbank(
 
 .addr_a(areg_DE),
 .addr_b(breg_DE),
-.data_a(data_a_DE),
-.data_b(data_b_DE),
+.data_a(data_a_EX),
+.data_b(data_b_EX),
 
 // from WB stage
 .addr_d(dreg_WB),
 .data_d(data_d_WB),
-.we(dreg_we_WB)
+.we(dreg_we_WB),
+
+.hold(stall_DE),
+.clear(flush_DE)
 );
 
 
 // Pass data from DE to EX
 
+// Set to 0 during stall (bubble)
 wire [31:0] instr_EX;
 Regr #(.N(32)) regr_instr_DE_EX(
 .clk(clk),
 .hold(stall_DE),
-.clear(flush_DE),
+.clear(flush_DE || stall_DE),
 .in(instr_DE),
 .out(instr_EX)
-);
-
-wire [31:0] data_a_EX, data_b_EX;
-Regr #(.N(64)) regr_regdata_DE_EX(
-.clk(clk),
-.hold(stall_DE),
-.clear(flush_DE),
-.in({data_a_DE, data_b_DE}),
-.out({data_a_EX, data_b_EX})
 );
 
 wire [31:0] pc4_EX;
@@ -192,6 +180,7 @@ Regr #(.N(32)) regr_pc4_DE_EX(
 .out(pc4_EX)
 );
 
+// Set to 0 during stall (bubble)
 wire alu_use_const_EX;
 wire push_EX, pop_EX;
 wire dreg_we_EX;
@@ -201,7 +190,7 @@ wire getIntID_EX, getPC_EX;
 Regr #(.N(12)) regr_cuflags_DE_EX(
 .clk        (clk),
 .hold       (stall_DE),
-.clear      (flush_DE),
+.clear      (flush_DE || stall_DE),
 .in         ({alu_use_const_DE, push_DE, pop_DE, dreg_we_DE, mem_write_DE, mem_read_DE, jumpc_DE, jumpr_DE, halt_DE, branch_DE, getIntID_DE, getPC_DE}),
 .out        ({alu_use_const_EX, push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, branch_EX, getIntID_EX, getPC_EX})
 );
@@ -272,6 +261,12 @@ ALU alu(
 .y(alu_result_EX)
 );
 
+// for special instructions, pass other data than alu result
+wire [31:0] execute_result_EX;
+assign execute_result_EX =  (getPC_EX) ? pc4_EX - 3'd4:
+                            (getIntID_EX) ? 32'd0: // TODO add after interrupts are implemented
+                            alu_result_EX;
+
 
 // Pass data from EX to MEM
 
@@ -306,13 +301,12 @@ wire push_MEM, pop_MEM;
 wire dreg_we_MEM;
 wire mem_write_MEM, mem_read_MEM;
 wire jumpc_MEM, jumpr_MEM, halt_MEM, branch_MEM;
-wire getIntID_MEM, getPC_MEM;
-Regr #(.N(11)) regr_cuflags_EX_MEM(
+Regr #(.N(9)) regr_cuflags_EX_MEM(
 .clk        (clk),
 .hold       (stall_EX),
 .clear      (flush_EX),
-.in         ({push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, branch_EX, getIntID_EX, getPC_EX}),
-.out        ({push_MEM, pop_MEM, dreg_we_MEM, mem_write_MEM, mem_read_MEM, jumpc_MEM, jumpr_MEM, halt_MEM, branch_MEM, getIntID_MEM, getPC_MEM})
+.in         ({push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, branch_EX}),
+.out        ({push_MEM, pop_MEM, dreg_we_MEM, mem_write_MEM, mem_read_MEM, jumpc_MEM, jumpr_MEM, halt_MEM, branch_MEM})
 );
 
 wire [31:0] alu_result_MEM;
@@ -320,7 +314,7 @@ Regr #(.N(32)) regr_alu_result_EX_MEM(
 .clk(clk),
 .hold(stall_EX),
 .clear(flush_EX),
-.in(alu_result_EX),
+.in(execute_result_EX), // other data in case of special instructions
 .out(alu_result_MEM)
 );
 
@@ -449,7 +443,8 @@ end
 
 // Data Memory
 //  should eventually become a memory with variable latency
-wire [31:0] dataMem_q_MEM;
+// writes directly to the next stage
+wire [31:0] dataMem_q_WB;
 wire [31:0] dataMem_addr_MEM;
 assign dataMem_addr_MEM = data_a_MEM + const16_MEM;
 
@@ -458,19 +453,24 @@ DataMem dataMem(
 .addr(dataMem_addr_MEM),
 .we(mem_write_MEM),
 .data(data_b_MEM),
-.q(dataMem_q_MEM)
+.q(dataMem_q_WB),
+.hold(stall_MEM),
+.clear(flush_MEM)
 );
 
 // Stack
-wire [31:0] stack_q_MEM;
+// writes directly to the next stage
+wire [31:0] stack_q_WB;
 
 Stack stack(
 .clk(clk),
 .reset(reset),
-.q(stack_q_MEM),
+.q(stack_q_WB),
 .d(data_b_MEM),
 .push(push_MEM),
-.pop(pop_MEM)
+.pop(pop_MEM),
+.hold(stall_MEM),
+.clear(flush_MEM)
 );
 
 
@@ -479,8 +479,8 @@ Stack stack(
 wire [31:0] instr_WB;
 Regr #(.N(32)) regr_instr_MEM_WB(
 .clk(clk),
-.hold(stall_WB),
-.clear(flush_WB),
+.hold(stall_MEM),
+.clear(flush_MEM),
 .in(instr_MEM),
 .out(instr_WB)
 );
@@ -494,15 +494,6 @@ Regr #(.N(32)) regr_alu_result_MEM_WB(
 .out(alu_result_WB)
 );
 
-wire [31:0] stack_q_WB;
-Regr #(.N(32)) regr_stack_q_MEM_WB(
-.clk(clk),
-.hold(stall_MEM),
-.clear(flush_MEM),
-.in(stack_q_MEM),
-.out(stack_q_WB)
-);
-
 wire [31:0] pc4_WB;
 Regr #(.N(32)) regr_pc4_MEM_WB(
 .clk(clk),
@@ -512,24 +503,14 @@ Regr #(.N(32)) regr_pc4_MEM_WB(
 .out(pc4_WB)
 );
 
-wire [31:0] dataMem_q_WB;
-Regr #(.N(32)) regr_dataMem_q_MEM_WB(
-.clk(clk),
-.hold(stall_MEM),
-.clear(flush_MEM),
-.in(dataMem_q_MEM),
-.out(dataMem_q_WB)
-);
-
 wire pop_WB, mem_read_WB;
 //wire dreg_we_WB;
-wire getIntID_WB, getPC_WB;
-Regr #(.N(5)) regr_cuflags_MEM_WB(
+Regr #(.N(3)) regr_cuflags_MEM_WB(
 .clk        (clk),
 .hold       (stall_MEM),
 .clear      (flush_MEM),
-.in         ({pop_MEM, dreg_we_MEM, mem_read_MEM, getIntID_MEM, getPC_MEM}),
-.out        ({pop_WB, dreg_we_WB, mem_read_WB, getIntID_WB, getPC_WB})
+.in         ({pop_MEM, dreg_we_MEM, mem_read_MEM}),
+.out        ({pop_WB, dreg_we_WB, mem_read_WB})
 );
 
 /*
@@ -568,15 +549,7 @@ begin
         begin
             data_d_WB <= dataMem_q_WB;
         end
-        getIntID_WB:
-        begin
-            data_d_WB <= 32'd0; // TODO: get interrupt ID
-        end
-        getPC_WB:
-        begin
-            data_d_WB <= pc4_WB;
-        end
-        default:
+        default: // (ALU, savPC, IntID)
         begin
             data_d_WB <= alu_result_WB;
         end
@@ -615,8 +588,8 @@ begin
     stall_MEM <= 1'b0;
     stall_WB <= 1'b0;
 
-    // stall if an instruction in EX uses the result of a READ in MEM (dreg_mem)
-    if (mem_read_EX && ( (dreg_EX == areg_DE) || (dreg_EX == breg_DE)) )
+    // stall if an instruction in EX uses the result of a some operation in MEM (dreg_mem)
+    if ((mem_read_EX || pop_EX) && ( (dreg_EX == areg_DE) || (dreg_EX == breg_DE)) )
     begin
         stall_FE <= 1'b1;
         stall_DE <= 1'b1;

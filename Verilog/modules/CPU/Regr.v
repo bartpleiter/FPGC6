@@ -16,11 +16,17 @@ parameter N = 1;
 always @(posedge clk)
 begin
     if (clear)
+    begin
         out <= {N{1'b0}};
+    end
     else if (hold)
+    begin
         out <= out;
+    end
     else
+    begin
         out <= in;
+    end
 end
 
 initial

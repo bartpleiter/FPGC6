@@ -10,15 +10,23 @@ module Regbank(
 
     input       [3:0]   addr_d,
     input       [31:0]  data_d,
-    input               we
+    input               we, clear, hold
 );
 
 reg [31:0] regs [0:15]; // 16 registers of 32 bit, although reg0 is unused
 
 // Read
-always @(*) 
+always @(posedge clk) 
 begin
-    if (addr_a == 4'd0)
+    if (clear)
+    begin
+        data_a <= 32'd0;
+    end
+    else if (hold)
+    begin
+        data_a <= data_a;
+    end
+    else if (addr_a == 4'd0)
     begin
         data_a <= 32'd0;
     end
@@ -31,7 +39,15 @@ begin
         data_a <= regs[addr_a];
     end
 
-    if (addr_b == 4'd0)
+    if (clear)
+    begin
+        data_b <= 32'd0;
+    end
+    else if (hold)
+    begin
+        data_b <= data_b;
+    end
+    else if (addr_b == 4'd0)
     begin
         data_b <= 32'd0;
     end

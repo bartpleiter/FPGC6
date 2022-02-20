@@ -10,9 +10,10 @@ module Stack (
     input clk,
     input reset,
     input [31:0] d,
-    output wire [31:0] q,
+    output reg [31:0] q,
     input push,
-    input pop
+    input pop,
+    input clear, hold
 );
 
 reg [6:0]   ptr;            // stack pointer
@@ -30,20 +31,33 @@ begin
         begin
             stack[ptr] <= d;
             ptr <= ptr + 1'b1;
+            $display("%d: push @%d := %d", $time, ptr, d);
         end
 
         if (pop)
         begin
-            ptr <= ptr - 1'b1;
+            if (clear)
+            begin
+                q <= 32'd0;
+            end
+            else if (hold)
+            begin
+                q <= q;
+            end
+            else
+            begin
+                ptr <= ptr - 1'b1;
+                q <= stack[ptr - 1'b1]; // simulation does not like this when ptr = 0
+                $display("%d: pop @%d := %d", $time, ptr, stack[ptr - 1'b1]);
+            end
         end
     end
 end
 
-assign q = stack[ptr - 1'b1]; // simulation does not like this when ptr = 0
-
 integer i;
 initial
 begin
+    q <= 32'd0;
     ptr = 7'd0;
     for (i = 0; i < 128; i = i + 1)
     begin

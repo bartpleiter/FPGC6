@@ -8,13 +8,24 @@ This does mean that I will have to reimplement everything, but this is good beca
 
 A lot of inspiration is taken from MIPS, because many online info use MIPS as example (especially on pipelining). As for implementation specific inspiration, I looked a lot at [mips-cpu by jmahler](https://github.com/jmahler/mips-cpu).
 
+## Done:
+- Working on the new CPU design in Verilog (simulator):
+    - Pipeline (done)
+    - Jumps (done)
+    - Branches (done)
+    - Data/control hazards (done, but more testing might be needed)
+    - Data memory/stack including stall (done)
+    - Special instructions
+        - SavPC (done)
+        - IntID (placeholder until interrupts are supported) (done)
+- Test CPU in hardware (Quartus)
+
 ## Current status:
-- Working on the new CPU design in Verilog (simulator)
 
 ## Next steps:
-- Test CPU in hardware (Quartus)
 - (hardest step) Add instruction memory and data memory cache, which both read from the same main memory (via a new MU with new bus protocol) on cache miss
-	- Make use of SDRAM burst to reduce the open/close costs
+    - Make use of SDRAM burst to reduce the open/close costs
+- Implement new, better and more efficient interrupt system
 - Extend MU with IO and other memory interfaces (VRAM, SPI flash, ROM, etc.)
 - Add GPU (can mostly copy paste from FPGC5 since it is completely separate from the CPU and MU)
 - Update assembler for new ISA

@@ -25,6 +25,9 @@ reg flush_FE, flush_DE, flush_EX, flush_MEM, flush_WB;
 reg stall_FE, stall_DE, stall_EX, stall_MEM, stall_WB;
 reg [1:0] forward_a, forward_b;
 
+// Cache delays
+wire instr_hit_FE;
+
 /*
 * FETCH (FE)
 */
@@ -37,13 +40,14 @@ assign pc4_FE = pc_FE + 3'd4;
 
 always @(posedge clk) 
 begin
-    if (stall_FE)
-    begin
-        pc_FE <= pc_FE;
-    end
-    else if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM))
+    // jump has priority over instruction cache stalls
+    if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM))
     begin
         pc_FE <= jump_addr_MEM;
+    end
+    else if (stall_FE || (!instr_hit_FE) )
+    begin
+        pc_FE <= pc_FE;
     end
     else
     begin
@@ -62,6 +66,7 @@ InstrMem instrMem(
 .reset(reset),
 .addr(pc_FE),
 .q(instr_DE),
+.hit(instr_hit_FE),
 .hold(stall_FE),
 .clear(flush_FE)
 );

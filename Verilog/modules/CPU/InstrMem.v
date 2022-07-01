@@ -11,14 +11,14 @@ module InstrMem(
     input clear, hold
 );
 
-assign hit = count == 3'd7; // 1'b1 if no delay
+assign hit = count == 2'd3; // 1'b1 if no delay
 assign q = (hit) ? qreg : 32'd0;
 
 reg [31:0] qreg = 32'd0;
 
 reg [31:0] rom [0:255];
 
-reg [2:0] count = 3'd0;
+reg [1:0] count = 2'd0;
 
 always @(posedge clk) 
 begin

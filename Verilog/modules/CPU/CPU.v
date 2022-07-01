@@ -14,6 +14,10 @@
     - flush
     - stall (MEM to reg)
     - forward
+
+- Variable delay support from InstrMem and DataMem:
+    - NOTE/BUG: the instruction after a READ or WRITE is skipped if there is a DataMem delay but no InstrMem delay
+       This might become a problem when caching is implemented
 */
 
 module CPU(

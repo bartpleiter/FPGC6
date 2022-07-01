@@ -20,7 +20,7 @@ reg [31:0] mem [0:127];  // 32-bit memory with 128 entries
 
 
 reg [2:0] count = 3'd0;
-assign busy = count != 3'd0;
+assign busy = 1'b0; //count != 3'd0; //1'b0 for no delay
 
 always @(posedge clk)
 begin

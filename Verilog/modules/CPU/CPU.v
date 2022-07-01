@@ -27,6 +27,7 @@ reg [1:0] forward_a, forward_b;
 
 // Cache delays
 wire instr_hit_FE;
+wire datamem_busy_MEM;
 
 /*
 * FETCH (FE)
@@ -457,8 +458,10 @@ DataMem dataMem(
 .clk(clk),
 .addr(dataMem_addr_MEM),
 .we(mem_write_MEM),
+.re(mem_read_MEM),
 .data(data_b_MEM),
 .q(dataMem_q_WB),
+.busy(datamem_busy_MEM),
 .hold(stall_MEM),
 .clear(flush_MEM)
 );
@@ -580,6 +583,12 @@ begin
         flush_DE <= 1'b1;
         flush_EX <= 1'b1;
     end
+
+    // flush MEM when busy, causing a bubble
+    if ((mem_read_MEM || mem_write_MEM) && datamem_busy_MEM)
+    begin
+        flush_MEM <= 1'b1;
+    end
 end
 
 /*
@@ -599,11 +608,18 @@ begin
         stall_FE <= 1'b1;
         stall_DE <= 1'b1;
     end
+
+    // stall if read or write in data MEM causes the busy flag to be set
+    if ((mem_read_MEM || mem_write_MEM) && datamem_busy_MEM)
+    begin
+        stall_FE <= 1'b1;
+        stall_DE <= 1'b1;
+        stall_EX <= 1'b1;
+    end
 end
 
 /*
 * FORWARDING
-* TODO: find a fix for loadhi
 */
 
 // MEM (4) -> EX (3)

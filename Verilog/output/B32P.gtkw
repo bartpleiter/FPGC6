@@ -1,21 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Mon Mar  7 10:05:45 2022
+[*] Fri Jul  1 11:01:46 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Mon Mar  7 10:04:40 2022"
-[dumpfile_size] 762029
+[dumpfile_mtime] "Fri Jul  1 11:00:34 2022"
+[dumpfile_size] 1038892
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
 [timestart] 0
-[size] 1920 1054
-[pos] -1 -1108
-*-8.666576 1005 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 1920 1027
+[pos] -1 -1
+*-9.666576 2330 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] B32P_tb.
 [treeopen] B32P_tb.cpu.
 [sst_width] 254
 [signals_width] 485
 [sst_expanded] 1
-[sst_vpaned_height] 327
+[sst_vpaned_height] 317
 @28
 B32P_tb.cpu.clk
 B32P_tb.cpu.reset
@@ -34,8 +34,9 @@ B32P_tb.cpu.instr_hit_FE
 @200
 -
 -Decode
-@28
+@29
 B32P_tb.cpu.clk
+@28
 B32P_tb.cpu.flush_DE
 B32P_tb.cpu.stall_DE
 @24
@@ -52,9 +53,7 @@ B32P_tb.cpu.alu_const16_EX[31:0]
 B32P_tb.cpu.he_DE
 B32P_tb.cpu.sig_DE
 B32P_tb.cpu.alu_use_const_DE
-@29
 B32P_tb.cpu.dreg_we_DE
-@28
 B32P_tb.cpu.push_DE
 B32P_tb.cpu.pop_DE
 B32P_tb.cpu.mem_write_DE
@@ -158,6 +157,11 @@ B32P_tb.cpu.mem_write_MEM
 B32P_tb.cpu.dataMem_addr_MEM[31:0]
 @28
 B32P_tb.cpu.mem_read_MEM
+B32P_tb.cpu.datamem_busy_MEM
+@24
+B32P_tb.cpu.dataMem.count[2:0]
+B32P_tb.cpu.dataMem.q[31:0]
+B32P_tb.cpu.data_d_WB[31:0]
 @200
 -
 @24

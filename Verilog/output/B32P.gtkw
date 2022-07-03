@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Sun Jul  3 15:36:46 2022
+[*] Sun Jul  3 16:59:05 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Sun Jul  3 15:35:54 2022"
-[dumpfile_size] 559715
+[dumpfile_mtime] "Sun Jul  3 16:56:50 2022"
+[dumpfile_size] 922191
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
-[timestart] 10180800
+[timestart] 0
 [size] 1920 1027
 [pos] -1 -1
-*-16.666576 10620800 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.666576 390600 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] B32P_tb.
 [treeopen] B32P_tb.cpu.
 [treeopen] B32P_tb.mu.
@@ -25,32 +25,37 @@ B32P_tb.cpu.reset
 -
 -
 -Arbiter
-@24
-B32P_tb.arbiter.addr_a[31:0]
-B32P_tb.arbiter.data_a[31:0]
-B32P_tb.arbiter.we_a
-B32P_tb.arbiter.start_a
-B32P_tb.arbiter.done_a
-@200
--
-@24
-B32P_tb.arbiter.addr_b[31:0]
-B32P_tb.arbiter.data_b[31:0]
-B32P_tb.arbiter.we_b
-@25
-B32P_tb.arbiter.start_b
-@24
-B32P_tb.arbiter.done_b
+@22
+B32P_tb.cpu.arbiter.addr_a[31:0]
+B32P_tb.cpu.arbiter.data_a[31:0]
+@28
+B32P_tb.cpu.arbiter.start_a
+B32P_tb.cpu.arbiter.we_a
 @200
 -
 @28
-B32P_tb.arbiter.busy_a
-B32P_tb.arbiter.busy_b
+B32P_tb.cpu.arbiter.done_a
+B32P_tb.cpu.arbiter.busy_a
 @200
 -
+@22
+B32P_tb.cpu.arbiter.addr_b[31:0]
+B32P_tb.cpu.arbiter.data_b[31:0]
+@28
+B32P_tb.cpu.arbiter.start_b
+B32P_tb.cpu.arbiter.we_b
+@200
+-
+@28
+B32P_tb.cpu.arbiter.done_b
+B32P_tb.cpu.arbiter.busy_b
+@200
+-
+-
 -MU
-@24
+@22
 B32P_tb.mu.bus_addr[26:0]
+@24
 B32P_tb.mu.bus_data[31:0]
 B32P_tb.mu.bus_we
 B32P_tb.mu.bus_start
@@ -63,6 +68,7 @@ B32P_tb.mu.bus_done_next
 -
 -
 -
+-SDRAM Controller
 @22
 B32P_tb.mu.sdramcontroller.state[6:0]
 @28
@@ -86,26 +92,8 @@ B32P_tb.mu.sdramcontroller.addr[23:0]
 -
 -
 -
--
--
--
--
--
--
--
--
--
--
--
--
--
--
--
--
--
--
 -Fetch
-@24
+@22
 B32P_tb.cpu.instrMem.addr[31:0]
 @28
 B32P_tb.cpu.instrMem.q[31:0]
@@ -117,6 +105,12 @@ B32P_tb.cpu.pc_FE[31:0]
 B32P_tb.cpu.pc4_FE[31:0]
 @28
 B32P_tb.cpu.instr_hit_FE
+@200
+-
+@28
+B32P_tb.cpu.instrMem.clear
+@29
+B32P_tb.cpu.instrMem.ignoreNext
 @200
 -
 -Decode
@@ -263,7 +257,7 @@ B32P_tb.cpu.jumpr_MEM
 B32P_tb.cpu.branch_MEM
 B32P_tb.cpu.branch_passed_MEM
 B32P_tb.cpu.branchOP_MEM[2:0]
-@24
+@22
 B32P_tb.cpu.jump_addr_MEM[31:0]
 @200
 -

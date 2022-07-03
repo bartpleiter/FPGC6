@@ -21,8 +21,69 @@
 */
 
 module CPU(
-    input clk, reset
+    input clk, reset,
+    output [26:0] bus_addr,
+    output [31:0] bus_data,
+    output        bus_we,
+    output        bus_start,
+    input [31:0]  bus_q,
+    input         bus_done
 );
+
+/*
+* CPU BUS
+*/
+
+wire [31:0] arbiter_q;
+
+wire [31:0] addr_a;
+wire [31:0] data_a;
+wire        we_a;
+wire        start_a;
+
+wire [31:0] addr_b;
+wire [31:0] data_b;
+wire        we_b;
+wire        start_b;
+
+// tmp until implemented in datamem
+assign addr_b = 32'd0;
+assign data_b = 32'd0;
+assign we_b = 1'b0;
+assign start_b = 1'b0;
+
+Arbiter arbiter (
+.clk(clk),
+.reset(reset),
+
+// port a (Instr)
+.addr_a(addr_a),
+.data_a(data_a),
+.we_a(we_a),
+.start_a(start_a),
+.done_a(done_a),
+
+// port b (Data)
+.addr_b(addr_b),
+.data_b(data_b),
+.we_b(we_b),
+.start_b(start_b),
+.done_b(done_b),
+
+// output (both ports)
+.q(arbiter_q),
+
+// bus
+.bus_addr(bus_addr),
+.bus_data(bus_data),
+.bus_we(bus_we),
+.bus_start(bus_start),
+.bus_q(bus_q),
+.bus_done(bus_done)
+);
+
+
+
 
 // Registers for flush, stall and forwarding
 reg flush_FE, flush_DE, flush_EX, flush_MEM, flush_WB;
@@ -38,7 +99,7 @@ wire datamem_busy_MEM;
 */
 
 // Program Counter
-reg [31:0]  pc_FE = 32'd0;
+reg [31:0]  pc_FE = 32'hC02522 << 2; // *4 because not byte addressable yet
 
 wire [31:0] pc4_FE;
 assign pc4_FE = pc_FE + 3'd4;
@@ -72,6 +133,15 @@ InstrMem instrMem(
 .addr(pc_FE),
 .q(instr_DE),
 .hit(instr_hit_FE),
+
+// bus
+.bus_addr(addr_a),
+.bus_data(data_a),
+.bus_we(we_a),
+.bus_start(start_a),
+.bus_q(arbiter_q),
+.bus_done(bus_done),
+
 .hold(stall_FE),
 .clear(flush_FE)
 );

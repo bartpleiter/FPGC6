@@ -44,9 +44,25 @@ reg clk = 0;
 reg clk_SDRAM = 0;
 reg reset = 0;
 
+//Bus
+wire [26:0] bus_addr;
+wire [31:0] bus_data;
+wire        bus_we;
+wire        bus_start;
+wire [31:0] bus_q;
+wire        bus_done;
+
 CPU cpu(
 .clk        (clk),
-.reset      (reset)
+.reset      (reset),
+
+// bus
+.bus_addr(bus_addr),
+.bus_data(bus_data),
+.bus_we(bus_we),
+.bus_start(bus_start),
+.bus_q(bus_q),
+.bus_done(bus_done)
 );
 
 //----------DEV-------------
@@ -330,14 +346,6 @@ reg [3:0] DIPS;
 //----------------Memory Unit--------------------
 //Memory Unit I/O
 
-//Bus
-wire [26:0] bus_addr;
-wire [31:0] bus_data;
-wire        bus_we;
-wire        bus_start;
-wire [31:0] bus_q;
-wire        bus_done;
-
 //Interrupt signals
 wire        OST1_int, OST2_int, OST3_int;
 wire        UART0_rx_int, UART2_rx_int;
@@ -481,50 +489,6 @@ MemoryUnit mu(
 );
 
 
-//----------ARBITER---------------
-
-wire [31:0] arbiter_q;
-
-reg [31:0] addr_a = 32'd0;
-reg [31:0] data_a = 32'd0;
-reg        we_a = 1'b0;
-reg        start_a = 1'b0;
-
-reg [31:0] addr_b = 32'd0;
-reg [31:0] data_b = 32'd0;
-reg        we_b = 1'b0;
-reg        start_b = 1'b0;
-
-Arbiter arbiter (
-.clk(clk),
-.reset(reset),
-
-// port a (Instr)
-.addr_a(addr_a),
-.data_a(data_a),
-.we_a(we_a),
-.start_a(start_a),
-.done_a(done_a),
-
-// port b (Data)
-.addr_b(addr_b),
-.data_b(data_b),
-.we_b(we_b),
-.start_b(start_b),
-.done_b(done_b),
-
-// output (both ports)
-.q(arbiter_q),
-
-// bus
-.bus_addr(bus_addr),
-.bus_data(bus_data),
-.bus_we(bus_we),
-.bus_start(bus_start),
-.bus_q(bus_q),
-.bus_done(bus_done)
-);
-
 
 
 initial
@@ -560,35 +524,7 @@ begin
         #5 clk_SDRAM = ~clk_SDRAM; //100MHz
     end
 
-    //addr_b = 27'hC02522; // rom[0]
-    addr_b = 27'd6;
-    data_b = 32'd37;
-    we_b = 1'b1;
-    start_b = 1'b1;
-
-    addr_a = 27'd8;
-    data_a = 32'd9;
-    we_a = 1'b1;
-    start_a = 1'b1;
-
-
-    repeat(14)
-    begin
-        #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
-        #5 clk_SDRAM = ~clk_SDRAM; //100MHz
-    end
-
-    start_b = 1'b0;
-
-    repeat(12)
-    begin
-        #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
-        #5 clk_SDRAM = ~clk_SDRAM; //100MHz
-    end
-
-    start_a = 1'b0;
-
-    repeat(32)
+    repeat(512)
     begin
         #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
         #5 clk_SDRAM = ~clk_SDRAM; //100MHz

@@ -29,7 +29,7 @@ assign hit = bus_done && !ignoreNext;
 assign q =  (bus_done && !clear && !hold && !ignoreNext) ? bus_q :
             (hit) ? qreg : 32'd0;
 
-assign bus_addr = addr >> 2; // divide by 4 because not byte addressable yet
+assign bus_addr = addr;
 assign bus_data = 32'd0;
 assign bus_we = 1'b0;
 

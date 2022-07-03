@@ -36,7 +36,7 @@ module Arbiter(
 
 assign q = bus_q;
 
-assign done_a = busy_a && bus_done;
+assign done_a = busy_a && !busy_b && bus_done;
 assign done_b = busy_b && bus_done;
 
 reg busy_a = 1'b0;
@@ -64,10 +64,15 @@ begin
         bus_we <= we_a;
         busy_a <= 1'b1;
     end
-    else if (bus_done)
+    
+    if (bus_done)
     begin
+        if (!busy_b)
+        begin
+            busy_a <= 1'b0;
+        end
+
         busy_b <= 1'b0;
-        busy_a <= 1'b0;
         bus_start_reg <= 1'b0;
     end
 

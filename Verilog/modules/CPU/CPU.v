@@ -46,12 +46,6 @@ wire [31:0] data_b;
 wire        we_b;
 wire        start_b;
 
-// tmp until implemented in datamem
-assign addr_b = 32'd0;
-assign data_b = 32'd0;
-assign we_b = 1'b0;
-assign start_b = 1'b0;
-
 Arbiter arbiter (
 .clk(clk),
 .reset(reset),
@@ -99,10 +93,10 @@ wire datamem_busy_MEM;
 */
 
 // Program Counter
-reg [31:0]  pc_FE = 32'hC02522 << 2; // *4 because not byte addressable yet
+reg [31:0]  pc_FE = 32'hC02522;
 
 wire [31:0] pc4_FE;
-assign pc4_FE = pc_FE + 3'd4;
+assign pc4_FE = pc_FE + 1'b1;
 
 always @(posedge clk) 
 begin
@@ -140,7 +134,7 @@ InstrMem instrMem(
 .bus_we(we_a),
 .bus_start(start_a),
 .bus_q(arbiter_q),
-.bus_done(bus_done),
+.bus_done(done_a),
 
 .hold(stall_FE),
 .clear(flush_FE)
@@ -343,7 +337,7 @@ ALU alu(
 
 // for special instructions, pass other data than alu result
 wire [31:0] execute_result_EX;
-assign execute_result_EX =  (getPC_EX) ? pc4_EX - 3'd4:
+assign execute_result_EX =  (getPC_EX) ? pc4_EX - 1'b1:
                             (getIntID_EX) ? 32'd0: // TODO add after interrupts are implemented
                             alu_result_EX;
 
@@ -470,7 +464,7 @@ begin
     else if (halt_MEM)
     begin
         // jump to same address to keep halting
-        jump_addr_MEM <= pc4_MEM - 3'd4;
+        jump_addr_MEM <= pc4_MEM - 1'b1;
     end
 end
 
@@ -536,6 +530,15 @@ DataMem dataMem(
 .data(data_b_MEM),
 .q(dataMem_q_WB),
 .busy(datamem_busy_MEM),
+
+// bus
+.bus_addr(addr_b),
+.bus_data(data_b),
+.bus_we(we_b),
+.bus_start(start_b),
+.bus_q(arbiter_q),
+.bus_done(done_b),
+
 .hold(stall_MEM),
 .clear(flush_MEM)
 );

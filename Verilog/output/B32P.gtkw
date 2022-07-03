@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Sun Jul  3 16:59:05 2022
+[*] Sun Jul  3 20:24:11 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Sun Jul  3 16:56:50 2022"
-[dumpfile_size] 922191
+[dumpfile_mtime] "Sun Jul  3 20:22:32 2022"
+[dumpfile_size] 417535
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
-[timestart] 0
+[timestart] 10850800
 [size] 1920 1027
 [pos] -1 -1
-*-16.666576 390600 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.666576 11219500 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] B32P_tb.
 [treeopen] B32P_tb.cpu.
 [treeopen] B32P_tb.mu.
@@ -51,6 +51,9 @@ B32P_tb.cpu.arbiter.done_b
 B32P_tb.cpu.arbiter.busy_b
 @200
 -
+@22
+B32P_tb.cpu.arbiter.q[31:0]
+@200
 -
 -MU
 @22
@@ -59,11 +62,21 @@ B32P_tb.mu.bus_addr[26:0]
 B32P_tb.mu.bus_data[31:0]
 B32P_tb.mu.bus_we
 B32P_tb.mu.bus_start
+@28
 B32P_tb.mu.bus_q[31:0]
+@24
 B32P_tb.mu.bus_done
 B32P_tb.mu.bus_done_next
 @200
 -
+-
+-DataMem
+@28
+B32P_tb.cpu.dataMem.bus_done
+B32P_tb.cpu.dataMem.bus_start
+B32P_tb.cpu.dataMem.bus_we
+B32P_tb.cpu.dataMem.busy
+@200
 -
 -
 -
@@ -93,23 +106,34 @@ B32P_tb.mu.sdramcontroller.addr[23:0]
 -
 -
 -Fetch
-@22
+@23
 B32P_tb.cpu.instrMem.addr[31:0]
 @28
 B32P_tb.cpu.instrMem.q[31:0]
 B32P_tb.cpu.clk
 B32P_tb.cpu.flush_FE
 B32P_tb.cpu.stall_FE
-@24
+@22
 B32P_tb.cpu.pc_FE[31:0]
 B32P_tb.cpu.pc4_FE[31:0]
 @28
 B32P_tb.cpu.instr_hit_FE
 @200
 -
+@22
+B32P_tb.cpu.instrMem.addr[31:0]
 @28
+B32P_tb.cpu.instrMem.bus_q[31:0]
+B32P_tb.cpu.instrMem.bus_start
+B32P_tb.cpu.instrMem.bus_done
+B32P_tb.cpu.instrMem.q[31:0]
+B32P_tb.cpu.instrMem.qreg[31:0]
+@200
+-
+-
+@28
+B32P_tb.cpu.instrMem.hold
 B32P_tb.cpu.instrMem.clear
-@29
 B32P_tb.cpu.instrMem.ignoreNext
 @200
 -
@@ -237,7 +261,6 @@ B32P_tb.cpu.dataMem_addr_MEM[31:0]
 @28
 B32P_tb.cpu.mem_read_MEM
 @24
-B32P_tb.cpu.dataMem.count[2:0]
 B32P_tb.cpu.dataMem.q[31:0]
 B32P_tb.cpu.data_d_WB[31:0]
 @200

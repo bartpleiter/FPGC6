@@ -1,25 +1,108 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Fri Jul  1 15:14:57 2022
+[*] Sun Jul  3 15:36:46 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Fri Jul  1 14:24:48 2022"
-[dumpfile_size] 2000880
+[dumpfile_mtime] "Sun Jul  3 15:35:54 2022"
+[dumpfile_size] 559715
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
-[timestart] 0
+[timestart] 10180800
 [size] 1920 1027
 [pos] -1 -1
-*-6.666576 434 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.666576 10620800 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] B32P_tb.
 [treeopen] B32P_tb.cpu.
+[treeopen] B32P_tb.mu.
 [sst_width] 254
 [signals_width] 485
 [sst_expanded] 1
 [sst_vpaned_height] 317
 @28
+B32P_tb.clk_SDRAM
 B32P_tb.cpu.clk
 B32P_tb.cpu.reset
 @200
+-
+-
+-Arbiter
+@24
+B32P_tb.arbiter.addr_a[31:0]
+B32P_tb.arbiter.data_a[31:0]
+B32P_tb.arbiter.we_a
+B32P_tb.arbiter.start_a
+B32P_tb.arbiter.done_a
+@200
+-
+@24
+B32P_tb.arbiter.addr_b[31:0]
+B32P_tb.arbiter.data_b[31:0]
+B32P_tb.arbiter.we_b
+@25
+B32P_tb.arbiter.start_b
+@24
+B32P_tb.arbiter.done_b
+@200
+-
+@28
+B32P_tb.arbiter.busy_a
+B32P_tb.arbiter.busy_b
+@200
+-
+-MU
+@24
+B32P_tb.mu.bus_addr[26:0]
+B32P_tb.mu.bus_data[31:0]
+B32P_tb.mu.bus_we
+B32P_tb.mu.bus_start
+B32P_tb.mu.bus_q[31:0]
+B32P_tb.mu.bus_done
+B32P_tb.mu.bus_done_next
+@200
+-
+-
+-
+-
+-
+@22
+B32P_tb.mu.sdramcontroller.state[6:0]
+@28
+B32P_tb.mu.sdramcontroller.busy
+B32P_tb.mu.sdramcontroller.initDone
+@24
+B32P_tb.mu.sdramcontroller.InitCounter[31:0]
+@28
+B32P_tb.mu.sdramcontroller.isRefreshing
+@24
+B32P_tb.mu.sdramcontroller.WrData[15:0]
+B32P_tb.mu.sdramcontroller.addr[23:0]
+@200
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
 -
 -Fetch
 @24

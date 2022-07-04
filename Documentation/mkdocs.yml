@@ -22,6 +22,10 @@ use_directory_urls: False
 
 nav:
   - Introduction: 'index.md'
+  - 'arch.md'
   - 'cpu.md'
-  - 'todos.md'
   - 'doc.md'
+  - 'gpu.md'
+  - 'map.md'
+  - 'quartus.md'
+  - 'todos.md'

@@ -1,25 +1,61 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Mon Jul  4 12:07:07 2022
+[*] Mon Jul  4 14:45:50 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Mon Jul  4 09:03:04 2022"
-[dumpfile_size] 430030266
+[dumpfile_mtime] "Mon Jul  4 14:41:45 2022"
+[dumpfile_size] 2748163
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw"
-[timestart] 0
+[timestart] 12234000
 [size] 1920 1027
 [pos] -1 -1
-*-29.666576 4299000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.666576 13073000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] FPGC_tb.
 [treeopen] FPGC_tb.fpgc.
+[treeopen] FPGC_tb.fpgc.cpu.
 [sst_width] 227
 [signals_width] 259
 [sst_expanded] 1
-[sst_vpaned_height] 295
+[sst_vpaned_height] 286
 @28
 FPGC_tb.fpgc.clk
-FPGC_tb.fpgc.fsx.vsync
-@29
-FPGC_tb.fpgc.fsx.hsync
+@200
+-
+-
+@28
+FPGC_tb.fpgc.cpu.regbank.clk
+FPGC_tb.fpgc.cpu.regbank.hold
+FPGC_tb.fpgc.cpu.regbank.clear
+@22
+FPGC_tb.fpgc.cpu.regbank.addr_a[3:0]
+FPGC_tb.fpgc.cpu.regbank.addr_b[3:0]
+FPGC_tb.fpgc.cpu.regbank.addr_d[3:0]
+@28
+FPGC_tb.fpgc.cpu.regbank.we
+@22
+FPGC_tb.fpgc.cpu.regbank.ramResulta[31:0]
+FPGC_tb.fpgc.cpu.regbank.ramResultb[31:0]
+@28
+FPGC_tb.fpgc.cpu.regbank.useRamResult_a
+FPGC_tb.fpgc.cpu.regbank.useRamResult_b
+@200
+-
+-
+@28
+FPGC_tb.fpgc.cpu.stack.clk
+@24
+FPGC_tb.fpgc.cpu.stack.ptr[6:0]
+@28
+FPGC_tb.fpgc.cpu.stack.push
+@24
+FPGC_tb.fpgc.cpu.stack.d[31:0]
+@28
+FPGC_tb.fpgc.cpu.stack.pop
+@25
+FPGC_tb.fpgc.cpu.stack.q[31:0]
+FPGC_tb.fpgc.cpu.stack.qreg[31:0]
+FPGC_tb.fpgc.cpu.stack.ramResult[31:0]
+@28
+FPGC_tb.fpgc.cpu.stack.useRamResult
 [pattern_trace] 1
 [pattern_trace] 0

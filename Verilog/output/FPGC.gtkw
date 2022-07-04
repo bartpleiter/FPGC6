@@ -1,0 +1,25 @@
+[*]
+[*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
+[*] Mon Jul  4 12:07:07 2022
+[*]
+[dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
+[dumpfile_mtime] "Mon Jul  4 09:03:04 2022"
+[dumpfile_size] 430030266
+[savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw"
+[timestart] 0
+[size] 1920 1027
+[pos] -1 -1
+*-29.666576 4299000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] FPGC_tb.
+[treeopen] FPGC_tb.fpgc.
+[sst_width] 227
+[signals_width] 259
+[sst_expanded] 1
+[sst_vpaned_height] 295
+@28
+FPGC_tb.fpgc.clk
+FPGC_tb.fpgc.fsx.vsync
+@29
+FPGC_tb.fpgc.fsx.hsync
+[pattern_trace] 1
+[pattern_trace] 0

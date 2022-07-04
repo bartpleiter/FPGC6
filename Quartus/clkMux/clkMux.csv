@@ -1,0 +1,18 @@
+# system info clkMux on 2022.07.04.11:59:13
+system_info:
+name,value
+DEVICE,EP4CE15F23C8
+DEVICE_FAMILY,Cyclone IV E
+GENERATION_ID,1656928753
+#
+#
+# Files generated for clkMux on 2022.07.04.11:59:13
+files:
+filepath,kind,attributes,module,is_top
+simulation/clkMux.v,VERILOG,,clkMux,true
+simulation/submodules/clkMux_altclkctrl_0.v,VERILOG,,clkMux_altclkctrl_0,false
+#
+# Map from instance-path to kind of module
+instances:
+instancePath,module
+clkMux.altclkctrl_0,clkMux_altclkctrl_0

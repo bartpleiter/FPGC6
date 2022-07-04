@@ -10,28 +10,10 @@ module Regbank(
 
     input       [3:0]   addr_d,
     input       [31:0]  data_d,
-    input               we, clear, hold,
-
-    output wire [31:0] r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15
+    input               we, clear, hold
 );
 
 reg [31:0] regs [0:15]; // 16 registers of 32 bit, although reg0 is unused
-
-assign r1 = regs[1];
-assign r2 = regs[2];
-assign r3 = regs[3];
-assign r4 = regs[4];
-assign r5 = regs[5];
-assign r6 = regs[6];
-assign r7 = regs[7];
-assign r8 = regs[8];
-assign r9 = regs[9];
-assign r10 = regs[10];
-assign r11 = regs[11];
-assign r12 = regs[12];
-assign r13 = regs[13];
-assign r14 = regs[14];
-assign r15 = regs[15];
 
 // Read
 always @(posedge clk) 
@@ -85,7 +67,7 @@ begin
     if (we && addr_d != 4'd0)
     begin
         regs[addr_d] <= data_d;
-        $display("%d: reg%d := %d", $time, addr_d, data_d);
+        //$display("%d: reg%d := %d", $time, addr_d, data_d);
     end
 end
 

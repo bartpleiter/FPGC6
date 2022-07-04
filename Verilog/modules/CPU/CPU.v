@@ -27,7 +27,9 @@ module CPU(
     output        bus_we,
     output        bus_start,
     input [31:0]  bus_q,
-    input         bus_done
+    input         bus_done,
+
+    output [26:0] PC
 );
 
 /*
@@ -92,11 +94,13 @@ wire datamem_busy_MEM;
 * FETCH (FE)
 */
 
-// Program Counter
-reg [31:0]  pc_FE = 32'h800000; //ROM: 32'hC02522;
+// Program Counter, start at ROM[0]
+reg [31:0]  pc_FE = 32'hC02522; //SPI flash 32'h800000;
 
 wire [31:0] pc4_FE;
 assign pc4_FE = pc_FE + 1'b1;
+
+assign PC = pc_FE;
 
 always @(posedge clk) 
 begin

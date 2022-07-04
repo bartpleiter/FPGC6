@@ -1,10 +1,10 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Mon Jul  4 07:36:15 2022
+[*] Mon Jul  4 08:03:44 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Mon Jul  4 07:35:06 2022"
-[dumpfile_size] 653302
+[dumpfile_mtime] "Mon Jul  4 08:02:13 2022"
+[dumpfile_size] 2433303
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
 [timestart] 0
 [size] 1920 1027
@@ -64,7 +64,7 @@ B32P_tb.mu.bus_addr[26:0]
 B32P_tb.mu.bus_data[31:0]
 B32P_tb.mu.bus_we
 B32P_tb.mu.bus_start
-@28
+@29
 B32P_tb.mu.bus_q[31:0]
 @24
 B32P_tb.mu.bus_done
@@ -78,7 +78,6 @@ B32P_tb.mu.sreader.recvDone
 B32P_tb.mu.sreader.instr[31:0]
 B32P_tb.mu.SPIflashReader_q[31:0]
 B32P_tb.mu.bus_q_wire[31:0]
-@29
 B32P_tb.mu.bus_q_wire_reg[31:0]
 @200
 -

@@ -14,37 +14,104 @@
     - flush
     - stall (MEM to reg)
     - forward
+
+- Variable delay support from InstrMem and DataMem:
+    - NOTE/BUG: the instruction after a READ or WRITE is skipped if there is a DataMem delay but no InstrMem delay
+       This might become a problem when caching is implemented
 */
 
 module CPU(
     input clk, reset,
-    output wire [31:0] r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15
+    output [26:0] bus_addr,
+    output [31:0] bus_data,
+    output        bus_we,
+    output        bus_start,
+    input [31:0]  bus_q,
+    input         bus_done,
+
+    output [26:0] PC
 );
+
+/*
+* CPU BUS
+*/
+
+wire [31:0] arbiter_q;
+
+wire [31:0] addr_a;
+wire [31:0] data_a;
+wire        we_a;
+wire        start_a;
+
+wire [31:0] addr_b;
+wire [31:0] data_b;
+wire        we_b;
+wire        start_b;
+
+Arbiter arbiter (
+.clk(clk),
+.reset(reset),
+
+// port a (Instr)
+.addr_a(addr_a),
+.data_a(data_a),
+.we_a(we_a),
+.start_a(start_a),
+.done_a(done_a),
+
+// port b (Data)
+.addr_b(addr_b),
+.data_b(data_b),
+.we_b(we_b),
+.start_b(start_b),
+.done_b(done_b),
+
+// output (both ports)
+.q(arbiter_q),
+
+// bus
+.bus_addr(bus_addr),
+.bus_data(bus_data),
+.bus_we(bus_we),
+.bus_start(bus_start),
+.bus_q(bus_q),
+.bus_done(bus_done)
+);
+
+
+
 
 // Registers for flush, stall and forwarding
 reg flush_FE, flush_DE, flush_EX, flush_MEM, flush_WB;
 reg stall_FE, stall_DE, stall_EX, stall_MEM, stall_WB;
 reg [1:0] forward_a, forward_b;
 
+// Cache delays
+wire instr_hit_FE;
+wire datamem_busy_MEM;
+
 /*
 * FETCH (FE)
 */
 
-// Program Counter
-reg [31:0]  pc_FE = 32'd0;
+// Program Counter, start at ROM[0]
+reg [31:0]  pc_FE = 32'hC02522; //SPI flash 32'h800000;
 
 wire [31:0] pc4_FE;
-assign pc4_FE = pc_FE + 3'd4;
+assign pc4_FE = pc_FE + 1'b1;
+
+assign PC = pc_FE;
 
 always @(posedge clk) 
 begin
-    if (stall_FE)
-    begin
-        pc_FE <= pc_FE;
-    end
-    else if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM))
+    // jump has priority over instruction cache stalls
+    if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM))
     begin
         pc_FE <= jump_addr_MEM;
+    end
+    else if (stall_FE || (!instr_hit_FE) )
+    begin
+        pc_FE <= pc_FE;
     end
     else
     begin
@@ -63,6 +130,16 @@ InstrMem instrMem(
 .reset(reset),
 .addr(pc_FE),
 .q(instr_DE),
+.hit(instr_hit_FE),
+
+// bus
+.bus_addr(addr_a),
+.bus_data(data_a),
+.bus_we(we_a),
+.bus_start(start_a),
+.bus_q(arbiter_q),
+.bus_done(done_a),
+
 .hold(stall_FE),
 .clear(flush_FE)
 );
@@ -156,23 +233,7 @@ Regbank regbank(
 .we(dreg_we_WB),
 
 .hold(stall_DE),
-.clear(flush_DE),
-
-.r1(r1),
-.r2(r2),
-.r3(r3),
-.r4(r4),
-.r5(r5),
-.r6(r6),
-.r7(r7),
-.r8(r8),
-.r9(r9),
-.r10(r10),
-.r11(r11),
-.r12(r12),
-.r13(r13),
-.r14(r14),
-.r15(r15)
+.clear(flush_DE)
 );
 
 
@@ -280,7 +341,7 @@ ALU alu(
 
 // for special instructions, pass other data than alu result
 wire [31:0] execute_result_EX;
-assign execute_result_EX =  (getPC_EX) ? pc4_EX - 3'd4:
+assign execute_result_EX =  (getPC_EX) ? pc4_EX - 1'b1:
                             (getIntID_EX) ? 32'd0: // TODO add after interrupts are implemented
                             alu_result_EX;
 
@@ -407,7 +468,7 @@ begin
     else if (halt_MEM)
     begin
         // jump to same address to keep halting
-        jump_addr_MEM <= pc4_MEM - 3'd4;
+        jump_addr_MEM <= pc4_MEM - 1'b1;
     end
 end
 
@@ -469,8 +530,19 @@ DataMem dataMem(
 .clk(clk),
 .addr(dataMem_addr_MEM),
 .we(mem_write_MEM),
+.re(mem_read_MEM),
 .data(data_b_MEM),
 .q(dataMem_q_WB),
+.busy(datamem_busy_MEM),
+
+// bus
+.bus_addr(addr_b),
+.bus_data(data_b),
+.bus_we(we_b),
+.bus_start(start_b),
+.bus_q(arbiter_q),
+.bus_done(done_b),
+
 .hold(stall_MEM),
 .clear(flush_MEM)
 );
@@ -592,6 +664,12 @@ begin
         flush_DE <= 1'b1;
         flush_EX <= 1'b1;
     end
+
+    // flush MEM when busy, causing a bubble
+    if ((mem_read_MEM || mem_write_MEM) && datamem_busy_MEM)
+    begin
+        flush_MEM <= 1'b1;
+    end
 end
 
 /*
@@ -611,11 +689,18 @@ begin
         stall_FE <= 1'b1;
         stall_DE <= 1'b1;
     end
+
+    // stall if read or write in data MEM causes the busy flag to be set
+    if ((mem_read_MEM || mem_write_MEM) && datamem_busy_MEM)
+    begin
+        stall_FE <= 1'b1;
+        stall_DE <= 1'b1;
+        stall_EX <= 1'b1;
+    end
 end
 
 /*
 * FORWARDING
-* TODO: find a fix for loadhi
 */
 
 // MEM (4) -> EX (3)

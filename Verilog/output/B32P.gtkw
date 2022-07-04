@@ -1,22 +1,22 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Sun Jul  3 20:24:11 2022
+[*] Mon Jul  4 07:36:15 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Sun Jul  3 20:22:32 2022"
-[dumpfile_size] 417535
+[dumpfile_mtime] "Mon Jul  4 07:35:06 2022"
+[dumpfile_size] 653302
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
-[timestart] 10850800
+[timestart] 0
 [size] 1920 1027
 [pos] -1 -1
-*-16.666576 11219500 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-23.666576 23945000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] B32P_tb.
 [treeopen] B32P_tb.cpu.
 [treeopen] B32P_tb.mu.
 [sst_width] 254
 [signals_width] 485
 [sst_expanded] 1
-[sst_vpaned_height] 317
+[sst_vpaned_height] 307
 @28
 B32P_tb.clk_SDRAM
 B32P_tb.cpu.clk
@@ -25,6 +25,8 @@ B32P_tb.cpu.reset
 -
 -
 -Arbiter
+@28
+B32P_tb.cpu.arbiter.clk
 @22
 B32P_tb.cpu.arbiter.addr_a[31:0]
 B32P_tb.cpu.arbiter.data_a[31:0]
@@ -70,6 +72,16 @@ B32P_tb.mu.bus_done_next
 @200
 -
 -
+@28
+B32P_tb.mu.sreader.initDone
+B32P_tb.mu.sreader.recvDone
+B32P_tb.mu.sreader.instr[31:0]
+B32P_tb.mu.SPIflashReader_q[31:0]
+B32P_tb.mu.bus_q_wire[31:0]
+@29
+B32P_tb.mu.bus_q_wire_reg[31:0]
+@200
+-
 -DataMem
 @28
 B32P_tb.cpu.dataMem.bus_done
@@ -106,7 +118,7 @@ B32P_tb.mu.sdramcontroller.addr[23:0]
 -
 -
 -Fetch
-@23
+@22
 B32P_tb.cpu.instrMem.addr[31:0]
 @28
 B32P_tb.cpu.instrMem.q[31:0]

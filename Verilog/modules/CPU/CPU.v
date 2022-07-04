@@ -93,7 +93,7 @@ wire datamem_busy_MEM;
 */
 
 // Program Counter
-reg [31:0]  pc_FE = 32'hC02522;
+reg [31:0]  pc_FE = 32'h800000; //ROM: 32'hC02522;
 
 wire [31:0] pc4_FE;
 assign pc4_FE = pc_FE + 1'b1;

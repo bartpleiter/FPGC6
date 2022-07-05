@@ -29,6 +29,8 @@ module CPU(
     input [31:0]  bus_q,
     input         bus_done,
 
+    input int1, int2, int3, int4,
+
     output [26:0] PC
 );
 
@@ -79,6 +81,27 @@ Arbiter arbiter (
 );
 
 
+/*
+* Interrupts
+*/
+reg intDisabled = 1'b0;
+wire intCPU;
+wire [7:0] intID;
+
+IntController intController(
+.clk(clk),
+.reset(reset),
+
+.int1(int1),
+.int2(int2),
+.int3(int3),
+.int4(int4),
+
+.intDisabled(intDisabled),
+.intCPU(intCPU),
+.intID(intID)
+);
+
 
 
 // Registers for flush, stall and forwarding
@@ -97,15 +120,28 @@ wire datamem_busy_MEM;
 // Program Counter, start at ROM[0]
 reg [31:0]  pc_FE = 32'hC02522; //SPI flash 32'h800000;
 
+reg [31:0]  pc_FE_backup = 32'd0;
+
 wire [31:0] pc4_FE;
 assign pc4_FE = pc_FE + 1'b1;
 
 assign PC = pc_FE;
 
+wire interruptValid;
+// instr_hit_FE to align with the pipeline
+assign interruptValid = (intCPU && !intDisabled && instr_hit_FE); // TODO: could add extra conditions here like pc_FE < ROM_address
+
 always @(posedge clk) 
 begin
+    // interrupt has highest priority
+    if (interruptValid)
+    begin
+        intDisabled <= 1'b1;
+        pc_FE_backup <= pc_FE;
+        pc_FE <= 32'hC02523;
+    end
     // jump has priority over instruction cache stalls
-    if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM))
+    else if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM))
     begin
         pc_FE <= jump_addr_MEM;
     end

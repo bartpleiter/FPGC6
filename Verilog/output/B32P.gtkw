@@ -1,18 +1,17 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Mon Jul  4 08:03:44 2022
+[*] Tue Jul  5 12:22:41 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Mon Jul  4 08:02:13 2022"
-[dumpfile_size] 2433303
+[dumpfile_mtime] "Tue Jul  5 12:20:33 2022"
+[dumpfile_size] 2837777
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
-[timestart] 0
+[timestart] 147600
 [size] 1920 1027
 [pos] -1 -1
-*-23.666576 23945000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.666576 391000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] B32P_tb.
 [treeopen] B32P_tb.cpu.
-[treeopen] B32P_tb.mu.
 [sst_width] 254
 [signals_width] 485
 [sst_expanded] 1
@@ -22,6 +21,7 @@ B32P_tb.clk_SDRAM
 B32P_tb.cpu.clk
 B32P_tb.cpu.reset
 @200
+-
 -
 -
 -Arbiter
@@ -64,7 +64,7 @@ B32P_tb.mu.bus_addr[26:0]
 B32P_tb.mu.bus_data[31:0]
 B32P_tb.mu.bus_we
 B32P_tb.mu.bus_start
-@29
+@28
 B32P_tb.mu.bus_q[31:0]
 @24
 B32P_tb.mu.bus_done
@@ -115,6 +115,27 @@ B32P_tb.mu.sdramcontroller.addr[23:0]
 -
 -
 -
+@28
+B32P_tb.cpu.intController.int1
+B32P_tb.cpu.intController.int2
+B32P_tb.cpu.intController.int3
+B32P_tb.cpu.intController.int4
+@200
+-
+@28
+B32P_tb.cpu.intController.int1_triggered
+@29
+B32P_tb.cpu.intController.int2_triggered
+@200
+-
+@28
+B32P_tb.cpu.intController.intCPU
+@22
+B32P_tb.cpu.intController.intID[7:0]
+@28
+B32P_tb.cpu.intController.intDisabled
+B32P_tb.cpu.interruptValid
+@200
 -
 -Fetch
 @22
@@ -138,7 +159,6 @@ B32P_tb.cpu.instrMem.bus_q[31:0]
 B32P_tb.cpu.instrMem.bus_start
 B32P_tb.cpu.instrMem.bus_done
 B32P_tb.cpu.instrMem.q[31:0]
-B32P_tb.cpu.instrMem.qreg[31:0]
 @200
 -
 -

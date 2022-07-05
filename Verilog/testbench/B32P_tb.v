@@ -16,6 +16,7 @@
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/InstrMem.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/DataMem.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/Regr.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/IntController.v"
 
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/Arbiter.v"
 
@@ -44,6 +45,11 @@ reg clk = 0;
 reg clk_SDRAM = 0;
 reg reset = 0;
 
+reg int1 = 1'b0;
+reg int2 = 1'b0;
+reg int3 = 1'b0;
+reg int4 = 1'b0;
+
 //Bus
 wire [26:0] bus_addr;
 wire [31:0] bus_data;
@@ -55,6 +61,11 @@ wire        bus_done;
 CPU cpu(
 .clk        (clk),
 .reset      (reset),
+
+.int1(int1),
+.int2(int2),
+.int3(int3),
+.int4(int4),
 
 // bus
 .bus_addr(bus_addr),
@@ -517,6 +528,15 @@ begin
     end
 
     reset = 0;
+
+    repeat(24)
+    begin
+        #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
+        #5 clk_SDRAM = ~clk_SDRAM; //100MHz
+    end
+
+    int1 = 1'b1;
+    int2 = 1'b1;
 
     repeat(1024)
     begin

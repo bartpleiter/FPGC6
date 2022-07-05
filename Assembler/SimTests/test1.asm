@@ -19,7 +19,7 @@ Main:
     pop r11             ; pop r11:=18
     add r10 r10 r15     ; r15:=36
     savpc r12           ; r12:=pc
-    add 1 r12 r13       ; r13:=r12+1
+    add r12 1 r13       ; r13:=r12+1
     halt                ; halt
     load 37 r1          ; unreached
 

@@ -60,6 +60,7 @@ BLT       101    Branch if A <  B
 BLE       110    Branch if A <= B
 XXX       111    Reserved
 ```
+Signed comparisons can be enabled by setting the S (sign) bit, creating the BGTS, BGES, BLTS and BLES operations.
 
 ### ARITH opcodes
 The type of ALU operation can be specified by the ARITH opcode:

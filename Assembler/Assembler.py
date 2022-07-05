@@ -464,7 +464,7 @@ def main():
     if len(sys.argv) >= 3:
         BDOSprogram = (sys.argv[1].lower() == "bdos")
         if BDOSprogram:
-            programOffset, _ = CompileInstruction.getNumber(sys.argv[2])
+            programOffset = CompileInstruction.getNumber(sys.argv[2])
     if len(sys.argv) >= 2:
         BDOSos = (sys.argv[1].lower() == "os")
     if sys.argv[len(sys.argv)-1] == "-O":

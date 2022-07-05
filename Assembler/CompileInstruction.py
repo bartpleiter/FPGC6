@@ -5,7 +5,7 @@ Library for compiling single instructions
 
 #converts string to int
 #string can by binary, decimal or hex
-def getNumber(word, allowNeg=True):
+def getNumber(word, allowNeg=True, returnABS=False):
     value = 0
     #check for binary number
     if len(word) > 2 and word[:2] == '0b':
@@ -32,7 +32,7 @@ def getNumber(word, allowNeg=True):
     if value < 0 and not allowNeg:
         raise ValueError(str(word) + " is a negative number (which are not allowed)")
 
-    if allowNeg:
+    if allowNeg and returnABS:
 
         if value < 0:
             return abs(value), True
@@ -100,7 +100,7 @@ def compileRead(line):
     const16 = ""
 
     #convert arg1 to number
-    arg1Int, neg = getNumber(line[1])
+    arg1Int = getNumber(line[1])
 
     #convert arg1 to binary
     CheckFitsInBits(arg1Int, 16)
@@ -136,7 +136,7 @@ def compileWrite(line):
     const16 = ""
 
     #convert arg1 to number
-    arg1Int, neg = getNumber(line[1])
+    arg1Int = getNumber(line[1])
 
     #convert arg1 to binary
     CheckFitsInBits(arg1Int, 16)
@@ -285,7 +285,7 @@ def compileJumpr(line):
     instruction = ""
     
     #convert arg1 to number
-    arg1Int, _ = getNumber(line[1])
+    arg1Int= getNumber(line[1])
 
     #convert arg1 to binary
     CheckFitsInBits(arg1Int, 16)
@@ -314,7 +314,7 @@ def compileJumpro(line):
     instruction = ""
     
     #convert arg1 to number
-    arg1Int, _ = getNumber(line[1])
+    arg1Int= getNumber(line[1])
 
     #convert arg1 to binary
     CheckFitsInBits(arg1Int, 16)
@@ -358,7 +358,7 @@ def compileBranch(line, opcode, signed):
     arg3Int = 0
 
     #convert arg3 to number
-    arg3Int, _ = getNumber(line[3])
+    arg3Int= getNumber(line[3])
 
     #convert arg3 to binary
     CheckFitsInBits(arg3Int, 16)
@@ -486,7 +486,7 @@ def compileARITH(line, opcode):
         arg2Int = getReg(line[2])
     else:                           #arg2 is a constant
         constantEnable = True
-        arg2Int, _ = getNumber(line[2])
+        arg2Int= getNumber(line[2])
 
     #convert arg2 to binary
     if constantEnable:
@@ -661,7 +661,7 @@ def compileLoad32(line):
     const32 = ""
 
     #convert arg1 to number
-    arg1Int, neg= getNumber(line[1], True)
+    arg1Int, neg= getNumber(line[1], True, True)
     if neg:
         arg1Int = -arg1Int # because getNumber does ABS on it
 

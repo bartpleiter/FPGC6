@@ -77,7 +77,7 @@ NOT(A)    0111   ~A
 MULTS     1000   A  *   B (signed)
 MULTU     1001   A  *   B (unsigned)
 SLT       1010   1 if A < B, else 0 (signed)
-SLTU      1010   1 if A < B, else 0 (unsigned)
+SLTU      1011   1 if A < B, else 0 (unsigned)
 LOAD      1100   16 bit constant (or B)
 LOADHI    1101   {16 bit constant, A[15:0]} (if AREG == DREG, this is equivalent to LOADHI)
 ```

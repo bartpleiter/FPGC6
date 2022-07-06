@@ -24,6 +24,7 @@
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/DataMem.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/Regr.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/Arbiter.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/IntController.v"
 
 // memory
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/VRAM.v"
@@ -284,7 +285,7 @@ begin
 
     GPI = 4'b1111;
 
-    DIPS = 4'b1110;
+    DIPS = 4'b0001;
 
 
     repeat(10)
@@ -303,12 +304,17 @@ begin
 
     nreset = 1;
 
-    repeat(4096)
+    repeat(40000)
     begin
         #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
         #5 clk_SDRAM = ~clk_SDRAM; //100MHz
     end
 
+    repeat(1000)
+    begin
+        #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
+        #5 clk_SDRAM = ~clk_SDRAM; //100MHz
+    end
 
     #1 $finish;
 end

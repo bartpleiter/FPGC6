@@ -34,3 +34,5 @@ Quartus/*.ipregen.rpt
 BCC/*.tmp
 BCC/*.out
 BCC/bcc
+Programmer/code.list
+Programmer/code.bin

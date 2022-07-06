@@ -1,7 +1,5 @@
 /*
 * Memory Unit
-* Requests by CPU are made on the posedge of clk.
-* Modules work on the negedge of clk.
 */
 module MemoryUnit(
     // Clocks
@@ -755,7 +753,7 @@ begin
         bus_d_reg <= bus_data; // latch for copy instructions to SRAM/regs
 
         // latch output
-        if (bus_done || sd_q_ready) // TODO: Should probably add more ready statements here
+        if (bus_done || bus_done_next || sd_q_ready || SPIflashReader_recvDone) // TODO: Should probably add more ready statements here
             bus_q_wire_reg <= bus_q_wire;
     end
 end

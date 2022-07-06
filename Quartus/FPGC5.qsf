@@ -234,6 +234,7 @@ set_global_assignment -name VERILOG_FILE modules/CPU/InstructionDecoder.v
 set_global_assignment -name VERILOG_FILE modules/CPU/Regbank.v
 set_global_assignment -name VERILOG_FILE modules/CPU/Regr.v
 set_global_assignment -name VERILOG_FILE modules/CPU/Stack.v
+set_global_assignment -name VERILOG_FILE modules/CPU/IntController.v
 set_global_assignment -name VERILOG_FILE modules/Memory/VRAM.v
 set_global_assignment -name VERILOG_FILE modules/Memory/SPIreader.v
 set_global_assignment -name VERILOG_FILE modules/Memory/SDRAMcontroller.v

@@ -37,6 +37,10 @@ module CPU(
     output [26:0] PC
 );
 
+parameter PCstart = 27'hC02522; // internal ROM addr 0 //27'hC02522;
+parameter PCincrease = 1'b1; // number of addresses to increase the PC with after each instruction
+parameter InterruptJumpAddr = 27'd1;
+
 /*
 * CPU BUS
 */
@@ -127,7 +131,7 @@ wire datamem_busy_MEM;
 */
 
 // Program Counter, start at ROM[0]
-reg [31:0]  pc_FE = 32'hC02522; //SPI flash 32'h800000;
+reg [31:0]  pc_FE = PCstart;
 
 reg [31:0]  pc_FE_backup = 32'd0;
 
@@ -136,36 +140,48 @@ assign pc4_FE = pc_FE + 1'b1;
 
 assign PC = pc_FE;
 
+wire [31:0] PC_backup_current;
+assign PC_backup_current = pc4_EX - PCincrease;
+
 wire interruptValid;
 // instr_hit_FE to align with the pipeline
-assign interruptValid = (intCPU && !intDisabled && instr_hit_FE); // TODO: could add extra conditions here like pc_FE < ROM_address
+assign interruptValid = (intCPU && !intDisabled && instr_hit_FE && PC_backup_current < PCstart);
 
 always @(posedge clk) 
 begin
-    // interrupt has highest priority
-    if (interruptValid)
+    if (reset)
     begin
-        intDisabled <= 1'b1;
-        pc_FE_backup <= pc4_EX - 1'b1; // TODO: match with pc4 addition if byte addressable
-        pc_FE <= 32'hC02523;
-    end
-    else if (reti_MEM)
-    begin
+        pc_FE <= PCstart;
+        pc_FE_backup <= 32'd0;
         intDisabled <= 1'b0;
-        pc_FE <= pc_FE_backup;
-    end
-    // jump has priority over instruction cache stalls
-    else if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM))
-    begin
-        pc_FE <= jump_addr_MEM;
-    end
-    else if (stall_FE || (!instr_hit_FE) )
-    begin
-        pc_FE <= pc_FE;
     end
     else
     begin
-        pc_FE <= pc4_FE;
+        // interrupt has highest priority
+        if (interruptValid)
+        begin
+            intDisabled <= 1'b1;
+            pc_FE_backup <= PC_backup_current;
+            pc_FE <= InterruptJumpAddr;
+        end
+        else if (reti_MEM)
+        begin
+            intDisabled <= 1'b0;
+            pc_FE <= pc_FE_backup;
+        end
+        // jump has priority over instruction cache stalls
+        else if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM))
+        begin
+            pc_FE <= jump_addr_MEM;
+        end
+        else if (stall_FE || (!instr_hit_FE) )
+        begin
+            pc_FE <= pc_FE;
+        end
+        else
+        begin
+            pc_FE <= pc4_FE;
+        end
     end
 end
 
@@ -200,7 +216,7 @@ wire [31:0] pc4_DE;
 Regr #(.N(32)) regr_pc4_FE_DE(
 .clk(clk),
 .hold(stall_FE),
-.clear(flush_FE),
+.clear(reset||flush_FE),
 .in(pc4_FE),
 .out(pc4_DE)
 );
@@ -295,7 +311,7 @@ wire [31:0] instr_EX;
 Regr #(.N(32)) regr_instr_DE_EX(
 .clk(clk),
 .hold(stall_DE),
-.clear(flush_DE || stall_DE),
+.clear(reset||flush_DE || stall_DE),
 .in(instr_DE),
 .out(instr_EX)
 );
@@ -304,7 +320,7 @@ wire [31:0] pc4_EX;
 Regr #(.N(32)) regr_pc4_DE_EX(
 .clk(clk),
 .hold(stall_DE),
-.clear(flush_DE),
+.clear(reset||flush_DE),
 .in(pc4_DE),
 .out(pc4_EX)
 );
@@ -319,7 +335,7 @@ wire getIntID_EX, getPC_EX;
 Regr #(.N(13)) regr_cuflags_DE_EX(
 .clk        (clk),
 .hold       (stall_DE),
-.clear      (flush_DE || stall_DE),
+.clear      (reset||flush_DE || stall_DE),
 .in         ({alu_use_const_DE, push_DE, pop_DE, dreg_we_DE, mem_write_DE, mem_read_DE, jumpc_DE, jumpr_DE, halt_DE, reti_DE, branch_DE, getIntID_DE, getPC_DE}),
 .out        ({alu_use_const_EX, push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX, getIntID_EX, getPC_EX})
 );
@@ -403,7 +419,7 @@ wire [31:0] instr_MEM;
 Regr #(.N(32)) regr_instr_EX_MEM(
 .clk(clk),
 .hold(stall_EX),
-.clear(flush_EX),
+.clear(reset||flush_EX),
 .in(instr_EX),
 .out(instr_MEM)
 );
@@ -412,7 +428,7 @@ wire [31:0] data_a_MEM, data_b_MEM;
 Regr #(.N(64)) regr_regdata_EX_MEM(
 .clk(clk),
 .hold(stall_EX),
-.clear(flush_EX),
+.clear(reset||flush_EX),
 .in({fw_data_a_EX, fw_data_b_EX}), // forwarded data
 .out({data_a_MEM, data_b_MEM})
 );
@@ -421,7 +437,7 @@ wire [31:0] pc4_MEM;
 Regr #(.N(32)) regr_pc4_EX_MEM(
 .clk(clk),
 .hold(stall_EX),
-.clear(flush_EX),
+.clear(reset||flush_EX),
 .in(pc4_EX),
 .out(pc4_MEM)
 );
@@ -433,7 +449,7 @@ wire jumpc_MEM, jumpr_MEM, halt_MEM, reti_MEM, branch_MEM;
 Regr #(.N(10)) regr_cuflags_EX_MEM(
 .clk        (clk),
 .hold       (stall_EX),
-.clear      (flush_EX),
+.clear      (reset||flush_EX),
 .in         ({push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX}),
 .out        ({push_MEM, pop_MEM, dreg_we_MEM, mem_write_MEM, mem_read_MEM, jumpc_MEM, jumpr_MEM, halt_MEM, reti_MEM, branch_MEM})
 );
@@ -442,7 +458,7 @@ wire [31:0] alu_result_MEM;
 Regr #(.N(32)) regr_alu_result_EX_MEM(
 .clk(clk),
 .hold(stall_EX),
-.clear(flush_EX),
+.clear(reset||flush_EX),
 .in(execute_result_EX), // other data in case of special instructions
 .out(alu_result_MEM)
 );
@@ -491,7 +507,7 @@ begin
         if (oe_MEM)
         begin
             // add sign extended to allow negative offsets
-            jump_addr_MEM <= pc4_MEM + {{5{const27_MEM[26]}}, const27_MEM[26:0]};
+            jump_addr_MEM <= (pc4_MEM - 1'b1) + {{5{const27_MEM[26]}}, const27_MEM[26:0]};
         end
         else
         begin
@@ -503,7 +519,7 @@ begin
     begin
         if (oe_MEM)
         begin
-            jump_addr_MEM <= pc4_MEM + (data_b_MEM + const16_MEM);
+            jump_addr_MEM <= (pc4_MEM - 1'b1) + (data_b_MEM + const16_MEM);
         end
         else
         begin
@@ -513,7 +529,7 @@ begin
     
     else if (branch_MEM)
     begin
-        jump_addr_MEM <= pc4_MEM + const16_MEM;
+        jump_addr_MEM <= (pc4_MEM - 1'b1) + const16_MEM;
     end
 
     else if (halt_MEM)
@@ -579,6 +595,7 @@ assign dataMem_addr_MEM = data_a_MEM + const16_MEM;
 
 DataMem dataMem(
 .clk(clk),
+.reset(reset),
 .addr(dataMem_addr_MEM),
 .we(mem_write_MEM),
 .re(mem_read_MEM),
@@ -620,7 +637,7 @@ wire [31:0] instr_WB;
 Regr #(.N(32)) regr_instr_MEM_WB(
 .clk(clk),
 .hold(stall_MEM),
-.clear(flush_MEM),
+.clear(reset||flush_MEM),
 .in(instr_MEM),
 .out(instr_WB)
 );
@@ -629,7 +646,7 @@ wire [31:0] alu_result_WB;
 Regr #(.N(32)) regr_alu_result_MEM_WB(
 .clk(clk),
 .hold(stall_MEM),
-.clear(flush_MEM),
+.clear(reset||flush_MEM),
 .in(alu_result_MEM),
 .out(alu_result_WB)
 );
@@ -638,7 +655,7 @@ wire [31:0] pc4_WB;
 Regr #(.N(32)) regr_pc4_MEM_WB(
 .clk(clk),
 .hold(stall_MEM),
-.clear(flush_MEM),
+.clear(reset||flush_MEM),
 .in(pc4_MEM),
 .out(pc4_WB)
 );
@@ -648,7 +665,7 @@ wire pop_WB, mem_read_WB;
 Regr #(.N(3)) regr_cuflags_MEM_WB(
 .clk        (clk),
 .hold       (stall_MEM),
-.clear      (flush_MEM),
+.clear      (reset||flush_MEM),
 .in         ({pop_MEM, dreg_we_MEM, mem_read_MEM}),
 .out        ({pop_WB, dreg_we_WB, mem_read_WB})
 );
@@ -756,7 +773,8 @@ end
 
 // MEM (4) -> EX (3)
 // WB  (5) -> EX (3)
-always @(*) begin
+always @(*)
+begin
 
     // input a of ALU
     forward_a <= 2'd0;  // default to no forwarding

@@ -16,8 +16,8 @@ module Stack (
     input clear, hold
 );
 
-reg [6:0]   ptr = 7'd0;            // stack pointer
-reg [31:0]  stack [127:0];  // stack
+reg [9:0]   ptr = 10'd0;            // stack pointer
+reg [31:0]  stack [1023:0];  // stack
 
 reg [31:0] ramResult = 32'd0;
 reg useRamResult = 1'b0;
@@ -29,7 +29,9 @@ always @(posedge clk)
 begin
     if (reset)
     begin
-        ptr <= 7'd0;
+        ptr <= 10'd0;
+        useRamResult <= 32'd0;
+        qreg <= 32'd0;
     end
     else 
     begin
@@ -66,7 +68,7 @@ end
 integer i;
 initial
 begin
-    for (i = 0; i < 128; i = i + 1)
+    for (i = 0; i < 1024; i = i + 1)
     begin
         stack[i] = 32'd0;
     end

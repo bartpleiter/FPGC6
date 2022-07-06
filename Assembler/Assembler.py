@@ -30,7 +30,7 @@ def removeFunctionFromCode(parsedLines, toRemove):
     belowCodeSection = False
 
     for idx, line in enumerate(parsedLines):
-        if line[1][0] == "Int4:":
+        if line[1][0] == "Int:":
             belowCodeSection = True
         if start == -1:
             if line[1][0] == toRemove + ":":
@@ -83,7 +83,7 @@ def removeUnreachebleCode(parsedLines):
     #for j in jumps:
     #    print(j)
 
-    unusedFunctions = list((set(functionNames).difference(jumps)).difference(["Main", "Int1", "Int2", "Int3", "Int4", "Syscall"]))
+    unusedFunctions = list((set(functionNames).difference(jumps)).difference(["Main", "Int", "Syscall"]))
 
     foundUnusedFunctions = len(unusedFunctions)
 
@@ -227,7 +227,8 @@ def compileLine(line):
         ".dl"       : CompileInstruction.compileDl,
         "loadlabellow" : CompileInstruction.compileLoadLabelLow,
         "loadlabelhigh" : CompileInstruction.compileLoadLabelHigh,
-        "`include" : CompileInstruction.compileNothing
+        "`include" : CompileInstruction.compileNothing,
+        ".eof" : CompileInstruction.compileNothing
     }
 
 
@@ -325,11 +326,11 @@ def processDefines(defines, content):
 #add jump to syscall if BDOS os
 def addHeaderCode(parsedLines):
     if BDOSprogram:
-        header = [(0,"jump Main"),(0,"jump Int1"),(0,"jump Int2"),(0,"jump Int3"),(0,"jump Int4")]
+        header = [(0,"jump Main"),(0,"jump Int")]
     elif BDOSos:
-        header = [(0,"jump Main"),(0,"jump Int1"),(0,"jump Int2"),(0,"jump Int3"),(0,"jump Int4"), (0,"LengthOfProgram"), (0,"jump Syscall")]
+        header = [(0,"jump Main"),(0,"jump Int"), (0,"LengthOfProgram"), (0,"jump Syscall")]
     else:
-        header = [(0,"jump Main"),(0,"jump Int1"),(0,"jump Int2"),(0,"jump Int3"),(0,"jump Int4"), (0,"LengthOfProgram")]
+        header = [(0,"jump Main"),(0,"jump Int"), (0,"LengthOfProgram")]
     
     return header + parsedLines
 
@@ -524,7 +525,7 @@ def main():
     if not BDOSprogram:
         lenString = '{0:032b}'.format(len(passTwoResult)) + " //Length of program"
         #calculate length of program
-        passTwoResult[5] = (5, lenString)
+        passTwoResult[2] = (2, lenString)
 
     #print result without line numbers
     for line in passTwoResult:

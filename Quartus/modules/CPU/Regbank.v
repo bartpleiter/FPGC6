@@ -44,51 +44,61 @@ assign data_b = (useRamResult_b) ? ramResultb : data_b_reg;
 // Read
 always @(posedge clk) 
 begin
-    useRamResult_a <= 1'b0;
-    useRamResult_b <= 1'b0;
-
-    if (clear)
+    if (reset)
     begin
+        useRamResult_a <= 1'b0;
+        useRamResult_b <= 1'b0;
         data_a_reg <= 32'd0;
-    end
-    else if (hold)
-    begin
-        data_a_reg <= data_a_reg;
-    end
-    else if (addr_a == 4'd0)
-    begin
-        data_a_reg <= 32'd0;
-    end
-    else if ((addr_a == addr_d) && we)
-    begin
-        data_a_reg <= data_d;
+        data_b_reg <= 32'd0;
     end
     else
     begin
-        //data_a <= regs[addr_a];
-        useRamResult_a <= 1'b1;
-    end
+        useRamResult_a <= 1'b0;
+        useRamResult_b <= 1'b0;
 
-    if (clear)
-    begin
-        data_b_reg <= 32'd0;
-    end
-    else if (hold)
-    begin
-        data_b_reg <= data_b_reg;
-    end
-    else if (addr_b == 4'd0)
-    begin
-        data_b_reg <= 32'd0;
-    end
-    else if ((addr_b == addr_d) && we)
-    begin
-        data_b_reg <= data_d;
-    end
-    else
-    begin
-        //data_b <= regs[addr_b];
-        useRamResult_b <= 1'b1;
+        if (clear)
+        begin
+            data_a_reg <= 32'd0;
+        end
+        else if (hold)
+        begin
+            data_a_reg <= data_a_reg;
+        end
+        else if (addr_a == 4'd0)
+        begin
+            data_a_reg <= 32'd0;
+        end
+        else if ((addr_a == addr_d) && we)
+        begin
+            data_a_reg <= data_d;
+        end
+        else
+        begin
+            //data_a <= regs[addr_a];
+            useRamResult_a <= 1'b1;
+        end
+
+        if (clear)
+        begin
+            data_b_reg <= 32'd0;
+        end
+        else if (hold)
+        begin
+            data_b_reg <= data_b_reg;
+        end
+        else if (addr_b == 4'd0)
+        begin
+            data_b_reg <= 32'd0;
+        end
+        else if ((addr_b == addr_d) && we)
+        begin
+            data_b_reg <= data_d;
+        end
+        else
+        begin
+            //data_b <= regs[addr_b];
+            useRamResult_b <= 1'b1;
+        end
     end
 end
 

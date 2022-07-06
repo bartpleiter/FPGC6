@@ -3,7 +3,7 @@
 */
 
 module DataMem(
-    input wire          clk,
+    input wire          clk, reset,
     input wire  [31:0]  addr,
     input wire          we,
     input wire          re,
@@ -47,11 +47,17 @@ begin
     end
     else */
 
-    if (bus_done)
+    if (reset)
     begin
-        qreg <= bus_q;
+        qreg <= 32'd0;
     end
-
+    else
+    begin
+        if (bus_done)
+        begin
+            qreg <= bus_q;
+        end
+    end
 end
 
 

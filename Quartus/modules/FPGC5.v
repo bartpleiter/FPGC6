@@ -573,17 +573,14 @@ CPU cpu(
 .clk            (clk),
 .reset          (reset),
 
-// Interrupts (no interrupts yet)
-/*
 .int1           (OST1_int),            //OStimer1
 .int2           (OST2_int),            //OStimer2
 .int3           (UART0_rx_int),        //UART0 rx (MAIN)
 .int4           (frameDrawn_stable),   //GPU Frame Drawn
-.ext_int1       (OST3_int),            //OStimer3
-.ext_int2       (PS2_int),             //PS/2 scancode ready
-.ext_int3       (1'b0),                //UART1 rx (APU)
-.ext_int4       (UART2_rx_int),        //UART2 rx (EXT)
-*/
+.int5           (OST3_int),            //OStimer3
+.int6           (PS2_int),             //PS/2 scancode ready
+.int7           (1'b0),                //UART1 rx (APU)
+.int8           (UART2_rx_int),        //UART2 rx (EXT)
 
 // Bus
 .bus_addr       (bus_addr),

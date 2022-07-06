@@ -47,35 +47,45 @@ assign bus_start = (bus_start_reg) && (!bus_done);
 
 always @(posedge clk) 
 begin
-    
-    if (start_b && (!busy_a || bus_done))
+    if (reset)
     begin
-        bus_start_reg <= 1'b1;
-        bus_addr <= addr_b;
-        bus_data <= data_b;
-        bus_we <= we_b;
-        busy_b <= 1'b1;
-    end
-    else if (start_a && (!busy_b || bus_done))
-    begin
-        bus_start_reg <= 1'b1;
-        bus_addr <= addr_a;
-        bus_data <= data_a;
-        bus_we <= we_a;
-        busy_a <= 1'b1;
-    end
-    
-    if (bus_done)
-    begin
-        if (!busy_b)
-        begin
-            busy_a <= 1'b0;
-        end
-
-        busy_b <= 1'b0;
         bus_start_reg <= 1'b0;
+        bus_addr <= 27'd0;
+        bus_data <= 32'd0;
+        bus_we <= 1'b0;
+        busy_b <= 1'b0;
+        busy_a <= 1'b0;
     end
+    else
+    begin
+        if (start_b && (!busy_a || bus_done))
+        begin
+            bus_start_reg <= 1'b1;
+            bus_addr <= addr_b;
+            bus_data <= data_b;
+            bus_we <= we_b;
+            busy_b <= 1'b1;
+        end
+        else if (start_a && (!busy_b || bus_done))
+        begin
+            bus_start_reg <= 1'b1;
+            bus_addr <= addr_a;
+            bus_data <= data_a;
+            bus_we <= we_a;
+            busy_a <= 1'b1;
+        end
+        
+        if (bus_done)
+        begin
+            if (!busy_b)
+            begin
+                busy_a <= 1'b0;
+            end
 
+            busy_b <= 1'b0;
+            bus_start_reg <= 1'b0;
+        end
+    end
 end
 
 

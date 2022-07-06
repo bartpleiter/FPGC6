@@ -1,61 +1,93 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Mon Jul  4 14:45:50 2022
+[*] Wed Jul  6 16:21:09 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Mon Jul  4 14:41:45 2022"
-[dumpfile_size] 2748163
+[dumpfile_mtime] "Wed Jul  6 15:56:41 2022"
+[dumpfile_size] 30933907
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw"
-[timestart] 12234000
+[timestart] 273501000
 [size] 1920 1027
 [pos] -1 -1
-*-17.666576 13073000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.666576 274305000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] FPGC_tb.
 [treeopen] FPGC_tb.fpgc.
-[treeopen] FPGC_tb.fpgc.cpu.
+[treeopen] FPGC_tb.fpgc.mu.
 [sst_width] 227
-[signals_width] 259
+[signals_width] 451
 [sst_expanded] 1
 [sst_vpaned_height] 286
 @28
 FPGC_tb.fpgc.clk
 @200
 -
+-Arbiter
+@22
+FPGC_tb.fpgc.cpu.arbiter.addr_a[31:0]
+FPGC_tb.fpgc.cpu.arbiter.data_a[31:0]
+@28
+FPGC_tb.fpgc.cpu.arbiter.done_a
+FPGC_tb.fpgc.cpu.arbiter.start_a
+FPGC_tb.fpgc.cpu.arbiter.we_a
+FPGC_tb.fpgc.cpu.arbiter.busy_a
+@200
+-
+@22
+FPGC_tb.fpgc.cpu.arbiter.addr_b[31:0]
+FPGC_tb.fpgc.cpu.arbiter.data_b[31:0]
+@28
+FPGC_tb.fpgc.cpu.arbiter.done_b
+FPGC_tb.fpgc.cpu.arbiter.start_b
+FPGC_tb.fpgc.cpu.arbiter.we_b
+FPGC_tb.fpgc.cpu.arbiter.busy_b
+@200
 -
 @28
-FPGC_tb.fpgc.cpu.regbank.clk
-FPGC_tb.fpgc.cpu.regbank.hold
-FPGC_tb.fpgc.cpu.regbank.clear
+FPGC_tb.fpgc.cpu.arbiter.clk
 @22
-FPGC_tb.fpgc.cpu.regbank.addr_a[3:0]
-FPGC_tb.fpgc.cpu.regbank.addr_b[3:0]
-FPGC_tb.fpgc.cpu.regbank.addr_d[3:0]
+FPGC_tb.fpgc.cpu.arbiter.bus_addr[26:0]
+FPGC_tb.fpgc.cpu.arbiter.bus_data[31:0]
 @28
-FPGC_tb.fpgc.cpu.regbank.we
+FPGC_tb.fpgc.cpu.arbiter.bus_we
+FPGC_tb.fpgc.cpu.arbiter.bus_start
+FPGC_tb.fpgc.cpu.arbiter.bus_done
 @22
-FPGC_tb.fpgc.cpu.regbank.ramResulta[31:0]
-FPGC_tb.fpgc.cpu.regbank.ramResultb[31:0]
+FPGC_tb.fpgc.cpu.arbiter.bus_q[31:0]
+@200
+-
+-
+-Fetch
 @28
-FPGC_tb.fpgc.cpu.regbank.useRamResult_a
-FPGC_tb.fpgc.cpu.regbank.useRamResult_b
+FPGC_tb.fpgc.cpu.instr_DE[31:0]
+@24
+FPGC_tb.fpgc.cpu.pc_FE[31:0]
+@28
+FPGC_tb.fpgc.cpu.instr_hit_FE
 @200
 -
 -
 @28
-FPGC_tb.fpgc.cpu.stack.clk
+FPGC_tb.fpgc.cpu.instr_MEM[31:0]
+FPGC_tb.fpgc.cpu.jumpc_MEM
+FPGC_tb.fpgc.cpu.branch_passed_MEM
 @24
-FPGC_tb.fpgc.cpu.stack.ptr[6:0]
+FPGC_tb.fpgc.cpu.jump_addr_MEM[31:0]
+@200
+-
+@22
+FPGC_tb.fpgc.mu.bus_addr[26:0]
 @28
-FPGC_tb.fpgc.cpu.stack.push
-@24
-FPGC_tb.fpgc.cpu.stack.d[31:0]
+FPGC_tb.fpgc.mu.bus_start
+@22
+FPGC_tb.fpgc.mu.bus_q[31:0]
+FPGC_tb.fpgc.mu.bus_q_wire[31:0]
+@29
+FPGC_tb.fpgc.mu.bus_done_next
+@22
+FPGC_tb.fpgc.mu.bus_q_wire_reg[31:0]
 @28
-FPGC_tb.fpgc.cpu.stack.pop
-@25
-FPGC_tb.fpgc.cpu.stack.q[31:0]
-FPGC_tb.fpgc.cpu.stack.qreg[31:0]
-FPGC_tb.fpgc.cpu.stack.ramResult[31:0]
-@28
-FPGC_tb.fpgc.cpu.stack.useRamResult
+FPGC_tb.fpgc.mu.bus_done
+@22
+FPGC_tb.fpgc.mu.UART0_rx.o_Rx_Byte[7:0]
 [pattern_trace] 1
 [pattern_trace] 0

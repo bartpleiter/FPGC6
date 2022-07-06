@@ -35,18 +35,25 @@ assign bus_start = !bus_done && !hold;
 
 always @(posedge clk) 
 begin
-    if (ignoreNext)
+    if (reset)
     begin
-        if (bus_done)
-        begin
-            ignoreNext <= 1'b0;
-        end
+        ignoreNext <= 1'b0;
     end
-    else if (clear)
+    else
     begin
-        if (bus_start)
+        if (ignoreNext)
         begin
-            ignoreNext <= 1'b1;
+            if (bus_done)
+            begin
+                ignoreNext <= 1'b0;
+            end
+        end
+        else if (clear)
+        begin
+            if (bus_start)
+            begin
+                ignoreNext <= 1'b1;
+            end
         end
     end
 end

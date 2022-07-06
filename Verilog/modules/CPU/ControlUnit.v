@@ -10,7 +10,7 @@ module ControlUnit(
     output reg          push, pop,
     output reg          dreg_we,
     output reg          mem_write, mem_read,
-    output reg          jumpc, jumpr, branch, halt,
+    output reg          jumpc, jumpr, branch, halt, reti,
     output reg          getIntID, getPC
 );
 
@@ -48,6 +48,7 @@ always @(*) begin
     getPC           <= 1'b0;
     branch          <= 1'b0;
     halt            <= 1'b0;
+    reti            <= 1'b0;
 
     case (instrOP)
         OP_HALT:
@@ -106,7 +107,7 @@ always @(*) begin
 
         OP_RETI:
         begin
-            
+            reti <= 1'b1;
         end
 
         OP_ARITH:

@@ -49,6 +49,12 @@ reg int1 = 1'b0;
 reg int2 = 1'b0;
 reg int3 = 1'b0;
 reg int4 = 1'b0;
+reg int5 = 1'b0;
+reg int6 = 1'b0;
+reg int7 = 1'b0;
+reg int8 = 1'b0;
+reg int9 = 1'b0;
+reg int10 = 1'b0;
 
 //Bus
 wire [26:0] bus_addr;
@@ -66,6 +72,12 @@ CPU cpu(
 .int2(int2),
 .int3(int3),
 .int4(int4),
+.int5(int5),
+.int6(int6),
+.int7(int7),
+.int8(int8),
+.int9(int9),
+.int10(int10),
 
 // bus
 .bus_addr(bus_addr),
@@ -529,7 +541,7 @@ begin
 
     reset = 0;
 
-    repeat(24)
+    repeat(22)
     begin
         #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
         #5 clk_SDRAM = ~clk_SDRAM; //100MHz
@@ -537,18 +549,62 @@ begin
 
     int1 = 1'b1;
     int2 = 1'b1;
+    int3 = 1'b1;
+    int4 = 1'b1;
+    int5 = 1'b1;
+    int6 = 1'b1;
+    int7 = 1'b1;
+    int8 = 1'b1;
+    int9 = 1'b1;
+    int10 = 1'b1;
 
-    repeat(1024)
+    repeat(500)
     begin
         #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
         #5 clk_SDRAM = ~clk_SDRAM; //100MHz
     end
 
+    int1 = 1'b0;
+    int2 = 1'b0;
+    int3 = 1'b0;
+    int4 = 1'b0;
+    int5 = 1'b0;
+    int6 = 1'b0;
+    int7 = 1'b0;
+    int8 = 1'b0;
+    int9 = 1'b0;
+    int10 = 1'b0;
+
+    repeat(100)
+    begin
+        #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
+        #5 clk_SDRAM = ~clk_SDRAM; //100MHz
+    end
+
+    int1 = 1'b1;
+    int2 = 1'b1;
+    int3 = 1'b1;
+    int4 = 1'b1;
+    int5 = 1'b1;
+    int6 = 1'b1;
+    int7 = 1'b1;
+    int8 = 1'b1;
+    int9 = 1'b1;
+    int10 = 1'b1;
+
+    repeat(500)
+    begin
+        #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
+        #5 clk_SDRAM = ~clk_SDRAM; //100MHz
+    end
+
+    /*
     repeat(4096)
     begin
         #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
         #5 clk_SDRAM = ~clk_SDRAM; //100MHz
     end
+    */
 
 
     #1 $finish;

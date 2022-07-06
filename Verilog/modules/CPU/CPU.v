@@ -15,9 +15,12 @@
     - stall (MEM to reg)
     - forward
 
+- Extendable amount of interrupts
+    - higher priority for lower interrupt numbers
+
 - Variable delay support from InstrMem and DataMem:
-    - NOTE/BUG: the instruction after a READ or WRITE is skipped if there is a DataMem delay but no InstrMem delay
-       This might become a problem when caching is implemented
+    - NOTE/BUG: the instruction after a READ or WRITE was skipped if there is a DataMem delay but no InstrMem delay
+       This might still be a problem when caching is implemented
 */
 
 module CPU(
@@ -29,7 +32,7 @@ module CPU(
     input [31:0]  bus_q,
     input         bus_done,
 
-    input int1, int2, int3, int4,
+    input int1, int2, int3, int4, int5, int6, int7, int8, int9, int10,
 
     output [26:0] PC
 );
@@ -96,6 +99,12 @@ IntController intController(
 .int2(int2),
 .int3(int3),
 .int4(int4),
+.int5(int5),
+.int6(int6),
+.int7(int7),
+.int8(int8),
+.int9(int9),
+.int10(int10),
 
 .intDisabled(intDisabled),
 .intCPU(intCPU),
@@ -137,8 +146,13 @@ begin
     if (interruptValid)
     begin
         intDisabled <= 1'b1;
-        pc_FE_backup <= pc_FE;
+        pc_FE_backup <= pc4_EX - 1'b1; // TODO: match with pc4 addition if byte addressable
         pc_FE <= 32'hC02523;
+    end
+    else if (reti_MEM)
+    begin
+        intDisabled <= 1'b0;
+        pc_FE <= pc_FE_backup;
     end
     // jump has priority over instruction cache stalls
     else if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM))
@@ -224,7 +238,7 @@ wire alu_use_const_DE;
 wire push_DE, pop_DE;
 wire dreg_we_DE;
 wire mem_write_DE, mem_read_DE;
-wire jumpc_DE, jumpr_DE, branch_DE, halt_DE;
+wire jumpc_DE, jumpr_DE, branch_DE, halt_DE, reti_DE;
 wire getIntID_DE, getPC_DE;
 ControlUnit controlUnit(
 // in
@@ -241,6 +255,7 @@ ControlUnit controlUnit(
 .jumpc          (jumpc_DE),
 .jumpr          (jumpr_DE),
 .halt           (halt_DE),
+.reti           (reti_DE),
 .branch         (branch_DE),
 .getIntID       (getIntID_DE),
 .getPC          (getPC_DE)
@@ -299,14 +314,14 @@ wire alu_use_const_EX;
 wire push_EX, pop_EX;
 wire dreg_we_EX;
 wire mem_write_EX, mem_read_EX;
-wire jumpc_EX, jumpr_EX, halt_EX, branch_EX;
+wire jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX;
 wire getIntID_EX, getPC_EX;
-Regr #(.N(12)) regr_cuflags_DE_EX(
+Regr #(.N(13)) regr_cuflags_DE_EX(
 .clk        (clk),
 .hold       (stall_DE),
 .clear      (flush_DE || stall_DE),
-.in         ({alu_use_const_DE, push_DE, pop_DE, dreg_we_DE, mem_write_DE, mem_read_DE, jumpc_DE, jumpr_DE, halt_DE, branch_DE, getIntID_DE, getPC_DE}),
-.out        ({alu_use_const_EX, push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, branch_EX, getIntID_EX, getPC_EX})
+.in         ({alu_use_const_DE, push_DE, pop_DE, dreg_we_DE, mem_write_DE, mem_read_DE, jumpc_DE, jumpr_DE, halt_DE, reti_DE, branch_DE, getIntID_DE, getPC_DE}),
+.out        ({alu_use_const_EX, push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX, getIntID_EX, getPC_EX})
 );
 
 
@@ -378,7 +393,7 @@ ALU alu(
 // for special instructions, pass other data than alu result
 wire [31:0] execute_result_EX;
 assign execute_result_EX =  (getPC_EX) ? pc4_EX - 1'b1:
-                            (getIntID_EX) ? 32'd0: // TODO add after interrupts are implemented
+                            (getIntID_EX) ? intID:
                             alu_result_EX;
 
 
@@ -414,13 +429,13 @@ Regr #(.N(32)) regr_pc4_EX_MEM(
 wire push_MEM, pop_MEM;
 wire dreg_we_MEM;
 wire mem_write_MEM, mem_read_MEM;
-wire jumpc_MEM, jumpr_MEM, halt_MEM, branch_MEM;
-Regr #(.N(9)) regr_cuflags_EX_MEM(
+wire jumpc_MEM, jumpr_MEM, halt_MEM, reti_MEM, branch_MEM;
+Regr #(.N(10)) regr_cuflags_EX_MEM(
 .clk        (clk),
 .hold       (stall_EX),
 .clear      (flush_EX),
-.in         ({push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, branch_EX}),
-.out        ({push_MEM, pop_MEM, dreg_we_MEM, mem_write_MEM, mem_read_MEM, jumpc_MEM, jumpr_MEM, halt_MEM, branch_MEM})
+.in         ({push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX}),
+.out        ({push_MEM, pop_MEM, dreg_we_MEM, mem_write_MEM, mem_read_MEM, jumpc_MEM, jumpr_MEM, halt_MEM, reti_MEM, branch_MEM})
 );
 
 wire [31:0] alu_result_MEM;
@@ -693,8 +708,8 @@ begin
     flush_MEM <= 1'b0;
     flush_WB <= 1'b0;
 
-    // flush on jumps
-    if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM))
+    // flush on jumps or interrupts
+    if (jumpc_MEM || jumpr_MEM || halt_MEM || (branch_MEM && branch_passed_MEM) || reti_MEM || interruptValid)
     begin
         flush_FE <= 1'b1;
         flush_DE <= 1'b1;

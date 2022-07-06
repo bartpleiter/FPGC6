@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Tue Jul  5 12:22:41 2022
+[*] Wed Jul  6 10:46:49 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Tue Jul  5 12:20:33 2022"
-[dumpfile_size] 2837777
+[dumpfile_mtime] "Wed Jul  6 10:46:10 2022"
+[dumpfile_size] 689109
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/B32P.gtkw"
-[timestart] 147600
+[timestart] 0
 [size] 1920 1027
 [pos] -1 -1
-*-16.666576 391000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.666576 932000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] B32P_tb.
 [treeopen] B32P_tb.cpu.
 [sst_width] 254
@@ -114,18 +114,32 @@ B32P_tb.mu.sdramcontroller.addr[23:0]
 -
 -
 -
--
 @28
-B32P_tb.cpu.intController.int1
-B32P_tb.cpu.intController.int2
-B32P_tb.cpu.intController.int3
-B32P_tb.cpu.intController.int4
+B32P_tb.cpu.int1
+B32P_tb.cpu.int2
+B32P_tb.cpu.int3
+B32P_tb.cpu.int4
+B32P_tb.cpu.int5
+B32P_tb.cpu.int6
+B32P_tb.cpu.int7
+B32P_tb.cpu.int8
+B32P_tb.cpu.int9
+B32P_tb.cpu.int10
 @200
+-
 -
 @28
 B32P_tb.cpu.intController.int1_triggered
-@29
 B32P_tb.cpu.intController.int2_triggered
+B32P_tb.cpu.intController.int3_triggered
+B32P_tb.cpu.intController.int4_triggered
+B32P_tb.cpu.intController.int5_triggered
+B32P_tb.cpu.intController.int6_triggered
+B32P_tb.cpu.intController.int7_triggered
+B32P_tb.cpu.intController.int8_triggered
+B32P_tb.cpu.intController.int9_triggered
+@29
+B32P_tb.cpu.intController.int10_triggered
 @200
 -
 @28
@@ -135,6 +149,18 @@ B32P_tb.cpu.intController.intID[7:0]
 @28
 B32P_tb.cpu.intController.intDisabled
 B32P_tb.cpu.interruptValid
+@200
+-
+@28
+B32P_tb.cpu.reti_MEM
+@22
+B32P_tb.cpu.pc_FE[31:0]
+B32P_tb.cpu.pc4_FE[31:0]
+B32P_tb.cpu.pc4_DE[31:0]
+B32P_tb.cpu.pc4_EX[31:0]
+B32P_tb.cpu.pc4_MEM[31:0]
+B32P_tb.cpu.pc_FE_backup[31:0]
+B32P_tb.cpu.pc4_WB[31:0]
 @200
 -
 -Fetch
@@ -224,7 +250,7 @@ B32P_tb.cpu.regbank.we
 B32P_tb.cpu.clk
 B32P_tb.cpu.flush_EX
 B32P_tb.cpu.stall_EX
-@24
+@22
 B32P_tb.cpu.pc4_EX[31:0]
 @28
 B32P_tb.cpu.instr_EX[31:0]
@@ -309,6 +335,7 @@ B32P_tb.cpu.halt_MEM
 B32P_tb.cpu.jumpc_MEM
 B32P_tb.cpu.jumpr_MEM
 B32P_tb.cpu.branch_MEM
+B32P_tb.cpu.reti_MEM
 B32P_tb.cpu.branch_passed_MEM
 B32P_tb.cpu.branchOP_MEM[2:0]
 @22

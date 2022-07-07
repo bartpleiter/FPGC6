@@ -168,7 +168,18 @@ word strncmp(const char * s1, const char * s2, size_t n )
   }
 }
 
+// Returns interrupt ID by using the readintid asm instruction
+word getIntID()
+{
+  word retval = 0;
 
+  asm(
+    "readintid r2  ;reads interrupt id to r2\n"
+    "write -4 r14 r2 ;write to stack to return\n"
+    );
+
+  return retval;
+}
 
 /*
 Recursive helper function for itoa

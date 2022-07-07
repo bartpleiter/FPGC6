@@ -846,7 +846,7 @@ begin
                 A_SPI0:
                 begin
                     if (SPI0_done)
-                        bus_done <= 1'b1;
+                        if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_SPI0CS:
@@ -855,7 +855,7 @@ begin
                     begin
                         SPI0_cs <= bus_data[0];
                     end
-                    bus_done <= 1'b1;
+                    if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_SPI0EN:
@@ -864,13 +864,13 @@ begin
                     begin
                         SPI0_enable <= bus_data[0];
                     end
-                    bus_done <= 1'b1;
+                    if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_SPI1:
                 begin
                     if (SPI1_done)
-                        bus_done <= 1'b1;
+                        if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_SPI1CS:
@@ -879,13 +879,13 @@ begin
                     begin
                         SPI1_cs <= bus_data[0];
                     end
-                    bus_done <= 1'b1;
+                    if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_SPI2:
                 begin
                     if (SPI2_done)
-                        bus_done <= 1'b1;
+                        if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_SPI2CS:
@@ -894,13 +894,13 @@ begin
                     begin
                         SPI2_cs <= bus_data[0];
                     end
-                    bus_done <= 1'b1;
+                    if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_SPI3:
                 begin
                     if (SPI3_done)
-                        bus_done <= 1'b1;
+                        if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_SPI3CS:
@@ -909,13 +909,13 @@ begin
                     begin
                         SPI3_cs <= bus_data[0];
                     end
-                    bus_done <= 1'b1;
+                    if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_SPI4:
                 begin
                     if (SPI4_done)
-                        bus_done <= 1'b1;
+                        if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_SPI4CS:
@@ -924,7 +924,7 @@ begin
                     begin
                         SPI4_cs <= bus_data[0];
                     end
-                    bus_done <= 1'b1;
+                    if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 A_GPIO:
@@ -933,7 +933,7 @@ begin
                     begin
                         GPO <= bus_data[7:4];
                     end
-                        bus_done <= 1'b1;
+                        if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 /*

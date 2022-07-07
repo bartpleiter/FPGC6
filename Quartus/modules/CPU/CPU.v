@@ -346,7 +346,7 @@ Regr #(.N(13)) regr_cuflags_DE_EX(
 */
 
 // Instruction Decoder
-wire [31:0] alu_const16_EX;
+wire [31:0] alu_const16_EX, alu_const16u_EX;
 wire [3:0] aluOP_EX;
 wire [3:0] areg_EX, breg_EX, dreg_EX;
 
@@ -357,6 +357,7 @@ InstructionDecoder instrDec_EX(
 .aluOP(aluOP_EX),
 
 .constAlu(alu_const16_EX),
+.constAluu(alu_const16u_EX),
 .const16(),
 .const27(),
 
@@ -375,7 +376,9 @@ wire [31:0] alu_result_EX;
 
 // select constant or register for input b
 wire[31:0] alu_input_b_EX;
-assign alu_input_b_EX = (alu_use_const_EX) ? alu_const16_EX : data_b_EX;
+assign alu_input_b_EX = (alu_use_const_EX && aluOP_EX[3:1] == 3'b110) ? alu_const16u_EX : // unsigned const for load(hi) instruction
+                        (alu_use_const_EX) ? alu_const16_EX :
+                        data_b_EX;
 
 // if forwarding, select forwarded data instead for input a of ALU
 reg [31:0] fw_data_a_EX;

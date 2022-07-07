@@ -4,12 +4,15 @@ Contains System Call functions
 
 #define SYSCALL_RETVAL_ADDR 0x200000
 
-// Interrupt IDs for extended interrupt handler
-#define INTID_TIMER2 0x0
-#define INTID_TIMER3 0x1
-#define INTID_PS2 0x2
-#define INTID_UART1 0x3
-#define INTID_UART2 0x4
+// Interrupt IDs for interrupt handler
+#define INTID_TIMER1  0x1
+#define INTID_TIMER2  0x2
+#define INTID_UART0   0x3
+#define INTID_GPU     0x4
+#define INTID_TIMER3  0x5
+#define INTID_PS2     0x6
+#define INTID_UART1   0x7
+#define INTID_UART2   0x8
 
 
 // executes system call to BDOS
@@ -38,7 +41,7 @@ word* syscall(word ID)
     "push r15\n"
     "savpc r1\n"
     "push r1\n"
-    "jump 6\n"
+    "jump 4\n"
     "pop r15\n"
     "pop r14\n"
     "pop r13\n"

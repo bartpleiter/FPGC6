@@ -7946,18 +7946,6 @@ int main()
   return 'q';
 }
 
-void int1()
-{
-}
-
-void int2()
-{
-}
-
-void int3()
-{
-}
-
-void int4()
+void interrupt()
 {
 }

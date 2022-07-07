@@ -149,6 +149,7 @@ void GFX_copyPatternTable(word addr)
   "push r4\n"
   "push r5\n"
   "push r6\n"
+  "push r7\n"
 
   "; vram address\n"
   "load32 0xC00000 r2        ; r2 = vram addr 0 0xC00000\n"
@@ -161,7 +162,8 @@ void GFX_copyPatternTable(word addr)
 
   "; copy loop\n"
   "GFX_initPatternTableLoop:\n"
-  "  copy 0 r6 r1      ; copy ascii to vram\n"
+  "    read 0 r6 r7            ; copy ascii to vram\n"
+  "    write 0 r1 r7 ;\n"
   "  add r1 1 r1       ; incr vram address\n"
   "  add r6 1 r6       ; incr ascii address\n"
   "  add r3 1 r3       ; incr counter\n"
@@ -169,6 +171,7 @@ void GFX_copyPatternTable(word addr)
   "  jump GFX_initPatternTableLoop\n"
 
   "; restore registers\n"
+  "pop r7\n"
   "pop r6\n"
   "pop r5\n"
   "pop r4\n"
@@ -193,6 +196,7 @@ void GFX_copyPaletteTable(word addr)
   "push r4\n"
   "push r5\n"
   "push r6\n"
+  "push r7\n"
 
   "; vram address\n"
   "load32 0xC00400 r2        ; r2 = vram addr 1024 0xC00400\n"
@@ -205,7 +209,8 @@ void GFX_copyPaletteTable(word addr)
 
   "; copy loop\n"
   "GFX_initPaletteTableLoop:\n"
-  "  copy 0 r6 r1      ; copy palette to vram\n"
+  "    read 0 r6 r7            ; copy ascii to vram\n"
+  "    write 0 r1 r7 ;\n"
   "  add r1 1 r1       ; incr vram address\n"
   "  add r6 1 r6       ; incr palette address\n"
   "  add r3 1 r3       ; incr counter\n"
@@ -213,6 +218,7 @@ void GFX_copyPaletteTable(word addr)
   "  jump GFX_initPaletteTableLoop\n"
 
   "; restore registers\n"
+  "pop r7\n"
   "pop r6\n"
   "pop r5\n"
   "pop r4\n"

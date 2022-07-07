@@ -131,7 +131,18 @@ void itoa(word n, char *s)
     s[i] = 0;
 } 
 
+// Returns interrupt ID by using the readintid asm instruction
+word getIntID()
+{
+  word retval = 0;
 
+  asm(
+    "readintid r2  ;reads interrupt id to r2\n"
+    "write -4 r14 r2 ;write to stack to return\n"
+    );
+
+  return retval;
+}
 
 /*
 Converts string into int.

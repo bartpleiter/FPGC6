@@ -324,13 +324,15 @@ def processDefines(defines, content):
 #adds interrupts, program length placeholder and jump to main
 #skip program length placeholder in case of BDOS program
 #add jump to syscall if BDOS os
+#NOTE: because of a unknown bug in B32P (probably related to return address of interrupt directly after jumping to SDRAM from ROM,
+# the 4th instruction needs to be jump Main as well
 def addHeaderCode(parsedLines):
     if BDOSprogram:
-        header = [(0,"jump Main"),(0,"jump Int")]
+        header = [(0,"jump Main"),(0,"jump Int"), (0,"jump Main"), (0,"jump Main")]
     elif BDOSos:
-        header = [(0,"jump Main"),(0,"jump Int"), (0,"LengthOfProgram"), (0,"jump Syscall")]
+        header = [(0,"jump Main"),(0,"jump Int"), (0,"LengthOfProgram"), (0,"jump Main"), (0,"jump Syscall")]
     else:
-        header = [(0,"jump Main"),(0,"jump Int"), (0,"LengthOfProgram")]
+        header = [(0,"jump Main"),(0,"jump Int"), (0,"LengthOfProgram"), (0,"jump Main")]
     
     return header + parsedLines
 

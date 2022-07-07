@@ -435,25 +435,36 @@ int main()
   return 'q';
 }
 
-// timer1 interrupt handler
-void int1()
+void interrupt()
 {
-   timer1Value = 1; // notify ending of timer1
-}
-
-void int2()
-{
-  int i = getIntID();
-  if (i == INTID_TIMER3)
+  // handle all interrupts
+  word i = getIntID();
+  switch(i)
   {
-    timer3Value = 1; // notify ending of timer3
+    case INTID_TIMER1:
+      timer1Value = 1; // notify ending of timer1
+      break;
+
+    case INTID_TIMER2:
+      break;
+
+    case INTID_UART0:
+      break;
+
+    case INTID_GPU:
+      break;
+
+    case INTID_TIMER3:
+      timer3Value = 1; // notify ending of timer3
+      break;
+
+    case INTID_PS2:
+      break;
+
+    case INTID_UART1:
+      break;
+
+    case INTID_UART2:
+      break;
   }
-}
-
-void int3()
-{
-}
-
-void int4()
-{
 }

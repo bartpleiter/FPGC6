@@ -10,6 +10,7 @@ module InstructionDecoder(
     output  [2:0]   branchOP,
 
     output  [31:0]  constAlu,
+    output  [31:0]  constAluu,
     output  [31:0]  const16,
     output  [15:0]  const16u,
     output  [26:0]  const27,
@@ -24,6 +25,7 @@ assign aluOP    = instr[27:24];
 assign branchOP = instr[3:1];
 
 assign constAlu = {{16{instr[23]}}, instr[23:8]}; // sign extend to 32 bit
+assign constAluu = {instr[23:8]};
 assign const16  = {{16{instr[27]}}, instr[27:12]}; // sign extend to 32 bit
 assign const16u = instr[27:12];
 assign const27  = instr[27:1];

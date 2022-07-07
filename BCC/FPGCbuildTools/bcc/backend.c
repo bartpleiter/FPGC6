@@ -347,7 +347,7 @@ void GenPrintInstr(word instr, word val)
   case B322InstrSub        : p = "sub"; break;
   case B322InstrShiftl     : p = "shiftl"; break;
   case B322InstrShiftr     : p = "shiftr"; break;
-  case B322InstrMult       : p = "mult"; break;
+  case B322InstrMult       : p = "mults"; break;
   case B322InstrNot        : p = "not"; break;
   case B322InstrNop        : p = "nop"; break;
   case B322InstrAddr2reg   : p = "addr2reg"; break;
@@ -2639,45 +2639,13 @@ void GenFin(void)
     printf2(
       ".code\n"
       
-      "Int1:\n"
+      "Int:\n"
       
       "    load32 0x7BFFFF r13\n"
       "    load32 0 r14\n"
       "    addr2reg Return_Interrupt r1\n"
       "    or r0 r1 r15\n"
-      "    jump int1\n"
-      
-      "    halt\n"
-      
-      "Int2:\n"
-      
-      "    load32 0x7BFFFF r13\n"
-      "    load32 0 r14\n"
-      "    addr2reg Return_Interrupt r1\n"
-      "    or r0 r1 r15\n"
-      "    jump int2\n"
-      
-      "    halt\n"
-      
-      
-      "Int3:\n"
-      
-      "    load32 0x7BFFFF r13\n"
-      "    load32 0 r14\n"
-      "    addr2reg Return_Interrupt r1\n"
-      "    or r0 r1 r15\n"
-      "    jump int3\n"
-      
-      "    halt\n"
-      
-      
-      "Int4:\n"
-      
-      "    load32 0x7BFFFF r13\n"
-      "    load32 0 r14\n"
-      "    addr2reg Return_Interrupt r1\n"
-      "    or r0 r1 r15\n"
-      "    jump int4\n"
+      "    jump interrupt\n"
       
       "    halt\n"
       
@@ -2695,7 +2663,7 @@ void GenFin(void)
     printf2(
 
       ".code\n"
-      "Int1:\n"
+      "Int:\n"
       "    push r1\n"
       "    push r2\n"
       "    push r3\n"
@@ -2719,85 +2687,6 @@ void GenFin(void)
       "    jump int1\n"
       
       "    halt\n"
-      
-      
-      "Int2:\n"
-      "    push r1\n"
-      "    push r2\n"
-      "    push r3\n"
-      "    push r4\n"
-      "    push r5\n"
-      "    push r6\n"
-      "    push r7\n"
-      "    push r8\n"
-      "    push r9\n"
-      "    push r10\n"
-      "    push r11\n"
-      "    push r12\n"
-      "    push r13\n"
-      "    push r14\n"
-      "    push r15\n"
-      
-      "    load32 0x7FFFFF r13\n"
-      "    load32 0 r14\n"
-      "    addr2reg Return_Interrupt r1\n"
-      "    or r0 r1 r15\n"
-      "    jump int2\n"
-      
-      "    halt\n"
-      
-      
-      "Int3:\n"
-      "    push r1\n"
-      "    push r2\n"
-      "    push r3\n"
-      "    push r4\n"
-      "    push r5\n"
-      "    push r6\n"
-      "    push r7\n"
-      "    push r8\n"
-      "    push r9\n"
-      "    push r10\n"
-      "    push r11\n"
-      "    push r12\n"
-      "    push r13\n"
-      "    push r14\n"
-      "    push r15\n"
-      
-      "    load32 0x7FFFFF r13\n"
-      "    load32 0 r14\n"
-      "    addr2reg Return_Interrupt r1\n"
-      "    or r0 r1 r15\n"
-      "    jump int3\n"
-      
-      "    halt\n"
-      
-      
-      "Int4:\n"
-      "    push r1\n"
-      "    push r2\n"
-      "    push r3\n"
-      "    push r4\n"
-      "    push r5\n"
-      "    push r6\n"
-      "    push r7\n"
-      "    push r8\n"
-      "    push r9\n"
-      "    push r10\n"
-      "    push r11\n"
-      "    push r12\n"
-      "    push r13\n"
-      "    push r14\n"
-      "    push r15\n"
-      
-      "    load32 0x7FFFFF r13\n"
-      "    load32 0 r14\n"
-      "    addr2reg Return_Interrupt r1\n"
-      "    or r0 r1 r15\n"
-      "    jump int4\n"
-      
-      "    halt\n"
-      
       
       "Return_Interrupt:\n"
       "    pop r15\n"

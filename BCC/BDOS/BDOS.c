@@ -30,12 +30,15 @@
 
 #define FS_PATH_MAX_LENGHT  256         // max length of a path
 
-// Interrupt IDs for extended interrupt handler
-#define INTID_TIMER2  0x0
-#define INTID_TIMER3  0x1
-#define INTID_PS2     0x2
-#define INTID_UART1   0x3
-#define INTID_UART2   0x4
+// Interrupt IDs for interrupt handler
+#define INTID_TIMER1  0x1
+#define INTID_TIMER2  0x2
+#define INTID_UART0   0x3
+#define INTID_GPU     0x4
+#define INTID_TIMER3  0x5
+#define INTID_PS2     0x6
+#define INTID_UART1   0x7
+#define INTID_UART2   0x8
 
 // System call IDs
 #define SYSCALL_FIFO_AVAILABLE  1
@@ -165,6 +168,7 @@ void BDOS_Restore()
 int main() 
 {
     // all kinds of initialisations
+    uprintln("BDOS_INIT"); // extra message over UART for debugging
 
     BDOS_userprogramRunning = 0; // indicate that no user program is running
 
@@ -241,15 +245,54 @@ void syscall()
     }
 }
 
-// Timer1 interrupt handler
-void int1()
+// Interrupt handler
+void interrupt()
 {
-    timer1Value = 1; // notify ending of timer1
+    // handle all interrupts
+    int i = getIntID();
+    switch(i)
+    {
+        case INTID_TIMER1:
+            timer1Value = 1; // notify ending of timer1
+            break;
+
+        case INTID_TIMER2:
+            USBkeyboard_HandleInterrupt(); // handle USB keyboard interrupt
+            break;
+
+        case INTID_UART0:
+            break;
+
+        case INTID_GPU:
+            if (NETHID_isInitialized == 1)
+            {
+                // check using CS if we are not interrupting any critical access to the W5500
+                word* spi3ChipSelect = (word*) 0xC02732;
+                if (*spi3ChipSelect == 1)
+                {
+                    NETHID_loop(NETHID_SOCKET); // look for an input sent to netHID
+                }
+            }
+            break;
+
+        case INTID_TIMER3:
+            break;
+
+        case INTID_PS2:
+            PS2_HandleInterrupt(); // handle PS2 interrupt
+            break;
+
+        case INTID_UART1:
+            break;
+
+        case INTID_UART2:
+            break;
+    }
 
     // check if a user program is running
     if (BDOS_userprogramRunning)
     {
-        // call int1() of user program
+        // call interrupt() of user program
         asm(
             "; backup registers\n"
             "push r1\n"
@@ -271,192 +314,6 @@ void int1()
             "savpc r1\n"
             "push r1\n"
             "jump 0x400001\n"
-
-            "; restore registers\n"
-            "pop r15\n"
-            "pop r14\n"
-            "pop r13\n"
-            "pop r12\n"
-            "pop r11\n"
-            "pop r10\n"
-            "pop r9\n"
-            "pop r8\n"
-            "pop r7\n"
-            "pop r6\n"
-            "pop r5\n"
-            "pop r4\n"
-            "pop r3\n"
-            "pop r2\n"
-            "pop r1\n"
-            );
-        return;
-    }
-    else // code to only run when not running a user program
-    {
-        
-    }
-}
-
-// Extended interrupt handler
-// use getIntID to get the id of the interrupt
-void int2()
-{
-    int i = getIntID();
-    switch(i)
-    {
-        case INTID_PS2:
-            PS2_HandleInterrupt(); // handle PS2 interrupt
-            break;
-
-        case INTID_TIMER2:
-            USBkeyboard_HandleInterrupt(); // handle USB keyboard interrupt
-            break;
-    }
-
-    // check if a user program is running
-    if (BDOS_userprogramRunning)
-    {
-        // call int2() of user program
-        asm(
-            "; backup registers\n"
-            "push r1\n"
-            "push r2\n"
-            "push r3\n"
-            "push r4\n"
-            "push r5\n"
-            "push r6\n"
-            "push r7\n"
-            "push r8\n"
-            "push r9\n"
-            "push r10\n"
-            "push r11\n"
-            "push r12\n"
-            "push r13\n"
-            "push r14\n"
-            "push r15\n"
-
-            "savpc r1\n"
-            "push r1\n"
-            "jump 0x400002\n"
-
-            "; restore registers\n"
-            "pop r15\n"
-            "pop r14\n"
-            "pop r13\n"
-            "pop r12\n"
-            "pop r11\n"
-            "pop r10\n"
-            "pop r9\n"
-            "pop r8\n"
-            "pop r7\n"
-            "pop r6\n"
-            "pop r5\n"
-            "pop r4\n"
-            "pop r3\n"
-            "pop r2\n"
-            "pop r1\n"
-            );
-        return;
-    }
-    else // code to only run when not running a user program
-    {
-        
-    }
-}
-
-// UART0 (TTYUSB) interrupt handler
-void int3()
-{
-    // check if a user program is running
-    if (BDOS_userprogramRunning)
-    {
-        // call int3() of user program
-        asm(
-            "; backup registers\n"
-            "push r1\n"
-            "push r2\n"
-            "push r3\n"
-            "push r4\n"
-            "push r5\n"
-            "push r6\n"
-            "push r7\n"
-            "push r8\n"
-            "push r9\n"
-            "push r10\n"
-            "push r11\n"
-            "push r12\n"
-            "push r13\n"
-            "push r14\n"
-            "push r15\n"
-
-            "savpc r1\n"
-            "push r1\n"
-            "jump 0x400003\n"
-
-            "; restore registers\n"
-            "pop r15\n"
-            "pop r14\n"
-            "pop r13\n"
-            "pop r12\n"
-            "pop r11\n"
-            "pop r10\n"
-            "pop r9\n"
-            "pop r8\n"
-            "pop r7\n"
-            "pop r6\n"
-            "pop r5\n"
-            "pop r4\n"
-            "pop r3\n"
-            "pop r2\n"
-            "pop r1\n"
-            );
-        return;
-    }
-    else // code to only run when not running a user program
-    {
-        
-    }
-}
-
-// GFX framedrawn interrupt handler
-// is called every frame, which is ~60 times per second
-void int4()
-{
-    if (NETHID_isInitialized == 1)
-    {
-        // check using CS if we are not interrupting any critical access to the W5500
-        word* spi3ChipSelect = (word*) 0xC02732;
-        if (*spi3ChipSelect == 1)
-        {
-            NETHID_loop(NETHID_SOCKET); // look for an input sent to netHID
-        }
-    }
-
-    // check if a user program is running
-    if (BDOS_userprogramRunning)
-    {
-        // call int4() of user program
-        asm(
-            "; backup registers\n"
-            "push r1\n"
-            "push r2\n"
-            "push r3\n"
-            "push r4\n"
-            "push r5\n"
-            "push r6\n"
-            "push r7\n"
-            "push r8\n"
-            "push r9\n"
-            "push r10\n"
-            "push r11\n"
-            "push r12\n"
-            "push r13\n"
-            "push r14\n"
-            "push r15\n"
-
-            "savpc r1\n"
-            "push r1\n"
-            "jump 0x400004\n"
 
             "; restore registers\n"
             "pop r15\n"

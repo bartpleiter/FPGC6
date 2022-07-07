@@ -133,15 +133,14 @@ NTSC_pll ntscPll(
 wire clkMuxOut;
 wire selectOutput;    // 1 -> HDMI, 0 -> Composite
 
-/*
 clkMux clkmux(
 .inclk0x(clk14),
 .inclk1x(clkPixel),
 .clkselect(selectOutput),
 .outclk(clkMuxOut)
-);*/
+);
 
-assign clkMuxOut = clk14;
+//assign clkMuxOut = clk14;
 
 //--------------------Reset&Stabilizers-----------------------
 // Reset signals
@@ -175,12 +174,12 @@ MultiStabilizer multistabilizer(
 .u6     (frameDrawn),
 .s6     (frameDrawn_stable),
 .u7     (DIPS[0]),
-.s7     (boot_mode_stable)
-//.u8     (DIPS[1]),
-//.s8     (selectOutput)
+.s7     (boot_mode_stable),
+.u8     (DIPS[1]),
+.s8     (selectOutput)
 );
 
-assign selectOutput = 1'b0;
+//assign selectOutput = 1'b0;
 
 // Debug: indicator for opened Serial port
 assign led = UART0_dtr_stable;

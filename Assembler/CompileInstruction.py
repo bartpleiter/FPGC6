@@ -555,10 +555,6 @@ def compileSHIFTL(line):
 def compileSHIFTR(line):
     return compileARITH(line, "0110")
 
-# compiles NOT instruction
-def compileNOT(line):
-    return compileARITH(line, "0111")
-
 # compiles MULTS instruction
 def compileMULTS(line):
     return compileARITH(line, "1000")
@@ -574,6 +570,34 @@ def compileSLT(line):
 # compiles SLTU instruction
 def compileSLTU(line):
     return compileARITH(line, "1011")
+
+# compiles NOT instruction
+#should have 2 arguments
+#arg1 should be a valid register
+#arg2 should be a valid register
+def compileNOT(line):
+    if len(line) != 3:
+        raise Exception("Incorrect number of arguments. Expected 2, but got " + str(len(line)-1))
+
+
+    instruction = ""
+
+    #convert arg1 to number
+    arg1Int = getReg(line[1])
+
+    #convert arg2 to binary
+    areg = format(arg1Int, '04b')
+       
+
+    #convert arg3 to number
+    arg2Int = getReg(line[2])
+
+    #convert arg3 to binary
+    dreg = format(arg2Int, '04b')
+
+    instruction = "00000111000000000000" + areg + "0000" + dreg + " //Compute NOT " +  line[1] + " and write result to " + line[2]
+
+    return instruction
 
 
 #compiles load instruction

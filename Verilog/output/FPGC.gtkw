@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Wed Jul  6 16:21:09 2022
+[*] Thu Jul  7 10:52:53 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Wed Jul  6 15:56:41 2022"
-[dumpfile_size] 30933907
+[dumpfile_mtime] "Thu Jul  7 10:45:42 2022"
+[dumpfile_size] 31713718
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw"
-[timestart] 273501000
+[timestart] 0
 [size] 1920 1027
 [pos] -1 -1
-*-17.666576 274305000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.666576 965000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] FPGC_tb.
 [treeopen] FPGC_tb.fpgc.
 [treeopen] FPGC_tb.fpgc.mu.
@@ -65,6 +65,14 @@ FPGC_tb.fpgc.cpu.pc_FE[31:0]
 FPGC_tb.fpgc.cpu.instr_hit_FE
 @200
 -
+@29
+FPGC_tb.fpgc.cpu.intDisabled
+@22
+FPGC_tb.fpgc.cpu.interruptValid
+FPGC_tb.fpgc.cpu.pc_FE[31:0]
+FPGC_tb.fpgc.cpu.pc_FE_backup[31:0]
+FPGC_tb.fpgc.cpu.PC_backup_current[31:0]
+@200
 -
 @28
 FPGC_tb.fpgc.cpu.instr_MEM[31:0]
@@ -81,7 +89,7 @@ FPGC_tb.fpgc.mu.bus_start
 @22
 FPGC_tb.fpgc.mu.bus_q[31:0]
 FPGC_tb.fpgc.mu.bus_q_wire[31:0]
-@29
+@28
 FPGC_tb.fpgc.mu.bus_done_next
 @22
 FPGC_tb.fpgc.mu.bus_q_wire_reg[31:0]

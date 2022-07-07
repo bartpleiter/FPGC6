@@ -2,7 +2,24 @@
 Things I want to do or I already have done but did not update this page:
 
 ## Next steps:
-- Clean up project a bit, update quartus project name
+- Update documentation
+    - Parts that are worth documentation:
+        - CPU
+        - GPU
+        - MU
+        - NTSC encoder
+        - HDMI encoder
+        - SDRAM controller
+        - SPI flash reader
+        - Assembler
+        - BCC
+        - BDOS (MemoryMap, shell, usb&PS2 keyboard, HID&NetHID, netloader, GFX, syscalls)
+        - userBDOS
+        - Compiling code on BCC (ASM, BDOS, EDIT)
+        - BCC programs (EDIT, WEBSERV, etc.)
+        - All programmers (UART, SPI flasher, BDOS send/upload)
+        - BDOS sync files
+        - Running BCC tests
 - Update BCC assembler for new ISA
 - Improve the C compiler with new instructions
 - Add instruction memory and data memory cache

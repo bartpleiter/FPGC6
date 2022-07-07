@@ -1,3 +1,5 @@
+; Simple program to test some basic pipeline hazards detections and other functionality
+
 Main:
     load 5 r1           ; r1:=5
     load 2 r2           ; r2:=2
@@ -23,14 +25,5 @@ Main:
     halt                ; halt
     load 37 r1          ; unreached
 
-Int1:
-    reti
-
-Int2:
-    reti
-
-Int3:
-    reti
-
-Int4:
+Int:
     reti

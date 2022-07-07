@@ -1,5 +1,5 @@
 /*
-* NTSC encoder test
+* NTSC encoder
 */
 module NTSC(
     input               clk, //14.31818MHz

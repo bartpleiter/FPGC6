@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import serial
 from time import sleep
 import sys
@@ -22,7 +21,6 @@ def writeThread(port):
 
     except:
         exit()
-        
 
 testReturnMode = False  # mode where we do not use a serial monitor,
                         # but instead wait for one byte and use it as return code of this program
@@ -74,12 +72,12 @@ while not doneSending:
         doneSending = True
 
 print("Done programming", flush=True)
-print(port.read(1)) # should return 'd', though I'm not checking on it
+port.read(1) # should return 'd', though I'm not checking on it
 
 if testReturnMode:
     rcv = port.read(1)
     retval = int.from_bytes(rcv, "little")
-    print("FPGC4 returned: ", retval)
+    print("FPGC returned: ", retval)
     sys.exit(retval)
 
 else:

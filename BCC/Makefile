@@ -1,4 +1,4 @@
-# the compiler to compile SmallerC with
+# the compiler to compile BCC with
 CC = gcc
 
 # compiler flags:

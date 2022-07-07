@@ -3,8 +3,6 @@
 {
 //	"shell_cmd": "iverilog -o /home/bart/Documents/FPGA/FPGC6/Verilog/output/output /home/bart/Documents/FPGA/FPGC6/Verilog/testbench/B32P_tb.v && vvp /home/bart/Documents/FPGA/FPGC6/Verilog/output/output",
 	"shell_cmd": "iverilog -o /home/bart/Documents/FPGA/FPGC6/Verilog/output/output /home/bart/Documents/FPGA/FPGC6/Verilog/testbench/FPGC_tb.v && vvp /home/bart/Documents/FPGA/FPGC6/Verilog/output/output",
-//	"shell_cmd": "iverilog -o /home/bart/Documents/FPGA/FPGC5/Verilog/output/output /home/bart/Documents/FPGA/FPGC5/Verilog/testbench/FPGC_tb.v && vvp /home/bart/Documents/FPGA/FPGC5/Verilog/output/output",
-//	"shell_cmd": "iverilog -o /home/bart/Documents/FPGA/FPGC5/Verilog/output/output /home/bart/Documents/FPGA/FPGC5/Verilog/testbench/FSX3_tb.v && vvp /home/bart/Documents/FPGA/FPGC5/Verilog/output/output",
 	"file_patterns": ["*.v"]
 }
 //also, you can use $file for current file

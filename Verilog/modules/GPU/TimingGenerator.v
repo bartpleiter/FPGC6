@@ -1,6 +1,5 @@
 /*
 * Generates video timings and counters
-* TODO: add NTSC compsite video timings when it is working
 */
 module TimingGenerator
 #(

@@ -7,6 +7,8 @@ Things I want to do or I already have done but did not update this page:
         - CPU
         - GPU
         - MU
+        - PCB
+        - 3D printed enclosure
         - NTSC encoder
         - HDMI encoder
         - SDRAM controller

@@ -23,6 +23,9 @@ use_directory_urls: False
 nav:
   - Introduction: 'index.md'
   - 'arch.md'
+  - 'asm.md'
+  - 'bcc.md'
+  - 'bdos.md'
   - 'cpu.md'
   - 'doc.md'
   - 'gpu.md'

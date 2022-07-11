@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021, b4rt-dev
+Copyright (c) 2021-2022, b4rt-dev
 Copyright (c) 2012-2015, Alexey Frunze
 All rights reserved.
 
@@ -26,21 +26,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /*****************************************************************************/
 /*                                                                           */
-/*                           BCC (B322 C Compiler)                           */
+/*                           BCC (B32P C Compiler)                           */
 /*                                                                           */
-/*                           C compiler for B322                             */
+/*                           C compiler for B32P                             */
 /*                                                                           */
 /*                            Based on SmallerC:                             */
 /*                 A simple and small single-pass C compiler                 */
 /*                                                                           */
-/*                           B322 code generator                             */
+/*                           B32P code generator                             */
 /*                  Modified from the MIPS code generator                    */
 /*                                                                           */
 /*****************************************************************************/
 
-// NOTE: Very clearly inefficient, because of the direct-ish translation from MIPS to B322
+// NOTE: Pretty inefficient generated code, because of the direct-ish translation from MIPS to B32P
 
 /* MAIN TODOs:
+- Improve using new B32P instructions
 - Remove all MIPS code leftovers
 - Do optimizations (like size stuff)
 */
@@ -137,7 +138,7 @@ void GenStartCommentLine(void)
   printf2(" ; ");
 }
 
-// No alignment needed on B322
+// No alignment needed on B32P
 STATIC
 void GenWordAlignment(int bss)
 {
@@ -184,7 +185,7 @@ void GenZeroData(unsigned Size, int bss)
   (void)bss;
   printf2("; .space %u\n", truncUint(Size));
 
-  // B322 implementation of .space:
+  // B32P implementation of .space:
   if (Size > 0)
   {
     printf2(".dw");
@@ -203,7 +204,7 @@ void GenIntData(int Size, int Val)
 {
   Val = truncInt(Val);
 
-  // Print multiple times, since the compiler does not know yet B322 is word addressable
+  // Print multiple times, since the compiler does not know yet B32P is word addressable
   if (Size == 1)
     printf2(" .dw %d\n", Val);
   else if (Size == 2)
@@ -225,7 +226,7 @@ void GenAddrData(int Size, char* Label, int ofs)
   ofs = truncInt(ofs);
 
   int i;
-  for (i = 0; i < 4; i++) // label is 4 "bytes", hotfix since the compiler does not know yet B322 is word addressable
+  for (i = 0; i < 4; i++) // label is 4 "bytes", hotfix since the compiler does not know yet B32P is word addressable
   {
     printf2(".dl ");
 
@@ -251,39 +252,45 @@ void GenRecordFxnSize(char* startLabelName, int endLabelNo)
   (void)endLabelNo;
 }
 
-#define B322InstrHalt       0x30
-#define B322InstrRead       0x31
-#define B322InstrWrite      0x32
-#define B322InstrCopy       0x33
-#define B322InstrPush       0x34
-#define B322InstrPop        0x35
-#define B322InstrJump       0x36
-#define B322InstrJumpo      0x37
-#define B322InstrJumpr      0x38
-#define B322InstrJumpro     0x39
-#define B322InstrLoad       0x3A
-#define B322InstrLoadhi     0x3B
-#define B322InstrBeq        0x3C
-#define B322InstrBne        0x3D
-#define B322InstrBgt        0x3E
-#define B322InstrBge        0x3F
-#define B322InstrSavpc      0x40
-#define B322InstrReti       0x41
-#define B322InstrOr         0x42
-#define B322InstrAnd        0x43
-#define B322InstrXor        0x44
-#define B322InstrAdd        0x45
-#define B322InstrSub        0x46
-#define B322InstrShiftl     0x47
-#define B322InstrShiftr     0x48
-#define B322InstrMult       0x49
-#define B322InstrNot        0x4A
-#define B322InstrNop        0x4B
-#define B322InstrAddr2reg   0x4C
-#define B322InstrReadintid  0x4D
-#define B322InstrBgtU        0x4E
-#define B322InstrBgeU        0x4F
-
+#define B32PInstrHalt      0x30
+#define B32PInstrRead      0x31
+#define B32PInstrWrite     0x32
+#define B32PInstrIntID     0x33
+#define B32PInstrPush      0x34
+#define B32PInstrPop       0x35
+#define B32PInstrJump      0x36
+#define B32PInstrJumpo     0x37
+#define B32PInstrJumpr     0x38
+#define B32PInstrJumpro    0x39
+#define B32PInstrBEQ       0x3A
+#define B32PInstrBGT       0x3B
+#define B32PInstrBGTS      0x3C
+#define B32PInstrBGE       0x3D
+#define B32PInstrBGES      0x3E
+#define B32PInstrBNE       0x3F
+#define B32PInstrBLT       0x40
+#define B32PInstrBLTS      0x41
+#define B32PInstrBLE       0x42
+#define B32PInstrBLES      0x43
+#define B32PInstrSavPC     0x44
+#define B32PInstrReti      0x45
+#define B32PInstrOR        0x46
+#define B32PInstrAND       0x47
+#define B32PInstrXOR       0x48
+#define B32PInstrADD       0x49
+#define B32PInstrSUB       0x4A
+#define B32PInstrSHIFTL    0x4B
+#define B32PInstrSHIFTR    0x4C
+#define B32PInstrNOT       0x4D
+#define B32PInstrMULTS     0x4E
+#define B32PInstrMULTU     0x4F
+#define B32PInstrSLT       0x50
+#define B32PInstrSLTU      0x51
+#define B32PInstrLoad      0x52
+#define B32PInstrLoadHi    0x53
+#define B32PInstrAddr2reg  0x54
+#define B32PInstrLoad32    0x55
+#define B32PInstrNOP       0x56
 
 STATIC
 void GenPrintInstr(int instr, int val)
@@ -294,110 +301,115 @@ void GenPrintInstr(int instr, int val)
 
   switch (instr)
   {
-  case B322InstrHalt       : p = "halt"; break;
-  case B322InstrRead       : p = "read"; break;
-  case B322InstrWrite      : p = "write"; break;
-  case B322InstrCopy       : p = "copy"; break;
-  case B322InstrPush       : p = "push"; break;
-  case B322InstrPop        : p = "pop"; break;
-  case B322InstrJump       : p = "jump"; break;
-  case B322InstrJumpo      : p = "jumpo"; break;
-  case B322InstrJumpr      : p = "jumpr"; break;
-  case B322InstrJumpro     : p = "jumpro"; break;
-  case B322InstrLoad       : p = "load32"; break;
-  case B322InstrLoadhi     : p = "loadhi"; break;
-  case B322InstrBeq        : p = "beq"; break;
-  case B322InstrBne        : p = "bne"; break;
-  case B322InstrBgt        : p = "bgts"; break; // HACK: Default signed comparison, because 32 bit should be large enough for most things
-  case B322InstrBge        : p = "bges"; break; // HACK: Default signed comparison, because 32 bit should be large enough for most things
-  case B322InstrBgtU       : p = "bgt"; break; // Special case for unsigned
-  case B322InstrBgeU       : p = "bge"; break; // Special case for unsigned
-  case B322InstrSavpc      : p = "savpc"; break;
-  case B322InstrReti       : p = "reti"; break;
-  case B322InstrOr         : p = "or"; break;
-  case B322InstrAnd        : p = "and"; break;
-  case B322InstrXor        : p = "xor"; break;
-  case B322InstrAdd        : p = "add"; break;
-  case B322InstrSub        : p = "sub"; break;
-  case B322InstrShiftl     : p = "shiftl"; break;
-  case B322InstrShiftr     : p = "shiftr"; break;
-  case B322InstrMult       : p = "mults"; break;
-  case B322InstrNot        : p = "not"; break;
-  case B322InstrNop        : p = "nop"; break;
-  case B322InstrAddr2reg   : p = "addr2reg"; break;
-  case B322InstrReadintid  : p = "readintid"; break;
+  case B32PInstrHalt      : p = "halt"; break;
+  case B32PInstrRead      : p = "read"; break;
+  case B32PInstrWrite     : p = "write"; break;
+  case B32PInstrIntID     : p = "readintid"; break;
+  case B32PInstrPush      : p = "push"; break;
+  case B32PInstrPop       : p = "pop"; break;
+  case B32PInstrJump      : p = "jump"; break;
+  case B32PInstrJumpo     : p = "jumpo"; break;
+  case B32PInstrJumpr     : p = "jumpr"; break;
+  case B32PInstrJumpro    : p = "jumpro"; break;
+  case B32PInstrBEQ       : p = "beq"; break;
+  case B32PInstrBGT       : p = "bgts"; break; // HACK: Default signed comparison, because of MIPS
+  case B32PInstrBGTS      : p = "bgts"; break;
+  case B32PInstrBGE       : p = "bges"; break; // HACK: Default signed comparison, because of MIPS
+  case B32PInstrBGES      : p = "bges"; break;
+  case B32PInstrBNE       : p = "bne"; break;
+  case B32PInstrBLT       : p = "blts"; break; // HACK: Default signed comparison, because of MIPS
+  case B32PInstrBLTS      : p = "blts"; break;
+  case B32PInstrBLE       : p = "bles"; break; // HACK: Default signed comparison, because of MIPS
+  case B32PInstrBLES      : p = "bles"; break;
+  case B32PInstrSavPC     : p = "savpc"; break;
+  case B32PInstrReti      : p = "reti"; break;
+  case B32PInstrOR        : p = "or"; break;
+  case B32PInstrAND       : p = "and"; break;
+  case B32PInstrXOR       : p = "xor"; break;
+  case B32PInstrADD       : p = "add"; break;
+  case B32PInstrSUB       : p = "sub"; break;
+  case B32PInstrSHIFTL    : p = "shiftl"; break;
+  case B32PInstrSHIFTR    : p = "shiftr"; break;
+  case B32PInstrNOT       : p = "not"; break;
+  case B32PInstrMULTS     : p = "mults"; break;
+  case B32PInstrMULTU     : p = "multu"; break;
+  case B32PInstrSLT       : p = "slt"; break;
+  case B32PInstrSLTU      : p = "sltu"; break;
+  case B32PInstrLoad      : p = "load32"; break;
+  case B32PInstrLoadHi    : p = "loadhi"; break;
+  case B32PInstrAddr2reg  : p = "addr2reg"; break;
+  case B32PInstrLoad32    : p = "load32"; break;
   }
 
   printf2(" %s ", p);
 }
 
-#define B322OpRegZero                    0x00 //0  0
-#define B322OpRegAt                      0x01 //1  at
-#define B322OpRegV0                      0x02 //2  ret0
-#define B322OpRegV1                      0x03 //3  ret1
-#define B322OpRegA0                      0x04 //4  arg0
-#define B322OpRegA1                      0x05 //5  arg1
-#define B322OpRegA2                      0x06 //6  arg2
-#define B322OpRegA3                      0x07 //7  arg3
-#define B322OpRegT0                      0x08 //8  gp0
-#define B322OpRegT1                      0x09 //9  gp1
-#define B322OpRegT2                      0x0A //10 gp2
-#define B322OpRegT8                      0x0B //11 tempa
-#define B322OpRegT9                      0x0C //12 tempb
-#define B322OpRegSp                      0x0D //13 sp
-#define B322OpRegFp                      0x0E //14 fp
-#define B322OpRegRa                      0x0F //15 retaddr
+#define B32POpRegZero                    0x00 //0  0
+#define B32POpRegAt                      0x01 //1  at
+#define B32POpRegV0                      0x02 //2  ret0
+#define B32POpRegV1                      0x03 //3  ret1
+#define B32POpRegA0                      0x04 //4  arg0
+#define B32POpRegA1                      0x05 //5  arg1
+#define B32POpRegA2                      0x06 //6  arg2
+#define B32POpRegA3                      0x07 //7  arg3
+#define B32POpRegT0                      0x08 //8  gp0
+#define B32POpRegT1                      0x09 //9  gp1
+#define B32POpRegT2                      0x0A //10 gp2
+#define B32POpRegT8                      0x0B //11 tempa
+#define B32POpRegT9                      0x0C //12 tempb
+#define B32POpRegSp                      0x0D //13 sp
+#define B32POpRegFp                      0x0E //14 fp
+#define B32POpRegRa                      0x0F //15 retaddr
 
-#define B322OpIndRegZero                 0x20
-#define B322OpIndRegAt                   0x21
-#define B322OpIndRegV0                   0x22
-#define B322OpIndRegV1                   0x23
-#define B322OpIndRegA0                   0x24
-#define B322OpIndRegA1                   0x25
-#define B322OpIndRegA2                   0x26
-#define B322OpIndRegA3                   0x27
-#define B322OpIndRegT0                   0x28
-#define B322OpIndRegT1                   0x29
-#define B322OpIndRegSp                   0x2D
-#define B322OpIndRegFp                   0x2E
-#define B322OpIndRegRa                   0x2F
+#define B32POpIndRegZero                 0x20
+#define B32POpIndRegAt                   0x21
+#define B32POpIndRegV0                   0x22
+#define B32POpIndRegV1                   0x23
+#define B32POpIndRegA0                   0x24
+#define B32POpIndRegA1                   0x25
+#define B32POpIndRegA2                   0x26
+#define B32POpIndRegA3                   0x27
+#define B32POpIndRegT0                   0x28
+#define B32POpIndRegT1                   0x29
+#define B32POpIndRegSp                   0x2D
+#define B32POpIndRegFp                   0x2E
+#define B32POpIndRegRa                   0x2F
 
-#define B322OpConst                      0x80
-#define B322OpLabel                      0x81
-#define B322OpNumLabel                   0x82
-#define B322OpLabelLo                    0x83
-#define B322OpIndLocal                   B322OpIndRegFp
+#define B32POpConst                      0x80
+#define B32POpLabel                      0x81
+#define B32POpNumLabel                   0x82
+#define B32POpLabelLo                    0x83
+#define B32POpIndLocal                   B32POpIndRegFp
 
 #define MAX_TEMP_REGS 3 // this many temp registers used beginning with T0 to hold subexpression results
-#define TEMP_REG_A B322OpRegT8 // two temporary registers used for momentary operations, similarly to the AT register
-#define TEMP_REG_B B322OpRegT9
+#define TEMP_REG_A B32POpRegT8 // two temporary registers used for momentary operations, similarly to the AT register
+#define TEMP_REG_B B32POpRegT9
 
 STATIC
 void GenPrintOperand(int op, int val)
 {
-  if (op >= B322OpRegZero && op <= B322OpRegRa)
+  if (op >= B32POpRegZero && op <= B32POpRegRa)
   {
     printf2("r%d", op);
   }
-  else if (op >= B322OpIndRegZero && op <= B322OpIndRegRa)
+  else if (op >= B32POpIndRegZero && op <= B32POpIndRegRa)
   {
-    printf2("%d r%d", truncInt(val), op - B322OpIndRegZero);
+    printf2("%d r%d", truncInt(val), op - B32POpIndRegZero);
   }
   else
   {
     switch (op)
     {
-    case B322OpConst: printf2("%d", truncInt(val)); break;
-    case B322OpLabelLo:
+    case B32POpConst: printf2("%d", truncInt(val)); break;
+    case B32POpLabelLo:
       printf2("%%lo(");
       GenPrintLabel(IdentTable + val);
       printf2(")(r1)");
       break;
-    case B322OpLabel: GenPrintLabel(IdentTable + val); break;
-    case B322OpNumLabel: GenPrintNumLabel(val); break;
+    case B32POpLabel: GenPrintLabel(IdentTable + val); break;
+    case B32POpNumLabel: GenPrintNumLabel(val); break;
 
     default:
-      //error("WTF!\n");
       errorInternal(100);
       break;
     }
@@ -428,8 +440,8 @@ STATIC
 void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1val, int operand2, int operand2val)
 {
   // TODO: figure out if this ever happens because ADD and SUB need 3 args
-  if (operand2 == B322OpConst && operand2val == 0 &&
-      (instr == B322InstrAdd || instr == B322InstrSub))
+  if (operand2 == B32POpConst && operand2val == 0 &&
+      (instr == B32PInstrADD || instr == B32PInstrSUB))
     return;
 
   GenPrintInstr(instr, instrval);
@@ -445,23 +457,23 @@ void GenPrintInstr3Operands(int instr, int instrval,
                             int operand2, int operand2val,
                             int operand3, int operand3val)
 {
-  if (operand3 == B322OpConst && operand3val == 0 &&
-      (instr == B322InstrAdd || instr == B322InstrSub) &&
+  if (operand3 == B32POpConst && operand3val == 0 &&
+      (instr == B32PInstrADD || instr == B32PInstrSUB) &&
       operand1 == operand2)
     return;
 
-  // If constant is negative, swap B322InstrAdd for B322InstrSUB and vice versa
+  // If constant is negative, swap B32PInstrADD for B32PInstrSUB and vice versa
   // and flip sign of constant
-  if (operand2 == B322OpConst && operand2val < 0)
+  if (operand2 == B32POpConst && operand2val < 0)
   {
-    if (instr == B322InstrAdd)
+    if (instr == B32PInstrADD)
     {
-      instr = B322InstrSub;
+      instr = B32PInstrSUB;
       operand2val = -operand2val;
     }
-    else if (instr == B322InstrSub)
+    else if (instr == B32PInstrSUB)
     {
-      instr = B322InstrAdd;
+      instr = B32PInstrADD;
       operand2val = -operand2val;
     }
   }
@@ -480,81 +492,14 @@ void GenPrintInstr3Operands(int instr, int instrval,
 STATIC
 void GenExtendRegIfNeeded(int reg, int opSz)
 {
-  if (opSz == -1)
-  {
-/* // Sign extension is currently not a thing in B322
-#ifdef DONT_USE_SEH
-    GenPrintInstr3Operands(MipsInstrSLL, 0,
-                           reg, 0,
-                           reg, 0,
-                           B322OpConst, 24);
-    GenPrintInstr3Operands(MipsInstrSRA, 0,
-                           reg, 0,
-                           reg, 0,
-                           B322OpConst, 24);
-#else
-    GenPrintInstr2Operands(MipsInstrSeb, 0,
-                           reg, 0,
-                           reg, 0);
-#endif
-*/
-  }
-  else if (opSz == 1)
-  {
-    /*
-    GenPrintInstr3Operands(B322InstrAnd, 0,
-                           reg, 0,
-                           B322OpConst, 0xFF,
-                           reg, 0);
-    */
-  }
-  else if (opSz == -2)
-  {
-/* // Sign extension is currently not a thing in B322
-#ifdef DONT_USE_SEH
-    GenPrintInstr3Operands(MipsInstrSLL, 0,
-                           reg, 0,
-                           reg, 0,
-                           B322OpConst, 16);
-    GenPrintInstr3Operands(MipsInstrSRA, 0,
-                           reg, 0,
-                           reg, 0,
-                           B322OpConst, 16);
-#else
-    GenPrintInstr2Operands(MipsInstrSeh, 0,
-                           reg, 0,
-                           reg, 0);
-#endif
-*/
-  }
-  else if (opSz == 2)
-  {
-    /*
-    GenPrintInstr3Operands(MipsInstrAnd, 0,
-                           reg, 0,
-                           reg, 0,
-                           B322OpConst, 0xFFFF);
-    */
-    // Use shiftl 16 and shiftr 16 as equivalent to AND 0xFFFF
-    //  (because constants in ARITH can only be 11 bits)
-    /*
-    GenPrintInstr3Operands(B322InstrShiftl, 0,
-                           reg, 0,
-                           B322OpConst, 16,
-                           reg, 0);
-    GenPrintInstr3Operands(B322InstrShiftr, 0,
-                           reg, 0,
-                           B322OpConst, 16,
-                           reg, 0);
-    */
-  }
+  
 }
 
 STATIC
 void GenJumpUncond(int label)
 {
-  GenPrintInstr1Operand(B322InstrJump, 0,
-                        B322OpNumLabel, label);
+  GenPrintInstr1Operand(B32PInstrJump, 0,
+                        B32POpNumLabel, label);
 }
 
 extern int GenWreg; // GenWreg is defined below
@@ -563,21 +508,21 @@ STATIC
 void GenJumpIfEqual(int val, int label)
 {
 
-  GenPrintInstr2Operands(B322InstrLoad, 0,
-                         B322OpConst, val,
+  GenPrintInstr2Operands(B32PInstrLoad, 0,
+                         B32POpConst, val,
                          TEMP_REG_B, 0);
   /*
   GenPrintInstr3Operands(MipsInstrBEQ, 0,
                          GenWreg, 0,
                          TEMP_REG_B, 0,
-                         B322OpNumLabel, label);
+                         B32POpNumLabel, label);
   */
-  GenPrintInstr3Operands(B322InstrBne, 0,
+  GenPrintInstr3Operands(B32PInstrBNE, 0,
                          GenWreg, 0,
                          TEMP_REG_B, 0,
-                         B322OpConst, 2);
-  GenPrintInstr1Operand(B322InstrJump, 0,
-                         B322OpNumLabel, label);
+                         B32POpConst, 2);
+  GenPrintInstr1Operand(B32PInstrJump, 0,
+                         B32POpNumLabel, label);
 }
 
 STATIC
@@ -589,15 +534,15 @@ void GenJumpIfZero(int label)
   /* if Wreg == 0, jump to label
   GenPrintInstr3Operands(MipsInstrBEQ, 0,
                          GenWreg, 0,
-                         B322OpRegZero, 0,
-                         B322OpNumLabel, label);
+                         B32POpRegZero, 0,
+                         B32POpNumLabel, label);
   */
-  GenPrintInstr3Operands(B322InstrBne, 0,
+  GenPrintInstr3Operands(B32PInstrBNE, 0,
                          GenWreg, 0,
-                         B322OpRegZero, 0,
-                         B322OpConst, 2);
-  GenPrintInstr1Operand(B322InstrJump, 0,
-                         B322OpNumLabel, label);
+                         B32POpRegZero, 0,
+                         B32POpConst, 2);
+  GenPrintInstr1Operand(B32PInstrJump, 0,
+                         B32POpNumLabel, label);
 }
 
 STATIC
@@ -609,15 +554,15 @@ void GenJumpIfNotZero(int label)
   /* if Wreg != 0, jump to label
   GenPrintInstr3Operands(MipsInstrBNE, 0,
                          GenWreg, 0,
-                         B322OpRegZero, 0,
-                         B322OpNumLabel, label);
+                         B32POpRegZero, 0,
+                         B32POpNumLabel, label);
   */
-  GenPrintInstr3Operands(B322InstrBeq, 0,
+  GenPrintInstr3Operands(B32PInstrBEQ, 0,
                          GenWreg, 0,
-                         B322OpRegZero, 0,
-                         B322OpConst, 2);
-  GenPrintInstr1Operand(B322InstrJump, 0,
-                         B322OpNumLabel, label);
+                         B32POpRegZero, 0,
+                         B32POpConst, 2);
+  GenPrintInstr1Operand(B32PInstrJump, 0,
+                         B32POpNumLabel, label);
 }
 
 fpos_t GenPrologPos;
@@ -664,9 +609,9 @@ void GenFxnProlog(void)
     // all words except the first to the stack). But passing structures
     // in registers from assembly code won't always work.
     for (i = 0; i < cnt; i++)
-      GenPrintInstr2Operands(B322InstrWrite, 0,
-                             B322OpIndRegSp, 4 * i, //WORDSIZE
-                             B322OpRegA0 + i, 0);
+      GenPrintInstr2Operands(B32PInstrWrite, 0,
+                             B32POpIndRegSp, 4 * i, //WORDSIZE
+                             B32POpRegA0 + i, 0);
   }
 
   GenLeaf = 1; // will be reset to 0 if a call is generated
@@ -683,17 +628,17 @@ void GenGrowStack(int size) //WORDSIZE
 
   if (size > 0)
   {
-    GenPrintInstr3Operands(B322InstrSub, 0,
-                           B322OpRegSp, 0,
-                           B322OpConst, size,
-                           B322OpRegSp, 0);
+    GenPrintInstr3Operands(B32PInstrSUB, 0,
+                           B32POpRegSp, 0,
+                           B32POpConst, size,
+                           B32POpRegSp, 0);
   }
   else
   {
-    GenPrintInstr3Operands(B322InstrAdd, 0,
-                           B322OpRegSp, 0,
-                           B322OpConst, -size,
-                           B322OpRegSp, 0);
+    GenPrintInstr3Operands(B32PInstrADD, 0,
+                           B32POpRegSp, 0,
+                           B32POpConst, -size,
+                           B32POpRegSp, 0);
   }
 }
 
@@ -703,22 +648,22 @@ void GenFxnEpilog(void)
   GenUpdateFrameSize();
 
   if (!GenLeaf)
-    GenPrintInstr2Operands(B322InstrRead, 0,
-                           B322OpIndRegFp, 4, //WORDSIZE
-                           B322OpRegRa, 0);
+    GenPrintInstr2Operands(B32PInstrRead, 0,
+                           B32POpIndRegFp, 4, //WORDSIZE
+                           B32POpRegRa, 0);
 
-  GenPrintInstr2Operands(B322InstrRead, 0,
-                         B322OpIndRegFp, 0,
-                         B322OpRegFp, 0);
+  GenPrintInstr2Operands(B32PInstrRead, 0,
+                         B32POpIndRegFp, 0,
+                         B32POpRegFp, 0);
 
-  GenPrintInstr3Operands(B322InstrAdd, 0,
-                         B322OpRegSp, 0,
-                         B322OpConst, 8/*RA + FP*/ - CurFxnMinLocalOfs, //WORDSIZE
-                         B322OpRegSp, 0);
+  GenPrintInstr3Operands(B32PInstrADD, 0,
+                         B32POpRegSp, 0,
+                         B32POpConst, 8/*RA + FP*/ - CurFxnMinLocalOfs, //WORDSIZE
+                         B32POpRegSp, 0);
 
-  GenPrintInstr2Operands(B322InstrJumpr, 0,
-                        B322OpConst, 0,
-                        B322OpRegRa, 0);
+  GenPrintInstr2Operands(B32PInstrJumpr, 0,
+                        B32POpConst, 0,
+                        B32POpRegRa, 0);
 }
 
 STATIC
@@ -735,20 +680,20 @@ int GenGetBinaryOperatorInstr(int tok)
   case tokPostAdd:
   case tokAssignAdd:
   case '+':
-    return B322InstrAdd;
+    return B32PInstrADD;
   case tokPostSub:
   case tokAssignSub:
   case '-':
-    return B322InstrSub;
+    return B32PInstrSUB;
   case '&':
   case tokAssignAnd:
-    return B322InstrAnd;
+    return B32PInstrAND;
   case '^':
   case tokAssignXor:
-    return B322InstrXor;
+    return B32PInstrXOR;
   case '|':
   case tokAssignOr:
-    return B322InstrOr;
+    return B32PInstrOR;
   case '<':
   case '>':
   case tokLEQ:
@@ -759,31 +704,31 @@ int GenGetBinaryOperatorInstr(int tok)
   case tokUGreater:
   case tokULEQ:
   case tokUGEQ:
-    return B322InstrNop;
+    return B32PInstrNOP;
   case '*':
   case tokAssignMul:
-    return B322InstrMult;
+    return B32PInstrMULTS;
   case '/':
   case '%':
   case tokAssignDiv:
   case tokAssignMod:
     printf("DIVISION/MOD is not supported!\n");
-    return B322InstrHalt;
+    return B32PInstrHalt;
   case tokUDiv:
   case tokUMod:
   case tokAssignUDiv:
   case tokAssignUMod:
     printf("DIVISION/MOD is not supported!\n");
-    return B322InstrHalt;
+    return B32PInstrHalt;
   case tokLShift:
   case tokAssignLSh:
-    return B322InstrShiftl;
+    return B32PInstrSHIFTL;
   case tokRShift:
   case tokAssignRSh:
-    return B322InstrShiftr; // B322 does not know about signed, so normal shiftr is done instead
+    return B32PInstrSHIFTR; // B32P does not know about signed, so normal shiftr is done instead
   case tokURShift:
   case tokAssignURSh:
-    return B322InstrShiftr;
+    return B32PInstrSHIFTR;
 
   default:
     //error("Error: Invalid operator\n");
@@ -792,7 +737,7 @@ int GenGetBinaryOperatorInstr(int tok)
   }
 }
 
-// Should not be needed, AT register is not used by B322 assembler
+// Should not be needed, AT register is not used by B32P assembler
 // Although the lui instruction probably should stay?
 STATIC
 void GenPreIdentAccess(int label)
@@ -802,7 +747,7 @@ void GenPreIdentAccess(int label)
   puts2(")");
 }
 
-// Should not be needed, AT register is not used by B322 assembler
+// Should not be needed, AT register is not used by B32P assembler
 STATIC
 void GenPostIdentAccess(void)
 {
@@ -812,175 +757,79 @@ void GenPostIdentAccess(void)
 STATIC
 void GenReadIdent(int regDst, int opSz, int label)
 {
-  GenPrintInstr2Operands(B322InstrAddr2reg, 0,
-                         B322OpLabel, label,
-                         B322OpRegAt, 0);
+  GenPrintInstr2Operands(B32PInstrAddr2reg, 0,
+                         B32POpLabel, label,
+                         B32POpRegAt, 0);
 
-  GenPrintInstr3Operands(B322InstrRead, 0,
-                         B322OpConst, 0,
-                         B322OpRegAt, 0,
+  GenPrintInstr3Operands(B32PInstrRead, 0,
+                         B32POpConst, 0,
+                         B32POpRegAt, 0,
                          regDst, 0);
-
-  //int instr = B322InstrAddr2reg;
-  //GenPreIdentAccess(label);
-  /* Always LW, because no byte addressable memory, and no distinction between neg and pos
-  if (opSz == -1)
-  {
-    instr = MipsInstrLB;
-  }
-  else if (opSz == 1)
-  {
-    instr = MipsInstrLBU;
-  }
-  else if (opSz == -2)
-  {
-    instr = MipsInstrLH;
-  }
-  else if (opSz == 2)
-  {
-    instr = MipsInstrLHU;
-  }
-  */
-  //GenPrintInstr2Operands(instr, 0,
-  //                       B322OpLabel, label,
-  //                       regDst, 0);
-  //GenPostIdentAccess();
 }
 
 STATIC
 void GenReadLocal(int regDst, int opSz, int ofs)
 {
-  int instr = B322InstrRead;
-  /* Always LW, because no byte addressable memory, and no distinction between neg and pos
-  if (opSz == -1)
-  {
-    instr = MipsInstrLB;
-  }
-  else if (opSz == 1)
-  {
-    instr = MipsInstrLBU;
-  }
-  else if (opSz == -2)
-  {
-    instr = MipsInstrLH;
-  }
-  else if (opSz == 2)
-  {
-    instr = MipsInstrLHU;
-  }
-  */
+  int instr = B32PInstrRead;
   GenPrintInstr2Operands(instr, 0,
-                         B322OpIndRegFp, ofs,
+                         B32POpIndRegFp, ofs,
                          regDst, 0);
 }
 
 STATIC
 void GenReadIndirect(int regDst, int regSrc, int opSz)
 {
-  int instr = B322InstrRead;
-  /* Always LW, because no byte addressable memory, and no distinction between neg and pos
-  if (opSz == -1)
-  {
-    instr = MipsInstrLB;
-  }
-  else if (opSz == 1)
-  {
-    instr = MipsInstrLBU;
-  }
-  else if (opSz == -2)
-  {
-    instr = MipsInstrLH;
-  }
-  else if (opSz == 2)
-  {
-    instr = MipsInstrLHU;
-  }
-  */
+  int instr = B32PInstrRead;
   GenPrintInstr2Operands(instr, 0,
-                         regSrc + B322OpIndRegZero, 0,
+                         regSrc + B32POpIndRegZero, 0,
                          regDst, 0);
 }
 
 STATIC
 void GenWriteIdent(int regSrc, int opSz, int label)
 {
-  GenPrintInstr2Operands(B322InstrAddr2reg, 0,
-                         B322OpLabel, label,
-                         B322OpRegAt, 0);
+  GenPrintInstr2Operands(B32PInstrAddr2reg, 0,
+                         B32POpLabel, label,
+                         B32POpRegAt, 0);
 
-  GenPrintInstr3Operands(B322InstrWrite, 0,
-                         B322OpConst, 0,
-                         B322OpRegAt, 0,
+  GenPrintInstr3Operands(B32PInstrWrite, 0,
+                         B32POpConst, 0,
+                         B32POpRegAt, 0,
                          regSrc, 0);
-  //int instr = B322InstrWrite;
-  //GenPreIdentAccess(label);
-
-  /* Always SW, because no byte addressable memory
-  if (opSz == -1 || opSz == 1)
-  {
-    instr = MipsInstrSB;
-  }
-  else if (opSz == -2 || opSz == 2)
-  {
-    instr = MipsInstrSH;
-  }
-  */
-  
-  //GenPostIdentAccess();
 }
 
 STATIC
 void GenWriteLocal(int regSrc, int opSz, int ofs)
 {
-  int instr = B322InstrWrite;
+  int instr = B32PInstrWrite;
 
-  /* Always SW, because no byte addressable memory
-  if (opSz == -1 || opSz == 1)
-  {
-    instr = MipsInstrSB;
-  }
-  else if (opSz == -2 || opSz == 2)
-  {
-    instr = MipsInstrSH;
-  }
-  */
   GenPrintInstr2Operands(instr, 0,
-                         B322OpIndRegFp, ofs,
+                         B32POpIndRegFp, ofs,
                          regSrc, 0);
 }
 
 STATIC
 void GenWriteIndirect(int regDst, int regSrc, int opSz)
 {
-  int instr = B322InstrWrite;
+  int instr = B32PInstrWrite;
 
-  /* Always SW, because no byte addressable memory
-  if (opSz == -1 || opSz == 1)
-  {
-    instr = MipsInstrSB;
-  }
-  else if (opSz == -2 || opSz == 2)
-  {
-    instr = MipsInstrSH;
-  }
-  */
   GenPrintInstr2Operands(instr, 0,
-                         regDst + B322OpIndRegZero, 0,
+                         regDst + B32POpIndRegZero, 0,
                          regSrc, 0);
 }
 
 STATIC
 void GenIncDecIdent(int regDst, int opSz, int label, int tok)
 {
-  int instr = B322InstrAdd;
+  int instr = B32PInstrADD;
 
   if (tok != tokInc)
-    instr = B322InstrSub;
+    instr = B32PInstrSUB;
 
   GenReadIdent(regDst, opSz, label);
   GenPrintInstr3Operands(instr, 0,
                          regDst, 0,
-                         B322OpConst, 1,
+                         B32POpConst, 1,
                          regDst, 0);
   GenWriteIdent(regDst, opSz, label);
   GenExtendRegIfNeeded(regDst, opSz);
@@ -989,15 +838,15 @@ void GenIncDecIdent(int regDst, int opSz, int label, int tok)
 STATIC
 void GenIncDecLocal(int regDst, int opSz, int ofs, int tok)
 {
-  int instr = B322InstrAdd;
+  int instr = B32PInstrADD;
 
   if (tok != tokInc)
-    instr = B322InstrSub;
+    instr = B32PInstrSUB;
 
   GenReadLocal(regDst, opSz, ofs);
   GenPrintInstr3Operands(instr, 0,
                          regDst, 0,
-                         B322OpConst, 1,
+                         B32POpConst, 1,
                          regDst, 0);
   GenWriteLocal(regDst, opSz, ofs);
   GenExtendRegIfNeeded(regDst, opSz);
@@ -1006,15 +855,15 @@ void GenIncDecLocal(int regDst, int opSz, int ofs, int tok)
 STATIC
 void GenIncDecIndirect(int regDst, int regSrc, int opSz, int tok)
 {
-  int instr = B322InstrAdd;
+  int instr = B32PInstrADD;
 
   if (tok != tokInc)
-    instr = B322InstrSub;
+    instr = B32PInstrSUB;
 
   GenReadIndirect(regDst, regSrc, opSz);
   GenPrintInstr3Operands(instr, 0,
                          regDst, 0,
-                         B322OpConst, 1,
+                         B32POpConst, 1,
                          regDst, 0);
   GenWriteIndirect(regSrc, regDst, opSz);
   GenExtendRegIfNeeded(regDst, opSz);
@@ -1023,21 +872,21 @@ void GenIncDecIndirect(int regDst, int regSrc, int opSz, int tok)
 STATIC
 void GenPostIncDecIdent(int regDst, int opSz, int label, int tok)
 {
-  int instr = B322InstrAdd;
+  int instr = B32PInstrADD;
 
   if (tok != tokPostInc)
-    instr = B322InstrSub;
+    instr = B32PInstrSUB;
 
   GenReadIdent(regDst, opSz, label);
   GenPrintInstr3Operands(instr, 0,
                          regDst, 0,
-                         B322OpConst, 1,
+                         B32POpConst, 1,
                          regDst, 0);
   GenWriteIdent(regDst, opSz, label);
 
   GenPrintInstr3Operands(instr, 0,
                          regDst, 0,
-                         B322OpConst, -1,
+                         B32POpConst, -1,
                          regDst, 0);
   GenExtendRegIfNeeded(regDst, opSz);
 }
@@ -1045,21 +894,21 @@ void GenPostIncDecIdent(int regDst, int opSz, int label, int tok)
 STATIC
 void GenPostIncDecLocal(int regDst, int opSz, int ofs, int tok)
 {
-  int instr = B322InstrAdd;
+  int instr = B32PInstrADD;
 
   if (tok != tokPostInc)
-    instr = B322InstrSub;
+    instr = B32PInstrSUB;
 
   GenReadLocal(regDst, opSz, ofs);
   GenPrintInstr3Operands(instr, 0,
                          regDst, 0,
-                         B322OpConst, 1,
+                         B32POpConst, 1,
                          regDst, 0);
   GenWriteLocal(regDst, opSz, ofs);
 
   GenPrintInstr3Operands(instr, 0,
                          regDst, 0,
-                         B322OpConst, -1,
+                         B32POpConst, -1,
                          regDst, 0);
   GenExtendRegIfNeeded(regDst, opSz);
 }
@@ -1067,28 +916,28 @@ void GenPostIncDecLocal(int regDst, int opSz, int ofs, int tok)
 STATIC
 void GenPostIncDecIndirect(int regDst, int regSrc, int opSz, int tok)
 {
-  int instr = B322InstrAdd;
+  int instr = B32PInstrADD;
 
   if (tok != tokPostInc)
-    instr = B322InstrSub;
+    instr = B32PInstrSUB;
 
   GenReadIndirect(regDst, regSrc, opSz);
   GenPrintInstr3Operands(instr, 0,
                          regDst, 0,
-                         B322OpConst, 1,
+                         B32POpConst, 1,
                          regDst, 0);
   GenWriteIndirect(regSrc, regDst, opSz);
 
   GenPrintInstr3Operands(instr, 0,
                          regDst, 0,
-                         B322OpConst, -1,
+                         B32POpConst, -1,
                          regDst, 0);
   GenExtendRegIfNeeded(regDst, opSz);
 }
 
 int CanUseTempRegs;
 int TempsUsed;
-int GenWreg = B322OpRegV0; // current working register (V0 or Tn or An)
+int GenWreg = B32POpRegV0; // current working register (V0 or Tn or An)
 int GenLreg, GenRreg; // left operand register and right operand register after GenPopReg()
 
 /*
@@ -1141,16 +990,16 @@ void GenWregInc(int inc)
   if (inc > 0)
   {
     // Advance the current working register to the next available temporary register
-    if (GenWreg == B322OpRegV0)
-      GenWreg = B322OpRegT0;
+    if (GenWreg == B32POpRegV0)
+      GenWreg = B32POpRegT0;
     else
       GenWreg++;
   }
   else
   {
     // Return to the previous current working register
-    if (GenWreg == B322OpRegT0)
-      GenWreg = B322OpRegV0;
+    if (GenWreg == B32POpRegT0)
+      GenWreg = B32POpRegV0;
     else
       GenWreg--;
   }
@@ -1166,13 +1015,13 @@ void GenPushReg(void)
     return;
   }
 
-  GenPrintInstr3Operands(B322InstrSub, 0,
-                         B322OpRegSp, 0,
-                         B322OpConst, 4, //WORDSIZE
-                         B322OpRegSp, 0);
+  GenPrintInstr3Operands(B32PInstrSUB, 0,
+                         B32POpRegSp, 0,
+                         B32POpConst, 4, //WORDSIZE
+                         B32POpRegSp, 0);
 
-  GenPrintInstr2Operands(B322InstrWrite, 0,
-                         B322OpIndRegSp, 0,
+  GenPrintInstr2Operands(B32PInstrWrite, 0,
+                         B32POpIndRegSp, 0,
                          GenWreg, 0);
 
   TempsUsed++;
@@ -1191,14 +1040,14 @@ void GenPopReg(void)
     return;
   }
 
-  GenPrintInstr2Operands(B322InstrRead, 0,
-                         B322OpIndRegSp, 0,
+  GenPrintInstr2Operands(B32PInstrRead, 0,
+                         B32POpIndRegSp, 0,
                          TEMP_REG_A, 0);
 
-  GenPrintInstr3Operands(B322InstrAdd, 0,
-                         B322OpRegSp, 0,
-                         B322OpConst, 4, //WORDSIZE
-                         B322OpRegSp, 0);
+  GenPrintInstr3Operands(B32PInstrADD, 0,
+                         B32POpRegSp, 0,
+                         B32POpConst, 4, //WORDSIZE
+                         B32POpRegSp, 0);
   GenLreg = TEMP_REG_A;
   GenRreg = GenWreg;
 }
@@ -1532,8 +1381,9 @@ char CmpBlocks[6/*op*/][2/*condbranch*/][3/*constness*/][2] =
 STATIC
 void GenCmp(int* idx, int op)
 {
-  // TODO: direct conversion from MIPS to B322 is very inefficient, so optimize this!
+  // TODO: 
   /*
+  For B322 (not B32P!): direct conversion from MIPS to B322 is very inefficient, these notes help:
   MIPS:
   slt reg, s < t (reg := 1, else reg := 0)
 
@@ -1559,8 +1409,7 @@ void GenCmp(int* idx, int op)
   // condbranch: 0 = no conditional branch, 1 = branch if true, 2 = branch if false
   int condbranch = (*idx + 1 < sp) ? (stack[*idx + 1][0] == tokIf) + (stack[*idx + 1][0] == tokIfNot) * 2 : 0;
   int unsign = op >> 4;
-  int instrBGEdependingOnSign = unsign ? B322InstrBgeU : B322InstrBge;
-  int instrBGTdependingOnSign = unsign ? B322InstrBgtU : B322InstrBgt;
+  int slt = unsign ? B32PInstrSLTU : B32PInstrSLT;
 
   int label = condbranch ? stack[*idx + 1][1] : 0;
   char* p;
@@ -1591,23 +1440,23 @@ void GenCmp(int* idx, int op)
       condbranch ^= 3;
       // fallthrough
     case 'b':
-      GenPrintInstr3Operands((condbranch == 1) ? B322InstrBne : B322InstrBeq, 0,
+      GenPrintInstr3Operands((condbranch == 1) ? B32PInstrBNE : B32PInstrBEQ, 0,
                              GenLreg, 0,
                              GenRreg, 0,
-                             B322OpConst, 2);
-      GenPrintInstr1Operand(B322InstrJump, 0,
-                             B322OpNumLabel, label);
+                             B32POpConst, 2);
+      GenPrintInstr1Operand(B32PInstrJump, 0,
+                             B32POpNumLabel, label);
       break;
     case 'c':
       condbranch ^= 3;
       // fallthrough
     case 'd':
-      GenPrintInstr3Operands((condbranch == 1) ? B322InstrBne : B322InstrBeq, 0,
+      GenPrintInstr3Operands((condbranch == 1) ? B32PInstrBNE : B32PInstrBEQ, 0,
                              GenWreg, 0,
-                             B322OpRegZero, 0,
-                             B322OpConst, 2);
-      GenPrintInstr1Operand(B322InstrJump, 0,
-                             B322OpNumLabel, label);
+                             B32POpRegZero, 0,
+                             B32POpConst, 2);
+      GenPrintInstr1Operand(B32PInstrJump, 0,
+                             B32POpNumLabel, label);
       break;
     case 'e':
       condbranch ^= 3;
@@ -1619,20 +1468,20 @@ void GenCmp(int* idx, int op)
       */
       if (condbranch == 1)
       {
-        GenPrintInstr3Operands(B322InstrBge, 0,
+        GenPrintInstr3Operands(B32PInstrBGE, 0,
                                GenWreg, 0,
-                               B322OpRegZero, 0,
-                               B322OpConst, 2);
+                               B32POpRegZero, 0,
+                               B32POpConst, 2);
       }
       else
       {
-        GenPrintInstr3Operands(B322InstrBgt, 0,
-                               B322OpRegZero, 0,
+        GenPrintInstr3Operands(B32PInstrBGT, 0,
+                               B32POpRegZero, 0,
                                GenWreg, 0,
-                               B322OpConst, 2);
+                               B32POpConst, 2);
       }
-      GenPrintInstr1Operand(B322InstrJump, 0,
-                             B322OpNumLabel, label);
+      GenPrintInstr1Operand(B32PInstrJump, 0,
+                             B32POpNumLabel, label);
       break;
     case 'g':
       condbranch ^= 3;
@@ -1644,168 +1493,116 @@ void GenCmp(int* idx, int op)
       */
       if (condbranch == 1)
       {
-        GenPrintInstr3Operands(B322InstrBge, 0,
-                               B322OpRegZero, 0,
+        GenPrintInstr3Operands(B32PInstrBGE, 0,
+                               B32POpRegZero, 0,
                                GenWreg, 0,
-                               B322OpConst, 2);
+                               B32POpConst, 2);
       }
       else
       {
-        GenPrintInstr3Operands(B322InstrBgt, 0,
+        GenPrintInstr3Operands(B32PInstrBGT, 0,
                                GenWreg, 0,
-                               B322OpRegZero, 0,
-                               B322OpConst, 2);
+                               B32POpRegZero, 0,
+                               B32POpConst, 2);
       }
-      GenPrintInstr1Operand(B322InstrJump, 0,
-                             B322OpNumLabel, label);
+      GenPrintInstr1Operand(B32PInstrJump, 0,
+                             B32POpNumLabel, label);
       break;
     case 'i':
-      GenPrintInstr3Operands(instrBGEdependingOnSign, 0,
+      GenPrintInstr3Operands(slt, 0,
                              GenLreg, 0,
                              GenRreg, 0,
-                             B322OpConst, 3);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               GenWreg, 0);
-      GenPrintInstr1Operand(B322InstrJumpo, 0,
-                             B322OpConst, 2);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 0,
-                               GenWreg, 0);
+                             GenWreg, 0);
       break;
     case 'j':
-      GenPrintInstr3Operands(instrBGEdependingOnSign, 0,
+      GenPrintInstr3Operands(slt, 0,
                              GenRreg, 0,
                              GenLreg, 0,
-                             B322OpConst, 3);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               GenWreg, 0);
-      GenPrintInstr1Operand(B322InstrJumpo, 0,
-                             B322OpConst, 2);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 0,
-                               GenWreg, 0);
+                             GenWreg, 0);
       break;
     case 'k':
-      GenPrintInstr3Operands(instrBGEdependingOnSign, 0,
+      GenPrintInstr3Operands(slt, 0,
                              GenWreg, 0,
-                             B322OpRegZero, 0,
-                             B322OpConst, 3);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               GenWreg, 0);
-      GenPrintInstr1Operand(B322InstrJumpo, 0,
-                             B322OpConst, 2);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 0,
-                               GenWreg, 0);
+                             B32POpRegZero, 0,
+                             GenWreg, 0);
       break;
     case 'l':
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               TEMP_REG_A, 0);
-      GenPrintInstr3Operands(instrBGEdependingOnSign, 0,
+      GenPrintInstr3Operands(slt, 0,
                              GenWreg, 0,
-                             TEMP_REG_A, 0,
-                             B322OpConst, 3);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               GenWreg, 0);
-      GenPrintInstr1Operand(B322InstrJumpo, 0,
-                             B322OpConst, 2);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 0,
-                               GenWreg, 0);
+                             B32POpConst, 1,
+                             GenWreg, 0);
       break;
     case 'n':
       constval++;
       // fallthrough
     case 'm':
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, constval,
+      if (constval < 0x8000)
+      {
+        GenPrintInstr3Operands(slt, 0,
+                             GenWreg, 0,
+                             B32POpConst, constval,
+                             GenWreg, 0);
+      }
+      else
+      {
+        GenPrintInstr2Operands(B32PInstrLoad, 0,
+                               B32POpConst, constval,
                                TEMP_REG_A, 0);
-      GenPrintInstr3Operands(instrBGEdependingOnSign, 0,
+        GenPrintInstr3Operands(slt, 0,
                              GenWreg, 0,
                              TEMP_REG_A, 0,
-                             B322OpConst, 3);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               GenWreg, 0);
-      GenPrintInstr1Operand(B322InstrJumpo, 0,
-                             B322OpConst, 2);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 0,
-                               GenWreg, 0);
+                             GenWreg, 0);
+      }
+      
       break;
     case 'o':
-      GenPrintInstr3Operands(instrBGEdependingOnSign, 0,
-                             B322OpRegZero, 0,
+      GenPrintInstr3Operands(slt, 0,
+                             B32POpRegZero, 0,
                              GenWreg, 0,
-                             B322OpConst, 3);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               GenWreg, 0);
-      GenPrintInstr1Operand(B322InstrJumpo, 0,
-                             B322OpConst, 2);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 0,
-                               GenWreg, 0);
+                             GenWreg, 0);
       break;
     case 'p':
-      GenPrintInstr3Operands(B322InstrBgeU, 0,
-                             B322OpRegZero, 0,
+      GenPrintInstr3Operands(B32PInstrSLTU, 0,
+                             B32POpRegZero, 0,
                              GenWreg, 0,
-                             B322OpConst, 3);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               GenWreg, 0);
-      GenPrintInstr1Operand(B322InstrJumpo, 0,
-                             B322OpConst, 2);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 0,
-                               GenWreg, 0);
+                             GenWreg, 0);
       break;
     case 'q':
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               B322OpRegAt, 0);
-      GenPrintInstr3Operands(B322InstrBgeU, 0,
+      GenPrintInstr3Operands(B32PInstrSLTU, 0,
                              GenWreg, 0,
-                             B322OpRegAt, 0,
-                             B322OpConst, 3);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               GenWreg, 0);
-      GenPrintInstr1Operand(B322InstrJumpo, 0,
-                             B322OpConst, 2);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 0,
-                               GenWreg, 0);
+                             B32POpConst, 1,
+                             GenWreg, 0);
       break;
     case 'r':
-      GenPrintInstr3Operands(B322InstrXor, 0,
+      GenPrintInstr3Operands(B32PInstrXOR, 0,
                              GenLreg, 0,
                              GenRreg, 0,
                              GenWreg, 0);
       break;
     case 's':
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               B322OpRegAt, 0);
-      GenPrintInstr3Operands(B322InstrXor, 0,
+      GenPrintInstr3Operands(B32PInstrXOR, 0,
                              GenWreg, 0,
-                             B322OpRegAt, 0,
+                             B32POpConst, 1,
                              GenWreg, 0);
       break;
     case 't':
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, constval,
-                               B322OpRegAt, 0);
-      GenPrintInstr3Operands(B322InstrXor, 0,
-                             GenWreg, 0,
-                             B322OpRegAt, 0,
-                             GenWreg, 0);
+      if (constval < 0x8000)
+      {
+        GenPrintInstr3Operands(B32PInstrXOR, 0,
+                               GenWreg, 0,
+                               B32POpConst, constval,
+                               GenWreg, 0);
+      }
+      else
+      {
+        GenPrintInstr2Operands(B32PInstrLoad, 0,
+                               B32POpConst, constval,
+                               TEMP_REG_A, 0);
+        GenPrintInstr3Operands(B32PInstrXOR, 0,
+                               GenWreg, 0,
+                               TEMP_REG_A, 0,
+                               GenWreg, 0);
+      }
       break;
     }
   }
@@ -1858,7 +1655,7 @@ void GenExpr0(void)
 
   CanUseTempRegs = maxCallDepth == 0;
   TempsUsed = 0;
-  if (GenWreg != B322OpRegV0)
+  if (GenWreg != B32POpRegV0)
     errorInternal(102);
 
   for (i = 0; i < sp; i++)
@@ -1903,8 +1700,8 @@ void GenExpr0(void)
         if (gotUnary)
           GenPushReg();
 
-        GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, v,
+        GenPrintInstr2Operands(B32PInstrLoad, 0,
+                               B32POpConst, v,
                                GenWreg, 0);
       }
       gotUnary = 1;
@@ -1920,8 +1717,8 @@ void GenExpr0(void)
                            t == tokPostInc ||
                            t == tokPostDec)))
       {
-        GenPrintInstr2Operands(B322InstrAddr2reg, 0,
-                               B322OpLabel, v,
+        GenPrintInstr2Operands(B32PInstrAddr2reg, 0,
+                               B32POpLabel, v,
                                GenWreg, 0);
       }
       gotUnary = 1;
@@ -1936,9 +1733,9 @@ void GenExpr0(void)
                            t == tokPostInc ||
                            t == tokPostDec)))
       {
-        GenPrintInstr3Operands(B322InstrAdd, 0,
-                               B322OpRegFp, 0,
-                               B322OpConst, v,
+        GenPrintInstr3Operands(B32PInstrADD, 0,
+                               B32POpRegFp, 0,
+                               B32POpConst, v,
                                GenWreg, 0);
       }
       gotUnary = 1;
@@ -1954,7 +1751,7 @@ void GenExpr0(void)
       if (maxCallDepth == 1 && paramOfs >= 0 && paramOfs <= 12)
       {
         // Work directly in A0-A3 instead of working in V0 and avoid copying V0 to A0-A3
-        GenWreg = B322OpRegA0 + division(paramOfs, 4);
+        GenWreg = B32POpRegA0 + division(paramOfs, 4); //(paramOfs >> 2); //division(paramOfs, 4);
       }
       break;
 
@@ -1966,7 +1763,7 @@ void GenExpr0(void)
           // Got the last on-stack parameter, the rest will go in A0-A3
           GenPushReg();
           gotUnary = 0;
-          GenWreg = B322OpRegA3;
+          GenWreg = B32POpRegA3;
         }
         if (paramOfs >= 0 && paramOfs <= 12)
         {
@@ -1974,7 +1771,7 @@ void GenExpr0(void)
           if (paramOfs)
             GenWreg--;
           else
-            GenWreg = B322OpRegV0;
+            GenWreg = B32POpRegV0;
           gotUnary = 0;
         }
         paramOfs -= 4;
@@ -1986,21 +1783,21 @@ void GenExpr0(void)
       if (maxCallDepth != 1)
       {
         if (v >= 4)
-          GenPrintInstr2Operands(B322InstrRead, 0,
-                                 B322OpIndRegSp, 0,
-                                 B322OpRegA0, 0);
+          GenPrintInstr2Operands(B32PInstrRead, 0,
+                                 B32POpIndRegSp, 0,
+                                 B32POpRegA0, 0);
         if (v >= 8)
-          GenPrintInstr2Operands(B322InstrRead, 0,
-                                 B322OpIndRegSp, 4,
-                                 B322OpRegA1, 0);
+          GenPrintInstr2Operands(B32PInstrRead, 0,
+                                 B32POpIndRegSp, 4,
+                                 B32POpRegA1, 0);
         if (v >= 12)
-          GenPrintInstr2Operands(B322InstrRead, 0,
-                                 B322OpIndRegSp, 8,
-                                 B322OpRegA2, 0);
+          GenPrintInstr2Operands(B32PInstrRead, 0,
+                                 B32POpIndRegSp, 8,
+                                 B32POpRegA2, 0);
         if (v >= 16)
-          GenPrintInstr2Operands(B322InstrRead, 0,
-                                 B322OpIndRegSp, 12,
-                                 B322OpRegA3, 0);
+          GenPrintInstr2Operands(B32PInstrRead, 0,
+                                 B32POpIndRegSp, 12,
+                                 B32POpRegA3, 0);
       }
       else
       {
@@ -2008,25 +1805,25 @@ void GenExpr0(void)
       }
       if (stack[i - 1][0] == tokIdent)
       {
-        GenPrintInstr1Operand(B322InstrSavpc, 0,
-                              B322OpRegRa, 0);
-        GenPrintInstr3Operands(B322InstrAdd, 0,
-                             B322OpRegRa, 0,
-                             B322OpConst, 3,
-                             B322OpRegRa, 0);
-        GenPrintInstr1Operand(B322InstrJump, 0,
-                              B322OpLabel, stack[i - 1][1]);
+        GenPrintInstr1Operand(B32PInstrSavPC, 0,
+                              B32POpRegRa, 0);
+        GenPrintInstr3Operands(B32PInstrADD, 0,
+                             B32POpRegRa, 0,
+                             B32POpConst, 3,
+                             B32POpRegRa, 0);
+        GenPrintInstr1Operand(B32PInstrJump, 0,
+                              B32POpLabel, stack[i - 1][1]);
       }
       else
       {
-        GenPrintInstr1Operand(B322InstrSavpc, 0,
-                              B322OpRegRa, 0);
-        GenPrintInstr3Operands(B322InstrAdd, 0,
-                             B322OpRegRa, 0,
-                             B322OpConst, 3,
-                             B322OpRegRa, 0);
-        GenPrintInstr2Operands(B322InstrJumpr, 0,
-                              B322OpConst, 0,
+        GenPrintInstr1Operand(B32PInstrSavPC, 0,
+                              B32POpRegRa, 0);
+        GenPrintInstr3Operands(B32PInstrADD, 0,
+                             B32POpRegRa, 0,
+                             B32POpConst, 3,
+                             B32POpRegRa, 0);
+        GenPrintInstr2Operands(B32PInstrJumpr, 0,
+                              B32POpConst, 0,
                               GenWreg, 0);
       }
       if (v < 16)
@@ -2046,18 +1843,18 @@ void GenExpr0(void)
     case tokUnaryPlus:
       break;
     case '~': //nor
-      GenPrintInstr3Operands(B322InstrOr, 0,
+      GenPrintInstr3Operands(B32PInstrOR, 0,
                              GenWreg, 0,
                              GenWreg, 0,
                              GenWreg, 0);
-      GenPrintInstr2Operands(B322InstrNot, 0,
+      GenPrintInstr2Operands(B32PInstrNOT, 0,
                              GenWreg, 0,
                              GenWreg, 0);
 
       break;
     case tokUnaryMinus:
-      GenPrintInstr3Operands(B322InstrSub, 0,
-                             B322OpRegZero, 0,
+      GenPrintInstr3Operands(B32PInstrSUB, 0,
+                             B32POpRegZero, 0,
                              GenWreg, 0,
                              GenWreg, 0);
       break;
@@ -2076,7 +1873,7 @@ void GenExpr0(void)
         int instr = GenGetBinaryOperatorInstr(tok);
         GenPrintInstr3Operands(instr, 0,
                                GenWreg, 0,
-                               B322OpConst, stack[i - 1][1],
+                               B32POpConst, stack[i - 1][1],
                                GenWreg, 0);
       }
       else
@@ -2100,12 +1897,12 @@ void GenExpr0(void)
         GenPopReg();
         if (tok == '/' || tok == '%')
           GenPrintInstr3Operands(MipsInstrDiv, 0,
-                                 B322OpRegZero, 0,
+                                 B32POpRegZero, 0,
                                  GenLreg, 0,
                                  GenRreg, 0);
         else
           GenPrintInstr3Operands(MipsInstrDivU, 0,
-                                 B322OpRegZero, 0,
+                                 B32POpRegZero, 0,
                                  GenLreg, 0,
                                  GenRreg, 0);
         if (tok == '%' || tok == tokUMod)
@@ -2130,8 +1927,8 @@ void GenExpr0(void)
       }
       else
       {
-        GenPrintInstr3Operands(B322InstrOr, 0,
-                               B322OpRegZero, 0,
+        GenPrintInstr3Operands(B32PInstrOR, 0,
+                               B32POpRegZero, 0,
                                GenWreg, 0,
                                TEMP_REG_A, 0);
         GenIncDecIndirect(GenWreg, TEMP_REG_A, v, tok);
@@ -2149,8 +1946,8 @@ void GenExpr0(void)
       }
       else
       {
-        GenPrintInstr3Operands(B322InstrOr, 0,
-                               B322OpRegZero, 0,
+        GenPrintInstr3Operands(B32PInstrOR, 0,
+                               B32POpRegZero, 0,
                                GenWreg, 0,
                                TEMP_REG_A, 0);
         GenPostIncDecIndirect(GenWreg, TEMP_REG_A, v, tok);
@@ -2164,8 +1961,8 @@ void GenExpr0(void)
         GenPopReg();
         if (GenWreg == GenLreg)
         {
-          GenPrintInstr3Operands(B322InstrOr, 0,
-                                 B322OpRegZero, 0,
+          GenPrintInstr3Operands(B32PInstrOR, 0,
+                                 B32POpRegZero, 0,
                                  GenLreg, 0,
                                  TEMP_REG_B, 0);
 
@@ -2179,8 +1976,8 @@ void GenExpr0(void)
         else
         {
           // GenWreg == GenRreg here
-          GenPrintInstr3Operands(B322InstrOr, 0,
-                                 B322OpRegZero, 0,
+          GenPrintInstr3Operands(B32PInstrOR, 0,
+                                 B32POpRegZero, 0,
                                  GenRreg, 0,
                                  TEMP_REG_B, 0);
 
@@ -2229,8 +2026,8 @@ void GenExpr0(void)
         GenPopReg();
         if (GenWreg == GenLreg)
         {
-          GenPrintInstr3Operands(B322InstrOr, 0,
-                                 B322OpRegZero, 0,
+          GenPrintInstr3Operands(B32PInstrOR, 0,
+                                 B32POpRegZero, 0,
                                  GenLreg, 0,
                                  TEMP_REG_B, 0);
           lsaved = TEMP_REG_B;
@@ -2239,8 +2036,8 @@ void GenExpr0(void)
         else
         {
           // GenWreg == GenRreg here
-          GenPrintInstr3Operands(B322InstrOr, 0,
-                                 B322OpRegZero, 0,
+          GenPrintInstr3Operands(B32PInstrOR, 0,
+                                 B32POpRegZero, 0,
                                  GenRreg, 0,
                                  TEMP_REG_B, 0);
           rsaved = TEMP_REG_B;
@@ -2273,7 +2070,7 @@ void GenExpr0(void)
           printf("DIVISION/MOD is not supported!\n");
           /*
           GenPrintInstr3Operands(MipsInstrDiv, 0,
-                                 B322OpRegZero, 0,
+                                 B32POpRegZero, 0,
                                  TEMP_REG_B, 0,
                                  GenWreg, 0);*/
         }
@@ -2282,7 +2079,7 @@ void GenExpr0(void)
           printf("DIVISION/MOD is not supported!\n");
           /*
           GenPrintInstr3Operands(MipsInstrDivU, 0,
-                                 B322OpRegZero, 0,
+                                 B32POpRegZero, 0,
                                  TEMP_REG_B, 0,
                                  GenWreg, 0);*/
         }
@@ -2312,8 +2109,8 @@ void GenExpr0(void)
         GenPopReg();
         if (GenWreg == GenLreg)
         {
-          GenPrintInstr3Operands(B322InstrOr, 0,
-                                 B322OpRegZero, 0,
+          GenPrintInstr3Operands(B32PInstrOR, 0,
+                                 B32POpRegZero, 0,
                                  GenLreg, 0,
                                  TEMP_REG_B, 0);
           lsaved = TEMP_REG_B;
@@ -2322,8 +2119,8 @@ void GenExpr0(void)
         else
         {
           // GenWreg == GenRreg here
-          GenPrintInstr3Operands(B322InstrOr, 0,
-                                 B322OpRegZero, 0,
+          GenPrintInstr3Operands(B32PInstrOR, 0,
+                                 B32POpRegZero, 0,
                                  GenRreg, 0,
                                  TEMP_REG_B, 0);
           rsaved = TEMP_REG_B;
@@ -2336,7 +2133,7 @@ void GenExpr0(void)
           printf("DIVISION/MOD is not supported!\n");
           /*
           GenPrintInstr3Operands(MipsInstrDiv, 0,
-                                 B322OpRegZero, 0,
+                                 B32POpRegZero, 0,
                                  GenWreg, 0,
                                  rsaved, 0);*/
         }
@@ -2345,7 +2142,7 @@ void GenExpr0(void)
           printf("DIVISION/MOD is not supported!\n");
           /*
           GenPrintInstr3Operands(MipsInstrDivU, 0,
-                                 B322OpRegZero, 0,
+                                 B32POpRegZero, 0,
                                  GenWreg, 0,
                                  rsaved, 0);*/
         }
@@ -2382,8 +2179,8 @@ void GenExpr0(void)
         GenPopReg();
         GenWriteIndirect(GenLreg, GenRreg, v);
         if (GenWreg != GenRreg)
-          GenPrintInstr3Operands(B322InstrOr, 0,
-                                 B322OpRegZero, 0,
+          GenPrintInstr3Operands(B32PInstrOR, 0,
+                                 B32POpRegZero, 0,
                                  GenRreg, 0,
                                  GenWreg, 0);
       }
@@ -2393,15 +2190,15 @@ void GenExpr0(void)
     case tokAssign0: // assignment of 0, while throwing away the expression result value
       if (stack[i - 1][0] == tokRevLocalOfs)
       {
-        GenWriteLocal(B322OpRegZero, v, stack[i - 1][1]);
+        GenWriteLocal(B32POpRegZero, v, stack[i - 1][1]);
       }
       else if (stack[i - 1][0] == tokRevIdent)
       {
-        GenWriteIdent(B322OpRegZero, v, stack[i - 1][1]);
+        GenWriteIdent(B32POpRegZero, v, stack[i - 1][1]);
       }
       else
       {
-        GenWriteIndirect(GenWreg, B322OpRegZero, v);
+        GenWriteIndirect(GenWreg, B32POpRegZero, v);
       }
       break;
 
@@ -2423,52 +2220,44 @@ void GenExpr0(void)
           wreg = 0
       GenPrintInstr3Operands(MipsInstrSLTU, 0,
                              GenWreg, 0,
-                             B322OpRegZero, 0,
+                             B32POpRegZero, 0,
                              GenWreg, 0);
       */
-      GenPrintInstr3Operands(B322InstrBgtU, 0,
+      GenPrintInstr3Operands(B32PInstrSLTU, 0,
+                             B32POpRegZero, 0,
                              GenWreg, 0,
-                             B322OpRegZero, 0,
-                             B322OpConst, 3);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 0,
-                               GenWreg, 0);
-      GenPrintInstr1Operand(B322InstrJumpo, 0,
-                             B322OpConst, 2);
-      GenPrintInstr2Operands(B322InstrLoad, 0,
-                               B322OpConst, 1,
-                               GenWreg, 0);
+                             GenWreg, 0);
       break;
 
     case tokSChar:
       /* just use as an int for now
-      GenPrintInstr3Operands(B322InstrShiftl, 0,
+      GenPrintInstr3Operands(B32PInstrSHIFTL, 0,
                              GenWreg, 0,
-                             B322OpConst, 24,
+                             B32POpConst, 24,
                              GenWreg, 0);
-      GenPrintInstr3Operands(B322InstrShiftr, 0, //TODO this should have also replicated the sign bit (SRA)
+      GenPrintInstr3Operands(B32PInstrSHIFTR, 0, //TODO this should have also replicated the sign bit (SRA)
                              GenWreg, 0,
-                             B322OpConst, 24,
+                             B32POpConst, 24,
                              GenWreg, 0);
       */
       break;
     case tokUChar:
       /* just use as an int for now
-      GenPrintInstr3Operands(B322InstrAnd, 0,
+      GenPrintInstr3Operands(B32PInstrAND, 0,
                              GenWreg, 0,
-                             B322OpConst, 0xFF,
+                             B32POpConst, 0xFF,
                              GenWreg, 0);
       */
       break;
     case tokShort:
       /* just use as an int for now
-      GenPrintInstr3Operands(B322InstrShiftl, 0,
+      GenPrintInstr3Operands(B32PInstrSHIFTL, 0,
                              GenWreg, 0,
-                             B322OpConst, 16,
+                             B32POpConst, 16,
                              GenWreg, 0);
-      GenPrintInstr3Operands(B322InstrShiftr, 0, //TODO this should have also replicated the sign bit (SRA)
+      GenPrintInstr3Operands(B32PInstrSHIFTR, 0, //TODO this should have also replicated the sign bit (SRA)
                              GenWreg, 0,
-                             B322OpConst, 16,
+                             B32POpConst, 16,
                              GenWreg, 0);
       */
       break;
@@ -2477,16 +2266,16 @@ void GenExpr0(void)
       GenPrintInstr3Operands(MipsInstrAnd, 0,
                              GenWreg, 0,
                              GenWreg, 0,
-                             B322OpConst, 0xFFFF);*/
+                             B32POpConst, 0xFFFF);*/
 
       /* just use as an int for now
-      GenPrintInstr3Operands(B322InstrShiftl, 0,
+      GenPrintInstr3Operands(B32PInstrSHIFTL, 0,
                              GenWreg, 0,
-                             B322OpConst, 16,
+                             B32POpConst, 16,
                              GenWreg, 0);
-      GenPrintInstr3Operands(B322InstrShiftr, 0,
+      GenPrintInstr3Operands(B32PInstrSHIFTR, 0,
                              GenWreg, 0,
-                             B322OpConst, 16,
+                             B32POpConst, 16,
                              GenWreg, 0);
       */
       break;
@@ -2541,7 +2330,7 @@ void GenExpr0(void)
     }
   }
 
-  if (GenWreg != B322OpRegV0)
+  if (GenWreg != B32POpRegV0)
     errorInternal(104);
 }
 
@@ -2574,7 +2363,7 @@ void GenExpr(void)
 STATIC
 void GenFin(void)
 {
-  // No idea what this does (something with structs??), so I just literally converted it to B322 asm
+  // No idea what this does (something with structs??), so I just literally converted it to B32P asm
   if (StructCpyLabel)
   {
     int lbl = LabelCnt++;

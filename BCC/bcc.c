@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021, b4rt-dev
+Copyright (c) 2021-2022, b4rt-dev
 Copyright (c) 2012-2020, Alexey Frunze
 All rights reserved.
 
@@ -26,9 +26,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /*****************************************************************************/
 /*                                                                           */
-/*                           BCC (B322 C Compiler)                           */
+/*                           BCC (B32P C Compiler)                           */
 /*                                                                           */
-/*                           C compiler for B322                             */
+/*                           C compiler for B32P                             */
 /*                                                                           */
 /*                            Based on SmallerC:                             */
 /*                 A simple and small single-pass C compiler                 */

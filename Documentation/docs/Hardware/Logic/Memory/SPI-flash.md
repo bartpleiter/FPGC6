@@ -1,0 +1,11 @@
+# SPI flash
+The SPI flash is mostly used to contain a program, like BDOS (an OS), since this allows the FPGC to run a program on its own without the need to have it sent over using UART. The size of the flash currently in use is 16MiB, and can be read completely by the MU.
+
+## QSPI mode
+The MU makes use of an SPI flash controller which accesses the flash chip in quad SPI mode with continuous reading for faster reads. The maximum speed without modifying the amount of dummy clocks for each read is 25MHz. Because of the SPI interface, it takes many cycles to read one 32 bit instruction. Therefore, the contents are usually copied to the faster SDRAM by the bootloader, though it is possible to directly execute from SPI flash. While the SPI flash chip uses 8 bit addresses internally, the controller can be addressed by 32 bit words. The values of 'empty' addresses are all ones. For this SPI flash controller only read instructions are implemented, so no writing or erasing is possible.
+
+## SPI mode
+By writing to a certain register, it is possible to switch to a direct SPI bus mode. When this register in the MU is written (see memory map), the SPI flash will be accessible using a generic SPI interface. This allows the CPU to send and receive SPI commands in single SPI mode. While this is much slower, it gives the CPU full control over the chip, allowing for updating the program stored on the SPI flash without using an external programmer.
+
+## Simulation
+To test the timing and functionality of the SPI flash controller, I added a simulation model of the W25Q128JV SPI chip (from the WinBond website), which is compatible with the W25Q128 I use. The SPI flash controller reads from this chip when a trigger occurs. When done reading it sets the recvDone signal high. Before all of this can happen, the chip has to be initialized. This is done by sending a 'reset continuous reading' command and a read command with the continuous reading bits set. This way each read does not have to start with an 8 cycle instruction. After initialization, the initDone signal is set high. When the MU gets a request from the CPU to read from SPI flash while the chip is not initialized yet, then the MU will wait (by keeping the busy signal high) until initialization is done before reading.

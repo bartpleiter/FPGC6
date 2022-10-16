@@ -1,7 +1,6 @@
-# Quartus
+# Quartus build instructions
 
-!!! info "TODO"
-	Add picture of usage
+TODO: write this page
 
 The Quartus folder contains all files for actually implementing the FPGC into hardware on an FPGA. The targeted development board is the QMTECH EP4CE15 core board with 32MiB SDRAM.
 

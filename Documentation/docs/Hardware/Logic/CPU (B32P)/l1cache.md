@@ -1,0 +1,2 @@
+# L1 Cache
+Since SDRAM memory access is a huge bottleneck for the pipeline, L1 cache is added to reduce this. As of writing, the CPU is designed in such a way that it allows for L1 cache for instructions and data. Only the implementation of the cache itself is still TODO.

@@ -1,0 +1,2 @@
+# GPIO
+One address on the Memory map is mapped to GPIO pins on the FPGC. Only the right 16 bits are used. The left 8 of these 16 bits are read only and are the state of the 8 input ports. The right 8 of these 16 bits are the state of the 8 output ports. The output ports can written and read. I will eventually work on this module to make it true GPIO, using tri-states and programmable input/output mode. Currently only 4 pins of each are mapped to the 8 physical pins of the new PCB design.

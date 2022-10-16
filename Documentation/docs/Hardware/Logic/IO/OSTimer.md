@@ -1,0 +1,2 @@
+# OStimer
+The OStimer (one stop timer) can be used to generate an interrupt after a programmable amount of time. Each timer has two memory addresses. One address specifies the time in milliseconds by using a prescaler of 50000 (which is 1 millisecond at 50MHz), the other address acts as a trigger if it is written to (it does not matter what value). An interrupt is raised for 1 clock cycle after the countdown has finished. A typical use-case for the OStimer are the implementation of delay functions.

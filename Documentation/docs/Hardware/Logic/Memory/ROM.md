@@ -1,0 +1,2 @@
+# ROM
+Internally on the FPGA, 2KiB of SRAM/Block RAM is used as ROM (it is initialized by the FPGA and read only when the FPGA is configured). It contains the bootloader of the FPGC. This code is read only and can only be modified by reprogramming the FPGA.

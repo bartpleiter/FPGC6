@@ -1,0 +1,2 @@
+# UART
+Using the addresses mapped to the UART RX and UART TX modules, it is possible to communicate with devices like a PC using UART. The baud rate is always set to 1MBaud and cannot be changed without modifying the FPGA design. When a byte is received, an interrupt is triggered and the byte can be read from a certain address.

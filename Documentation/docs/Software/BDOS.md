@@ -1,5 +1,8 @@
 # BDOS
 
+!!! warning
+    Because I am updating BDOS a lot, this page can become quickly outdated.
+
 BDOS (or Bart's Drive Operating System) is a single-tasking operating system for the FPGC written in C and assembly. Its goal is to provide a user interface (shell) to load programs from storage an to do other basic drive operations. These programs still have full access to all hardware as if it is running on bare metal. The only difference is that the program is ran from `0x400000` instead of `0x000000` and that interrupts first go through BDOS before reaching the program. Therefore, some compiler parameters will have to be passed for running programs on BDOS. Furthermore, BDOS user programs have access to the OS via system calls. These system calls can be used, for example, to get HID inputs from the HID FIFO, or to print characters to the shell. While technically not required, they do make the programs a lot simpler.
 
 While this is definitely not a complex OS like Linux or Windows, it does add a lot of functionality to the FPGC. Mainly the shell and the ability to load programs from USB and Network are a huge step-up over the MCU-like programming experience where you can only run one program until it is reprogrammed. By adding BCC, ASM (assembler) and a file editor as userBDOS programs, and loading BDOS from the SPI flash, the system can be fully used as a personal computer without the need for an external programmer!

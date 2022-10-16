@@ -1,0 +1,2 @@
+# PS/2 Keyboard
+A PS/2 Keyboard reader. Throws an interrupt when a scan code is received. The scan code can then be read from memory. A software library is required to keep track of which button is pressed. Read only, so it is not possible to set the lights on the keyboard.

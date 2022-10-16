@@ -1,0 +1,2 @@
+# Audio
+Currently there is no audio support anymore for the FPGC6. This was removed after removing the ESP32-based software synthesizer from the design. An I2S DAC was added to the PCB, allowing for an FPGA-based audio solution. However, this still has to be designed and implemented.

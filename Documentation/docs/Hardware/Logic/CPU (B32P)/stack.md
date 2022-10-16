@@ -1,0 +1,5 @@
+# Stack
+The stack memory has an internal stack pointer. The stack is mostly used in assembly coding for jumping to functions and backing up or restoring registers in interrupt handlers or functions. In combination with the SavPC instruction, one can easily jump to (and return from) functions in assembly (C uses a software stack).
+
+The pointer wraps around in case of a push when the stack is full or in case of a pop when the stack is empty.
+The stack is 1024 words deep, allowing for 64 full register bank backups. The stack pointer and stack memory are not accessible by the rest of the CPU. This and the small size make the stack mostly unusable for the C compiler. For this, a software stack implementation using the SDRAM main memory and some registers are used. However, the hardware stack is used to quickly backup and restore all 15 GP registers during an interrupt.

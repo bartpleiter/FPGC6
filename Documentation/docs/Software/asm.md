@@ -167,4 +167,4 @@ The assembler will always read the code from code.asm and write the result to st
 I could create my own syntax highlighting for Sublime Text 3, however its Z80 syntax highlighting is already kinda decent on B32P ASM code.
 
 ## BCC version
-To allow for assembling code directly from the FPGC/BDOS itself, a special version of the assembler is written in BCC. This version lacks several features since its goal is to only assemble the output of BCC. It is also more optimized for speed.
+To allow for assembling code directly from the FPGC/BDOS itself, a special version of the assembler is written in BCC. This version lacks several features since its goal is to only assemble the output of BCC. It is also more optimized for speed (the compiler, not the code per sé)

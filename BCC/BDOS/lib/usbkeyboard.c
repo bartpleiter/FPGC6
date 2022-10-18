@@ -311,6 +311,19 @@ void USBkeyboard_sendToFifo(char usbCode, char* usbBuf)
     } 
 }
 
+// Returns if a button value is present in a USB buffer
+word USBkeyboard_buttonInBuffer(char button, char* buffer)
+{
+    word i;
+    for (i = 0; i < 8; i++)
+    {
+        if (button == buffer[i])
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 // Parses USB keyboard buffer and writes result to HID FIFO
 void USBkeyboard_parse_buffer(char* usbBuf, char* usbBufPrev)
@@ -321,8 +334,8 @@ void USBkeyboard_parse_buffer(char* usbBuf, char* usbBufPrev)
     word i;
     for (i = 2; i < 8; i++)
     {
-        // if prev byte != new byte and new byte != 0, then new byte is new keypress
-        if (usbBuf[i] != 0 && usbBufPrev[i] != usbBuf[i])
+        // if new byte != 0 and not in previous buffer, then new byte is new keypress
+        if (usbBuf[i] != 0 && !USBkeyboard_buttonInBuffer(usbBuf[i], usbBufPrev))
         {
             //uprintlnDec(usbBuf[i]); // usefull for adding new keys
             USBkeyboard_holdButton = i;

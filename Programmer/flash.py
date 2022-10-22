@@ -62,7 +62,9 @@ sleep(0.3) # give the FPGC time to reset, even though it also works without this
 # parse byte file
 ba = bytearray()
 
-with open("flasher.bin", "rb") as f:
+# Use flasher_accurate.bin or flasher_fast.bin
+#  and change fillBuffer() accordingly
+with open("flasher_fast.bin", "rb") as f:
     bytes_read = f.read()
     for b in bytes_read:
         ba.append(b)
@@ -110,10 +112,17 @@ print("Done programming FPGC", flush=True)
 INTERACTING WITH PROGRAMMER
 """
 
-
+# Send single byte, wait a bit and assume successful receive
+# Speed depends a lot on USB configuration (like hubs),
+#  so change the delay between ~0.001 and 0.00005
 def sendSingleByte(b):
     port.write(b)
-    sleep(0.001) # give FPGC time to process byte
+    sleep(0.00005) # give FPGC time to process byte
+
+# Send single byte, wait for ACk from FPGC
+def sendSingleByteWaitForAck(b):
+    port.write(b)
+    port.read(1) # should return 'a', to indicate successful receive
 
 
 def eraseBlock(addr):
@@ -161,6 +170,10 @@ def fillBuffer(page):
     port.read(1)
 
     for i in range(256):
+        # Slow, but accurate (needs flasher_accurate.bin):
+        #sendSingleByteWaitForAck(page[i].to_bytes(1, byteorder="big"))
+        
+        # Fast, but needs finetuning on host device (needs flasher_fast.bin)
         sendSingleByte(page[i].to_bytes(1, byteorder="big"))
 
     #print("page sent")

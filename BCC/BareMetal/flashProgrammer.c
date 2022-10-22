@@ -534,7 +534,7 @@ void int3()
         word *p_pageBuffer = pageBuffer;
         *(p_pageBuffer + pageBufferIndex) = b;
         pageBufferIndex++;
-
+        //uprintc('a'); // notify write to buffer is done
     }
     // Get command
     else if (currentCommand == COMMAND_IDLE)

@@ -102,9 +102,6 @@ assign I2S_SCLK = 1'b0;
 assign I2S_LRCLK = 1'b0;
 assign I2S_MCLK = 1'b0;
 
-assign SDRAM_DQM[3:2] = SDRAM_DQM[1:0];
-assign SDRAM_DQ[31:16] = SDRAM_DQ[15:0];
-
 
 //-------------------CLK-------------------------
 // Clock generator PLL
@@ -481,8 +478,8 @@ MemoryUnit mu(
 .SDRAM_RASn     (SDRAM_RASn),
 .SDRAM_A        (SDRAM_A),
 .SDRAM_BA       (SDRAM_BA),
-.SDRAM_DQM      (SDRAM_DQM[1:0]),
-.SDRAM_DQ       (SDRAM_DQ[15:0]),
+.SDRAM_DQM      (SDRAM_DQM),
+.SDRAM_DQ       (SDRAM_DQ),
 
 // VRAM32 cpu port
 .VRAM32_cpu_d       (vram32_cpu_d),

@@ -29,8 +29,8 @@ module MemoryUnit(
     output          SDRAM_CKE, SDRAM_RASn,
     output [12:0]   SDRAM_A,
     output [1:0]    SDRAM_BA,
-    output [1:0]    SDRAM_DQM,
-    inout [15:0]    SDRAM_DQ,
+    output [3:0]    SDRAM_DQM,
+    inout [31:0]    SDRAM_DQ,
 
     //VRAM32 cpu port
     output [31:0]   VRAM32_cpu_d,

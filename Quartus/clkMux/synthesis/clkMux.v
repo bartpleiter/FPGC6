@@ -4,14 +4,18 @@
 
 `timescale 1 ps / 1 ps
 module clkMux (
-		input  wire  inclk1x,   //  altclkctrl_input.inclk1x
-		input  wire  inclk0x,   //                  .inclk0x
-		input  wire  clkselect, //                  .clkselect
-		output wire  outclk     // altclkctrl_output.outclk
+		input  wire       inclk3x,   //  altclkctrl_input.inclk3x
+		input  wire       inclk2x,   //                  .inclk2x
+		input  wire       inclk1x,   //                  .inclk1x
+		input  wire       inclk0x,   //                  .inclk0x
+		input  wire [1:0] clkselect, //                  .clkselect
+		output wire       outclk     // altclkctrl_output.outclk
 	);
 
 	clkMux_altclkctrl_0 altclkctrl_0 (
-		.inclk1x   (inclk1x),   //  altclkctrl_input.inclk1x
+		.inclk3x   (inclk3x),   //  altclkctrl_input.inclk3x
+		.inclk2x   (inclk2x),   //                  .inclk2x
+		.inclk1x   (inclk1x),   //                  .inclk1x
 		.inclk0x   (inclk0x),   //                  .inclk0x
 		.clkselect (clkselect), //                  .clkselect
 		.outclk    (outclk)     // altclkctrl_output.outclk

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="clkMux" kind="system" version="21.1" fabric="QSYS">
  <!-- Format version 21.1 850 (Future versions may contain additional information.) -->
- <!-- 2022.07.04.11:59:14 -->
+ <!-- 2022.10.23.13:13:42 -->
  <!-- A collection of modules and connections -->
  <parameter name="clockCrossingAdapter">
   <type>com.altera.sopcmodel.ensemble.EClockAdapter</type>
@@ -13,7 +13,7 @@
  </parameter>
  <parameter name="device">
   <type>java.lang.String</type>
-  <value>EP4CE15F23C8</value>
+  <value>5CEFA5F23I7</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>true</visible>
@@ -21,7 +21,7 @@
  </parameter>
  <parameter name="deviceFamily">
   <type>java.lang.String</type>
-  <value>CYCLONEIVE</value>
+  <value>CYCLONEV</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>true</visible>
@@ -29,7 +29,7 @@
  </parameter>
  <parameter name="deviceSpeedGrade">
   <type>java.lang.String</type>
-  <value>8</value>
+  <value>7</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -53,7 +53,7 @@
  </parameter>
  <parameter name="generationId">
   <type>int</type>
-  <value>1656928754</value>
+  <value>1666523621</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>true</visible>
@@ -101,7 +101,7 @@
  </parameter>
  <parameter name="projectName">
   <type>java.lang.String</type>
-  <value></value>
+  <value>Test02_project_key.qpf</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -156,7 +156,7 @@
 the requested settings for a module instance. -->
   <parameter name="DEVICE_FAMILY">
    <type>java.lang.String</type>
-   <value>CYCLONEIVE</value>
+   <value>CYCLONEV</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -173,7 +173,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="NUMBER_OF_CLOCKS">
    <type>int</type>
-   <value>2</value>
+   <value>4</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -184,7 +184,7 @@ the requested settings for a module instance. -->
    <value>1</value>
    <derived>false</derived>
    <enabled>false</enabled>
-   <visible>false</visible>
+   <visible>true</visible>
    <valid>true</valid>
   </parameter>
   <parameter name="GUI_USE_ENA">
@@ -262,6 +262,18 @@ parameters are a RESULT of the module parameters. -->
    <type>conduit</type>
    <isStart>false</isStart>
    <port>
+    <name>inclk3x</name>
+    <direction>Input</direction>
+    <width>1</width>
+    <role>inclk3x</role>
+   </port>
+   <port>
+    <name>inclk2x</name>
+    <direction>Input</direction>
+    <width>1</width>
+    <role>inclk2x</role>
+   </port>
+   <port>
     <name>inclk1x</name>
     <direction>Input</direction>
     <width>1</width>
@@ -276,7 +288,7 @@ parameters are a RESULT of the module parameters. -->
    <port>
     <name>clkselect</name>
     <direction>Input</direction>
-    <width>1</width>
+    <width>2</width>
     <role>clkselect</role>
    </port>
   </interface>
@@ -347,5 +359,5 @@ parameters are a RESULT of the module parameters. -->
   <version>21.1</version>
  </plugin>
  <reportVersion>21.1 850</reportVersion>
- <uniqueIdentifier>FE5400DE3AB400000181C8A65A98</uniqueIdentifier>
+ <uniqueIdentifier>8C89A553699400000184048C6ACF</uniqueIdentifier>
 </EnsembleReport>

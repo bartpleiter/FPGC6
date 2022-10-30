@@ -21,8 +21,8 @@ module FPGC5(
     output          SDRAM_CKE,
     output [12:0]   SDRAM_A,
     output [1:0]    SDRAM_BA,
-    output [1:0]    SDRAM_DQM,
-    inout  [15:0]   SDRAM_DQ,
+    output [3:0]    SDRAM_DQM,
+    inout  [31:0]   SDRAM_DQ,
 
     //SPI0 flash
     output          SPI0_clk,
@@ -102,6 +102,9 @@ assign I2S_SCLK = 1'b0;
 assign I2S_LRCLK = 1'b0;
 assign I2S_MCLK = 1'b0;
 
+assign SDRAM_DQM[3:2] = SDRAM_DQM[1:0];
+assign SDRAM_DQ[31:16] = SDRAM_DQ[15:0];
+
 
 //-------------------CLK-------------------------
 // Clock generator PLL
@@ -110,20 +113,37 @@ wire clkTMDShalf;       // TMDS clock (pre-DDR), 5x pixel clock (125MHz)
 wire clk_SDRAM;         // SDRAM clock                          (100MHz)
 wire clk;               // System clock                         (50MHz)
 
+//clock_pll_v clkPll(
+//.refclk (clock),
+//.outclk_0     (clkPixel),
+//.outclk_1     (clkTMDShalf),
+//.outclk_2     (clk_SDRAM),
+//.outclk_3     (SDRAM_CLK),
+//.outclk_4     (clk)
+//);
+
 clock_pll clkPll(
 .inclk0 (clock),
-//.c0     (clkPixel),
-//.c1     (clkTMDShalf),
-.c2     (clk_SDRAM),
-.c3     (SDRAM_CLK),
-.c4     (clk)
+.areset (DIPS[3]),
+.c0     (clk_SDRAM),
+.c1     (SDRAM_CLK),
+.c2     (clk)
 );
 
 wire clk14; //14.31818MHz (50*63/220)
 wire clk114; //14.31818 * 8 MHz = 114.5454MHz (50*(63*2)/55)
 
+//NTSC_pll ntscPll(
+//.refclk (clock),
+//.outclk_0     (clk14),
+//.outclk_1     (clk114),
+//.outclk_2     (clkPixel), // 25.2MHz dirty fix to allow ALTCLKBUF
+//.outclk_3     (clkTMDShalf)
+//);
+
 NTSC_pll ntscPll(
-.inclk0 (clock),
+.inclk0 (clk),
+.areset (DIPS[2]),
 .c0     (clk14),
 .c1     (clk114),
 .c2     (clkPixel), // 25.2MHz dirty fix to allow ALTCLKBUF
@@ -134,9 +154,11 @@ wire clkMuxOut;
 wire selectOutput;    // 1 -> HDMI, 0 -> Composite
 
 clkMux clkmux(
-.inclk0x(clk14),
-.inclk1x(clkPixel),
-.clkselect(selectOutput),
+.inclk0x(clock),
+.inclk1x(clock),
+.inclk2x(clk14),
+.inclk3x(clkPixel),
+.clkselect({1'b1, selectOutput}),
 .outclk(clkMuxOut)
 );
 
@@ -378,8 +400,8 @@ FSX fsx(
 .clkMuxOut      (clkMuxOut),
 
 // HDMI
-.TMDS_p         (TMDS_p),
-.TMDS_n         (TMDS_n),
+//.TMDS_p         (TMDS_p),
+//.TMDS_n         (TMDS_n),
 
 // NTSC composite
 .composite      (composite),
@@ -459,8 +481,8 @@ MemoryUnit mu(
 .SDRAM_RASn     (SDRAM_RASn),
 .SDRAM_A        (SDRAM_A),
 .SDRAM_BA       (SDRAM_BA),
-.SDRAM_DQM      (SDRAM_DQM),
-.SDRAM_DQ       (SDRAM_DQ),
+.SDRAM_DQM      (SDRAM_DQM[1:0]),
+.SDRAM_DQ       (SDRAM_DQ[15:0]),
 
 // VRAM32 cpu port
 .VRAM32_cpu_d       (vram32_cpu_d),

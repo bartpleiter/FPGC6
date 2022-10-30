@@ -1,4 +1,4 @@
-//altclkctrl CBX_SINGLE_OUTPUT_FILE="ON" CLOCK_TYPE="Global Clock" DEVICE_FAMILY="Cyclone IV E" ENA_REGISTER_MODE="falling edge" USE_GLITCH_FREE_SWITCH_OVER_IMPLEMENTATION="OFF" clkselect ena inclk outclk
+//altclkctrl CBX_SINGLE_OUTPUT_FILE="ON" CLOCK_TYPE="Global Clock" DEVICE_FAMILY="Cyclone V" USE_GLITCH_FREE_SWITCH_OVER_IMPLEMENTATION="OFF" clkselect ena inclk outclk
 //VERSION_BEGIN 21.1 cbx_altclkbuf 2022:06:23:22:02:32:SJ cbx_cycloneii 2022:06:23:22:02:32:SJ cbx_lpm_add_sub 2022:06:23:22:02:32:SJ cbx_lpm_compare 2022:06:23:22:02:32:SJ cbx_lpm_decode 2022:06:23:22:02:32:SJ cbx_lpm_mux 2022:06:23:22:02:32:SJ cbx_mgl 2022:06:23:22:26:17:SJ cbx_nadder 2022:06:23:22:02:32:SJ cbx_stratix 2022:06:23:22:02:32:SJ cbx_stratixii 2022:06:23:22:02:32:SJ cbx_stratixiii 2022:06:23:22:02:32:SJ cbx_stratixv 2022:06:23:22:02:32:SJ  VERSION_END
 // synthesis VERILOG_INPUT_VERSION VERILOG_2001
 // altera message_off 10463
@@ -22,7 +22,7 @@
 
 
 
-//synthesis_resources = clkctrl 1 
+//synthesis_resources = cyclonev_clkena 1 
 //synopsys translate_off
 `timescale 1 ps / 1 ps
 //synopsys translate_on
@@ -46,30 +46,30 @@ module  clkMux_altclkctrl_0_sub
 // synopsys translate_on
 `endif
 
-	wire  wire_clkctrl1_outclk;
+	wire  wire_sd2_outclk;
+	wire  wire_sd1_outclk;
 	wire  [1:0]  clkselect_wire;
 	wire  [3:0]  inclk_wire;
 
-	cycloneive_clkctrl   clkctrl1
+	cyclonev_clkselect   sd2
 	( 
 	.clkselect(clkselect_wire),
-	.ena(ena),
 	.inclk(inclk_wire),
-	.outclk(wire_clkctrl1_outclk)
-	// synopsys translate_off
-	,
-	.devclrn(1'b1),
-	.devpor(1'b1)
-	// synopsys translate_on
-	);
+	.outclk(wire_sd2_outclk));
+	cyclonev_clkena   sd1
+	( 
+	.ena(ena),
+	.enaout(),
+	.inclk(wire_sd2_outclk),
+	.outclk(wire_sd1_outclk));
 	defparam
-		clkctrl1.clock_type = "Global Clock",
-		clkctrl1.ena_register_mode = "falling edge",
-		clkctrl1.lpm_type = "cycloneive_clkctrl";
+		sd1.clock_type = "Global Clock",
+		sd1.ena_register_mode = "always enabled",
+		sd1.lpm_type = "cyclonev_clkena";
 	assign
 		clkselect_wire = {clkselect},
 		inclk_wire = {inclk},
-		outclk = wire_clkctrl1_outclk;
+		outclk = wire_sd1_outclk;
 endmodule //clkMux_altclkctrl_0_sub
 //VALID FILE // (C) 2001-2022 Intel Corporation. All rights reserved.
 // Your use of Intel Corporation's design tools, logic functions and other 
@@ -92,16 +92,20 @@ module  clkMux_altclkctrl_0  (
     clkselect,
     inclk0x,
     inclk1x,
+    inclk2x,
+    inclk3x,
     outclk);
 
-    input    clkselect;
+    input  [1:0]  clkselect;
     input    inclk0x;
     input    inclk1x;
+    input    inclk2x;
+    input    inclk3x;
     output   outclk;
 `ifndef ALTERA_RESERVED_QIS
 // synopsys translate_off
 `endif
-    tri0     clkselect;
+    tri0 [1:0]  clkselect;
 `ifndef ALTERA_RESERVED_QIS
 // synopsys translate_on
 `endif
@@ -109,28 +113,24 @@ module  clkMux_altclkctrl_0  (
     wire  sub_wire0;
     wire  outclk;
     wire  sub_wire1;
-    wire [1:0] sub_wire2;
-    wire [0:0] sub_wire3;
+    wire  sub_wire2;
+    wire [3:0] sub_wire3;
     wire  sub_wire4;
     wire  sub_wire5;
-    wire [3:0] sub_wire6;
-    wire  sub_wire7;
-    wire [1:0] sub_wire8;
+    wire  sub_wire6;
 
     assign  outclk = sub_wire0;
-    assign  sub_wire1 = clkselect;
-    assign sub_wire2[1:0] = {sub_wire3, sub_wire1};
-    assign sub_wire3[0:0] = 1'h0;
-    assign  sub_wire4 = 1'h1;
-    assign  sub_wire5 = inclk0x;
-    assign sub_wire6[3:0] = {sub_wire8, sub_wire7, sub_wire5};
-    assign  sub_wire7 = inclk1x;
-    assign sub_wire8[1:0] = 2'h0;
+    assign  sub_wire1 = 1'h1;
+    assign  sub_wire2 = inclk0x;
+    assign sub_wire3[3:0] = {sub_wire6, sub_wire5, sub_wire4, sub_wire2};
+    assign  sub_wire4 = inclk1x;
+    assign  sub_wire5 = inclk2x;
+    assign  sub_wire6 = inclk3x;
 
     clkMux_altclkctrl_0_sub  clkMux_altclkctrl_0_sub_component (
-                .clkselect (sub_wire2),
-                .ena (sub_wire4),
-                .inclk (sub_wire6),
+                .clkselect (clkselect),
+                .ena (sub_wire1),
+                .inclk (sub_wire3),
                 .outclk (sub_wire0));
 
 endmodule

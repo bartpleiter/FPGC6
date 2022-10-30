@@ -20,6 +20,7 @@ Quartus/*.cdf
 Quartus/*.txt
 !Quartus/output_files/output_file.jic
 !Quartus/output_files/FPGC5.sof
+QuartusE15/
 Programmer/verify.bin
 Quartus/*/*.bak
 Quartus/*/*/*.bak

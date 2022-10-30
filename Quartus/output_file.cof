@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="US-ASCII" standalone="yes"?>
 <cof>
-	<eprom_name>EPCQ64</eprom_name>
-	<flash_loader_device>EP4CE15</flash_loader_device>
+	<eprom_name>EPCQ128</eprom_name>
+	<flash_loader_device>5CEFA5</flash_loader_device>
 	<output_filename>output_files/output_file.jic</output_filename>
 	<n_pages>1</n_pages>
 	<width>1</width>
@@ -10,7 +10,7 @@
 		<user_name>Page_0</user_name>
 		<page_flags>1</page_flags>
 		<bit0>
-			<sof_filename>output_files/FPGC5.sof</sof_filename> 
+			<sof_filename>/home/bart/Documents/FPGA/FPGC6/Quartus/output_files/Test02_project_key.sof</sof_filename> 
 		</bit0>
 	</sof_data>
 	<version>10</version>

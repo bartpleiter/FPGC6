@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deploy
- date="2022.07.04.11:59:14"
- outputDirectory="/home/bart/Documents/FPGA/FPGC5/Quartus/clkMux/">
+ date="2022.10.23.13:13:42"
+ outputDirectory="/home/bart/Documents/FPGA/FPGC6/Quartus/clkMux/">
  <perimeter>
   <parameter
      name="AUTO_GENERATION_ID"
@@ -18,27 +18,29 @@
   <parameter
      name="AUTO_DEVICE_FAMILY"
      type="String"
-     defaultValue="Cyclone IV E"
+     defaultValue="Cyclone V"
      onHdl="0"
      affectsHdl="1" />
   <parameter
      name="AUTO_DEVICE"
      type="String"
-     defaultValue="EP4CE15F23C8"
+     defaultValue="5CEFA5F23I7"
      onHdl="0"
      affectsHdl="1" />
   <parameter
      name="AUTO_DEVICE_SPEEDGRADE"
      type="String"
-     defaultValue="8"
+     defaultValue="7"
      onHdl="0"
      affectsHdl="1" />
   <interface name="altclkctrl_input" kind="conduit" start="0">
    <property name="associatedClock" value="" />
    <property name="associatedReset" value="" />
+   <port name="inclk3x" direction="input" role="inclk3x" width="1" />
+   <port name="inclk2x" direction="input" role="inclk2x" width="1" />
    <port name="inclk1x" direction="input" role="inclk1x" width="1" />
    <port name="inclk0x" direction="input" role="inclk0x" width="1" />
-   <port name="clkselect" direction="input" role="clkselect" width="1" />
+   <port name="clkselect" direction="input" role="clkselect" width="2" />
   </interface>
   <interface name="altclkctrl_output" kind="conduit" start="0">
    <property name="associatedClock" value="" />
@@ -48,29 +50,29 @@
  </perimeter>
  <entity
    path=""
-   parameterizationKey="clkMux:1.0:AUTO_DEVICE=EP4CE15F23C8,AUTO_DEVICE_FAMILY=Cyclone IV E,AUTO_DEVICE_SPEEDGRADE=8,AUTO_GENERATION_ID=1656928754,AUTO_UNIQUE_ID=(altclkctrl:21.1:CLOCK_TYPE=1,DEVICE_FAMILY=Cyclone IV E,ENA_REGISTER_MODE=1,GUI_USE_ENA=false,NUMBER_OF_CLOCKS=2,USE_GLITCH_FREE_SWITCH_OVER_IMPLEMENTATION=false)"
+   parameterizationKey="clkMux:1.0:AUTO_DEVICE=5CEFA5F23I7,AUTO_DEVICE_FAMILY=Cyclone V,AUTO_DEVICE_SPEEDGRADE=7,AUTO_GENERATION_ID=1666523621,AUTO_UNIQUE_ID=(altclkctrl:21.1:CLOCK_TYPE=1,DEVICE_FAMILY=Cyclone V,ENA_REGISTER_MODE=1,GUI_USE_ENA=false,NUMBER_OF_CLOCKS=4,USE_GLITCH_FREE_SWITCH_OVER_IMPLEMENTATION=false)"
    instancePathKey="clkMux"
    kind="clkMux"
    version="1.0"
    name="clkMux">
-  <parameter name="AUTO_GENERATION_ID" value="1656928754" />
-  <parameter name="AUTO_DEVICE" value="EP4CE15F23C8" />
-  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone IV E" />
+  <parameter name="AUTO_GENERATION_ID" value="1666523621" />
+  <parameter name="AUTO_DEVICE" value="5CEFA5F23I7" />
+  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone V" />
   <parameter name="AUTO_UNIQUE_ID" value="" />
-  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="8" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="7" />
   <generatedFiles>
    <file
-       path="/home/bart/Documents/FPGA/FPGC5/Quartus/clkMux/synthesis/clkMux.v"
+       path="/home/bart/Documents/FPGA/FPGC6/Quartus/clkMux/synthesis/clkMux.v"
        type="VERILOG" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/bart/Documents/FPGA/FPGC5/Quartus/clkMux/synthesis/submodules/clkMux_altclkctrl_0.v"
+       path="/home/bart/Documents/FPGA/FPGC6/Quartus/clkMux/synthesis/submodules/clkMux_altclkctrl_0.v"
        type="VERILOG"
        attributes="" />
   </childGeneratedFiles>
   <sourceFiles>
-   <file path="/home/bart/Documents/FPGA/FPGC5/Quartus/clkMux.qsys" />
+   <file path="/home/bart/Documents/FPGA/FPGC6/Quartus/clkMux.qsys" />
   </sourceFiles>
   <childSourceFiles>
    <file
@@ -99,20 +101,20 @@
  </entity>
  <entity
    path="submodules/"
-   parameterizationKey="altclkctrl:21.1:CLOCK_TYPE=1,DEVICE_FAMILY=Cyclone IV E,ENA_REGISTER_MODE=1,GUI_USE_ENA=false,NUMBER_OF_CLOCKS=2,USE_GLITCH_FREE_SWITCH_OVER_IMPLEMENTATION=false"
+   parameterizationKey="altclkctrl:21.1:CLOCK_TYPE=1,DEVICE_FAMILY=Cyclone V,ENA_REGISTER_MODE=1,GUI_USE_ENA=false,NUMBER_OF_CLOCKS=4,USE_GLITCH_FREE_SWITCH_OVER_IMPLEMENTATION=false"
    instancePathKey="clkMux:.:altclkctrl_0"
    kind="altclkctrl"
    version="21.1"
    name="clkMux_altclkctrl_0">
-  <parameter name="NUMBER_OF_CLOCKS" value="2" />
+  <parameter name="NUMBER_OF_CLOCKS" value="4" />
   <parameter name="USE_GLITCH_FREE_SWITCH_OVER_IMPLEMENTATION" value="false" />
   <parameter name="GUI_USE_ENA" value="false" />
-  <parameter name="DEVICE_FAMILY" value="Cyclone IV E" />
+  <parameter name="DEVICE_FAMILY" value="Cyclone V" />
   <parameter name="ENA_REGISTER_MODE" value="1" />
   <parameter name="CLOCK_TYPE" value="1" />
   <generatedFiles>
    <file
-       path="/home/bart/Documents/FPGA/FPGC5/Quartus/clkMux/synthesis/submodules/clkMux_altclkctrl_0.v"
+       path="/home/bart/Documents/FPGA/FPGC6/Quartus/clkMux/synthesis/submodules/clkMux_altclkctrl_0.v"
        type="VERILOG"
        attributes="" />
   </generatedFiles>

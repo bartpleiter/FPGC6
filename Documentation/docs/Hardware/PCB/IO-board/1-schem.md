@@ -1,3 +1,3 @@
 # Schematic
 
-TODO: write this page
+![Schematic](../../../images/schematic.png)

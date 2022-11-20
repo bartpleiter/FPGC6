@@ -1,0 +1,44 @@
+[*]
+[*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
+[*] Sun Nov 20 16:24:51 2022
+[*]
+[dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
+[dumpfile_mtime] "Sun Nov 20 16:22:26 2022"
+[dumpfile_size] 50713
+[savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/SDRAM.gtkw"
+[timestart] 1539000
+[size] 1920 1027
+[pos] -1 -1
+*-17.666576 1741000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] SDRAM_tb.
+[sst_width] 227
+[signals_width] 451
+[sst_expanded] 1
+[sst_vpaned_height] 286
+@28
+SDRAM_tb.clk
+SDRAM_tb.reset
+@200
+-
+-SDRAM
+@28
+SDRAM_tb.SDRAM_CLK
+SDRAM_tb.SDRAM_A[12:0]
+SDRAM_tb.SDRAM_BA[1:0]
+SDRAM_tb.SDRAM_CASn
+SDRAM_tb.SDRAM_CKE
+SDRAM_tb.SDRAM_CSn
+SDRAM_tb.SDRAM_DQM[3:0]
+SDRAM_tb.SDRAM_RASn
+SDRAM_tb.SDRAM_WEn
+@24
+SDRAM_tb.SDRAM_DQ[31:0]
+@200
+-
+-Controller
+@25
+SDRAM_tb.sdramcontroller.state[4:0]
+@24
+SDRAM_tb.sdramcontroller.startup_counter[15:0]
+[pattern_trace] 1
+[pattern_trace] 0

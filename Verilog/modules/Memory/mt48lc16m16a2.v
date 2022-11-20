@@ -1,5 +1,6 @@
 /**************************************************************************
 *
+*         NOTE:  Modified to use W9825G6KH-6 timings
 *    File Name:  MT48LC16M16A2.V  
 *      Version:  2.1
 *         Date:  June 6th, 2002
@@ -119,7 +120,7 @@ module mt48lc16m16a2 (Dq, Addr, Ba, Clk, Cke, Cs_n, Ras_n, Cas_n, We_n, Dqm);
     // Write Burst Mode
     wire      Write_burst_mode = Mode_reg[9];
 
-    wire      Debug            = 1'b0;                          // Debug messages : 1 = On
+    wire      Debug            = 1'b1;                          // Debug messages : 1 = On
     wire      Dq_chk           = Sys_clk & Data_in_enable;      // Check setup/hold time for DQ
     
     assign    Dq               = Dq_reg;                        // DQ buffer
@@ -134,19 +135,19 @@ module mt48lc16m16a2 (Dq, Addr, Ba, Clk, Cke, Cs_n, Ras_n, Cas_n, We_n, Dqm);
     `define   BST       6
     `define   LMR       7
 
-    // Timing Parameters for -7E PC133 CL2
+    // Timing Parameters for -6 CL2
     parameter tAC  =   6.0;
     parameter tHZ  =   6.0;
-    parameter tOH  =   5.0;
+    parameter tOH  =   3.0;
     parameter tMRD =   2.0;     // 2 Clk Cycles
     parameter tRAS =  42.0;
     parameter tRC  =  60.0;
     parameter tRCD =  15.0;
     parameter tRFC =  64.0;
     parameter tRP  =  15.0;
-    parameter tRRD =  14.0;
-    parameter tWRa =   7.0;     // A2 Version - Auto precharge mode (1 Clk + 7 ns)
-    parameter tWRm =  14.0;     // A2 Version - Manual precharge mode (14 ns)
+    parameter tRRD =  15.0;
+    parameter tWRa =   7.5;     // A2 Version - Auto precharge mode (1 Clk + 1CLK(7.5 ns))
+    parameter tWRm =  15.0;     // A2 Version - Manual precharge mode (15 ns)
 
     // Timing Check variable
     time  MRD_chk;
@@ -1040,14 +1041,14 @@ module mt48lc16m16a2 (Dq, Addr, Ba, Clk, Cke, Cs_n, Ras_n, Cas_n, We_n, Dqm);
         end
     endtask
 
-    // Timing Parameters for -7E (133 MHz @ CL2)
+    // Timing Parameters for W9825G6KH-6 (CL2)
     specify
         specparam
+            tCK  =  7.5,                                        // Clock Cycle Time
+            tCH  =  2.0,                                        // Clock High-Level Width
+            tCL  =  2.0,                                        // Clock Low-Level Width
             tAH  =  0.8,                                        // Addr, Ba Hold Time
             tAS  =  1.5,                                        // Addr, Ba Setup Time
-            tCH  =  2.5,                                        // Clock High-Level Width
-            tCL  =  2.5,                                        // Clock Low-Level Width
-            tCK  =  7.0,                                        // Clock Cycle Time
             tDH  =  0.8,                                        // Data-in Hold Time
             tDS  =  1.5,                                        // Data-in Setup Time
             tCKH =  0.8,                                        // CKE Hold  Time

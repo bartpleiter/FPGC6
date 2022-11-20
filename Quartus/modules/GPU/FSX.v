@@ -40,16 +40,6 @@ module FSX(
     output              frameDrawn
 );
 
-// LVDS Converter
-wire [3:0] TMDS;
-
-lvds lvdsConverter(
-    .datain     (TMDS),
-    .dataout    (TMDS_p),
-    .dataout_b  (TMDS_n) // Reversed because of a LVDS polarity swap on the V3 PCB
-);
-
-
 wire [11:0] h_count_hdmi;
 wire [11:0] v_count_hdmi;
 
@@ -186,10 +176,14 @@ RGB2HDMI rgb2hdmi(
     .blk    (blank_hdmi),
     .hs     (hsync_hdmi),
     .vs     (vsync_hdmi), 
-    .bTMDS  (TMDS[0]),
-    .gTMDS  (TMDS[1]),
-    .rTMDS  (TMDS[2]),
-    .cTMDS  (TMDS[3])
+    .bTMDS  (TMDS_p[0]),
+    .gTMDS  (TMDS_p[1]),
+    .rTMDS  (TMDS_p[2]),
+    .cTMDS  (TMDS_p[3]),
+	 .bTMDSn  (TMDS_n[0]),
+    .gTMDSn  (TMDS_n[1]),
+    .rTMDSn  (TMDS_n[2]),
+    .cTMDSn  (TMDS_n[3])
 );
 
 

@@ -263,7 +263,6 @@ set_global_assignment -name VERILOG_FILE modules/MultiStabilizer.v
 set_global_assignment -name VERILOG_FILE modules/DtrReset.v
 set_global_assignment -name QIP_FILE clock_pll.qip
 set_global_assignment -name QIP_FILE NTSC_pll.qip
-set_global_assignment -name QIP_FILE lvds.qip
 set_global_assignment -name QIP_FILE ddr.qip
 set_global_assignment -name QIP_FILE clock_pll_v.qip
 set_global_assignment -name SIP_FILE clock_pll_v.sip

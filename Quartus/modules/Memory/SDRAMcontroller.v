@@ -20,8 +20,8 @@ module SDRAMcontroller(
     output reg SDRAM_CKE, 
     output reg [12:0] SDRAM_A,
     output reg [1:0] SDRAM_BA,
-    output reg [1:0] SDRAM_DQM,
-    inout [15:0] SDRAM_DQ
+    output reg [3:0] SDRAM_DQM,
+    inout [31:0] SDRAM_DQ
 );
 
 reg q_ready_reg;
@@ -77,10 +77,10 @@ assign addr_bank = bigaddr[23:22];
 //DQ write port
 reg [15:0] WrData;
 reg SDRAM_DQ_OE;
-assign SDRAM_DQ = SDRAM_DQ_OE ? WrData : 16'hZZZZ;
+assign SDRAM_DQ = SDRAM_DQ_OE ? {WrData, WrData} : 32'hZZZZ;
 
 wire [15:0] SDRAM_Q;
-assign SDRAM_Q = SDRAM_DQ;
+assign SDRAM_Q = SDRAM_DQ[15:0];
 
 //Input data
 wire [15:0] data_low, data_high;
@@ -159,7 +159,7 @@ begin
             begin
                     q_ready_reg <= 1'b0;
                 SDRAM_CKE <= 1'b1;
-                SDRAM_DQM <= 2'b00;
+                SDRAM_DQM <= 4'b0000;
                 case(InitCounter)
                     1010: begin
                         SDRAM_CMD <= SDRAM_CMD_PRECHARGE;
@@ -212,7 +212,7 @@ begin
                     end
                     else //if nothing happens, just nop
                     begin
-                        SDRAM_DQM <= 2'b00;
+                        SDRAM_DQM <= 4'b0000;
                         SDRAM_CMD <= SDRAM_CMD_NOP;
                         SDRAM_A <= 0;  
                     end
@@ -246,7 +246,7 @@ begin
                 SDRAM_A                 <= addr_col; 
                 SDRAM_A[prefresh_cmd]   <= 1'b0; // A10 actually matters - it selects auto precharge
                 SDRAM_BA                <= addr_bank;
-                SDRAM_DQM               <= 2'b00;  
+                SDRAM_DQM               <= 4'b0000;  
                 WrData                  <= data_low;
             end   
             s_write_2:
@@ -301,7 +301,7 @@ begin
                 SDRAM_A         <= addr_col; 
                 SDRAM_BA        <= addr_bank;
                 SDRAM_A[prefresh_cmd] <= 1'b0; // A10 actually matters - it selects auto precharge
-                SDRAM_DQM       <= 2'b00;
+                SDRAM_DQM       <= 4'b0000;
             end   
             s_read_2: begin
                 SDRAM_CMD       <= SDRAM_CMD_NOP;
@@ -362,7 +362,7 @@ end
 initial
 begin
   SDRAM_BA      <= 2'b00;
-  SDRAM_DQM     <= 2'b11;
+  SDRAM_DQM     <= 4'b1111;
   SDRAM_A       <= 0;  
   SDRAM_CMD     <= SDRAM_CMD_UNSELECTED;
   SDRAM_CKE     <= 0;

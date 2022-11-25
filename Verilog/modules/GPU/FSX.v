@@ -32,9 +32,9 @@ module FSX(
     output [13:0]       vram8_addr,
     input  [7:0]        vram8_q,
 
-    //VRAMSPR
-    output [13:0]       vramSPR_addr,
-    input  [8:0]        vramSPR_q,
+    //VRAMpixel
+    output [16:0]       vramPX_addr,
+    input  [7:0]        vramPX_q,
 
     //Interrupt signal
     output              frameDrawn
@@ -154,18 +154,57 @@ BGWrenderer bgwrenderer(
 );
 
 
-assign r_ntsc = (!selectOutput) ? BGW_r : 3'd0;
-assign g_ntsc = (!selectOutput) ? BGW_g : 3'd0;
-assign b_ntsc = (!selectOutput) ? BGW_b : 2'd0;
+wire [2:0] PX_r;
+wire [2:0] PX_g;
+wire [1:0] PX_b;
+
+
+PixelEngine pixelEngine(
+    // Video I/O
+    .clk(clkMuxOut),
+    .hs(hsync),
+    .vs(vsync),
+    .blank(blank),
+
+    .scale2x(selectOutput),
+    
+    // Output colors
+    .r(PX_r),
+    .g(PX_g),
+    .b(PX_b),
+
+    .h_count(h_count),  // line position in pixels including blanking 
+    .v_count(v_count),  // frame position in lines including blanking 
+
+    // VRAM
+    .vram_addr(vramPX_addr),
+    .vram_q(vramPX_q)
+);
+
+
+// Give priority to bgw plane if pixel plane is black
+wire bgwPriority = (PX_r == 3'd0 && PX_g == 3'd0 && PX_b == 3'd0);
+
+wire [2:0] rendered_r;
+wire [2:0] rendered_g;
+wire [1:0] rendered_b;
+
+assign rendered_r = (bgwPriority) ? BGW_r : PX_r;
+assign rendered_g = (bgwPriority) ? BGW_g : PX_g;
+assign rendered_b = (bgwPriority) ? BGW_b : PX_b;
+
+assign r_ntsc = (!selectOutput) ? rendered_r : 3'd0;
+assign g_ntsc = (!selectOutput) ? rendered_g : 3'd0;
+assign b_ntsc = (!selectOutput) ? rendered_b : 2'd0;
 
 
 wire [2:0] r_hdmi;
 wire [2:0] g_hdmi;
 wire [1:0] b_hdmi;
 
-assign r_hdmi = (selectOutput) ? BGW_r : 3'd0;
-assign g_hdmi = (selectOutput) ? BGW_g : 3'd0;
-assign b_hdmi = (selectOutput) ? BGW_b : 2'd0;
+assign r_hdmi = (selectOutput) ? rendered_r : 3'd0;
+assign g_hdmi = (selectOutput) ? rendered_g : 3'd0;
+assign b_hdmi = (selectOutput) ? rendered_b : 2'd0;
 
 wire [7:0] rByte;
 wire [7:0] gByte;

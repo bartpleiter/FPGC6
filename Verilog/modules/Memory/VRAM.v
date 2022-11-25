@@ -6,18 +6,19 @@ module VRAM
 #(
     parameter WIDTH = 32,
     parameter WORDS = 1056,
+    parameter ADDR_BITS = 11,
     parameter LIST  = "/home/bart/Documents/FPGA/FPGC6/Verilog/memory/vram32.list"
 ) 
 (
   input                   cpu_clk,        
   input      [WIDTH-1:0]  cpu_d,
-  input      [13:0]       cpu_addr,
+  input      [ADDR_BITS-1:0]       cpu_addr,
   input                   cpu_we,
   output reg [WIDTH-1:0]  cpu_q, 
 
   input                   gpu_clk,
   input      [WIDTH-1:0]  gpu_d,
-  input      [13:0]       gpu_addr,
+  input      [ADDR_BITS-1:0]       gpu_addr,
   input                   gpu_we,
   output reg [WIDTH-1:0]  gpu_q 
 );

@@ -1,21 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Fri Nov 25 20:06:13 2022
+[*] Sat Nov 26 18:55:49 2022
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Fri Nov 25 20:04:10 2022"
-[dumpfile_size] 180316680
+[dumpfile_mtime] "Sat Nov 26 18:54:40 2022"
+[dumpfile_size] 182232774
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/FSX.gtkw"
-[timestart] 0
+[timestart] 2725069
 [size] 1920 1027
 [pos] -1 -1
-*-20.666576 2720020 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-8.666576 2726415 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] FSX_tb.
 [treeopen] FSX_tb.fsx.
-[sst_width] 354
+[sst_width] 233
 [signals_width] 294
 [sst_expanded] 1
-[sst_vpaned_height] 430
+[sst_vpaned_height] 597
 @28
 FSX_tb.clkPixel
 FSX_tb.clkTMDShalf
@@ -78,6 +78,8 @@ FSX_tb.fsx.vram32_q[31:0]
 -
 -PX
 @28
+FSX_tb.fsx.vsync_hdmi
+FSX_tb.fsx.vsync_ntsc
 FSX_tb.fsx.pixelEngine.scale2x
 FSX_tb.fsx.pixelEngine.clk
 FSX_tb.fsx.pixelEngine.vs
@@ -85,14 +87,24 @@ FSX_tb.fsx.pixelEngine.hs
 @24
 FSX_tb.fsx.pixelEngine.h_count[11:0]
 FSX_tb.fsx.pixelEngine.v_count[11:0]
+FSX_tb.fsx.pixelEngine.line_active[9:0]
+FSX_tb.fsx.pixelEngine.pixel_active[9:0]
+FSX_tb.fsx.pixelEngine.pixel_idx[16:0]
+@29
+FSX_tb.fsx.pixelEngine.v_active
 @28
+FSX_tb.fsx.pixelEngine.h_active
 FSX_tb.fsx.pixelEngine.blank
 @24
 FSX_tb.fsx.pixelEngine.vram_addr[16:0]
-@25
+@28
 FSX_tb.fsx.pixelEngine.vram_q[7:0]
 @24
 FSX_tb.fsx.pixelEngine.pixel_data[7:0]
+@22
+FSX_tb.fsx.rByte_ntsc[7:0]
+@24
+FSX_tb.fsx.rByte[7:0]
 @200
 -
 -BGW

@@ -20,31 +20,30 @@ module PixelEngine(
 
     // VRAMpixel
     output wire [16:0] vram_addr,
-    input  [7:0]       vram_q
+    input [7:0]    vram_q
 );
 
-localparam VSTART = 45; // Line to start rendering
-localparam HSTART = 159; // Pixel to start rendering, -1 because pixel_data buffer
+localparam HSTART = 159; // Pixel to start rendering
+localparam HEND = 800;   // Pixel to end rendering
+
+localparam VSTART = 44; // Line to start rendering
+localparam VEND = 524;  // Line to start rendering
 
 reg [7:0] pixel_data = 8'd0;
 
-assign vram_addr = (blank) ? 32'd0: ( ( (v_count - VSTART) >> scale2x ) * 320) + ( (h_count - HSTART)  >> scale2x);
+wire h_active = (h_count > HSTART && h_count <= HEND);
+wire v_active = (v_count > VSTART && v_count <= VEND);
 
-// Reading from VRAM
-always @(posedge clk)
-begin
-    if (blank)
-    begin
-        pixel_data <= 8'd0;
-    end
-    else
-    begin
-        pixel_data <= vram_q;
-    end
-end
 
-assign r = pixel_data[7:5];
-assign g = pixel_data[4:2];
-assign b = pixel_data[1:0];
+wire [9:0] line_active = (v_active) ? v_count-(VSTART+1'b1) : 10'd0;
+wire [9:0] pixel_active = (h_active && v_active) ? h_count-HSTART : 10'd0;
+
+wire [16:0] pixel_idx = ( (line_active >> 1) *320) + (pixel_active >> 1);
+
+assign vram_addr = pixel_idx;
+
+assign r = (blank) ? 3'd0 : vram_q[7:5];
+assign g = (blank) ? 3'd0 : vram_q[4:2];
+assign b = (blank) ? 2'd0 : vram_q[1:0];
 
 endmodule

@@ -182,16 +182,16 @@ PixelEngine pixelEngine(
 );
 
 
-// Give priority to bgw plane if pixel plane is black
-wire bgwPriority = (PX_r == 3'd0 && PX_g == 3'd0 && PX_b == 3'd0);
+// Give priority to pixel plane if bgw plane is black
+wire pxPriority = (BGW_r == 3'd0 && BGW_g == 3'd0 && BGW_b == 2'd0);
 
 wire [2:0] rendered_r;
 wire [2:0] rendered_g;
 wire [1:0] rendered_b;
 
-assign rendered_r = (bgwPriority) ? BGW_r : PX_r;
-assign rendered_g = (bgwPriority) ? BGW_g : PX_g;
-assign rendered_b = (bgwPriority) ? BGW_b : PX_b;
+assign rendered_r = (pxPriority) ? PX_r: BGW_r;
+assign rendered_g = (pxPriority) ? PX_g: BGW_g;
+assign rendered_b = (pxPriority) ? PX_b : BGW_b;
 
 assign r_ntsc = (!selectOutput) ? rendered_r : 3'd0;
 assign g_ntsc = (!selectOutput) ? rendered_g : 3'd0;

@@ -122,7 +122,7 @@ wire [7:0]  vramPX_gpu_q;
 
 //because FSX will not write to VRAM
 assign vramPX_gpu_we     = 1'b0;
-assign vramPX_gpu_d      = 9'd0;
+assign vramPX_gpu_d      = 8'd0;
 
 VRAM #(
 .WIDTH(8),

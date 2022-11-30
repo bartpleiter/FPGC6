@@ -23,22 +23,24 @@ module PixelEngine(
     input [7:0]    vram_q
 );
 
-localparam HSTART = 159; // Pixel to start rendering
-localparam HEND = 800;   // Pixel to end rendering
+localparam HSTART_HDMI = 159; // Pixel to start rendering
+localparam VSTART_HDMI = 44; // Line to start rendering
 
-localparam VSTART = 44; // Line to start rendering
-localparam VEND = 524;  // Line to start rendering
+localparam HSTART_NTSC = 195; // Pixel to start rendering
+localparam VSTART_NTSC = 19; // Line to start rendering
+
+wire [9:0] h_start = (scale2x) ? HSTART_HDMI : HSTART_NTSC;
+wire [9:0] v_start = (scale2x) ? VSTART_HDMI : VSTART_NTSC;
 
 reg [7:0] pixel_data = 8'd0;
 
-wire h_active = (h_count > HSTART && h_count <= HEND);
-wire v_active = (v_count > VSTART && v_count <= VEND);
+wire h_active = (h_count > h_start);
+wire v_active = (v_count > v_start);
 
+wire [9:0] line_active = (v_active) ? v_count-(v_start+1'b1) : 10'd0;
+wire [9:0] pixel_active = (h_active && v_active) ? h_count-h_start : 10'd0;
 
-wire [9:0] line_active = (v_active) ? v_count-(VSTART+1'b1) : 10'd0;
-wire [9:0] pixel_active = (h_active && v_active) ? h_count-HSTART : 10'd0;
-
-wire [16:0] pixel_idx = ( (line_active >> 1) *320) + (pixel_active >> 1);
+wire [16:0] pixel_idx = ( (line_active >> scale2x) *320) + (pixel_active >> 1);
 
 assign vram_addr = pixel_idx;
 

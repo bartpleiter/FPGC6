@@ -340,9 +340,9 @@ word FS_setCursor(word s)
     FS_spiBeginTransfer();
     FS_spiTransfer(FS_CMD_BYTE_LOCATE);
     FS_spiTransfer(s);
-    FS_spiTransfer(s >> 8);
-    FS_spiTransfer(s >> 16);
-    FS_spiTransfer(s >> 24);
+    FS_spiTransfer((unsigned) s >> 8);
+    FS_spiTransfer((unsigned) s >> 16);
+    FS_spiTransfer((unsigned) s >> 24);
     FS_spiEndTransfer();
 
     return FS_WaitGetStatus();
@@ -363,7 +363,7 @@ word FS_readFile(char* buf, word s, word bytesToWord)
     FS_spiBeginTransfer();
     FS_spiTransfer(FS_CMD_BYTE_READ);
     FS_spiTransfer(s);
-    FS_spiTransfer(s >> 8);
+    FS_spiTransfer((unsigned) s >> 8);
     FS_spiEndTransfer();
 
     word retval = FS_WaitGetStatus();
@@ -461,7 +461,7 @@ word FS_writeFile(char* d, word s)
     FS_spiBeginTransfer();
     FS_spiTransfer(FS_CMD_BYTE_WRITE);
     FS_spiTransfer(s);
-    FS_spiTransfer(s >> 8);
+    FS_spiTransfer((unsigned) s >> 8);
     FS_spiEndTransfer();
 
     word retval = FS_WaitGetStatus();

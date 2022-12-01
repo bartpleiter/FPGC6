@@ -25,7 +25,7 @@ char (*memStatus)[SCREEN_WIDTH] = (char (*)[SCREEN_WIDTH]) MEMSTATUS_ADDR;
 
 // Chars: 33 to 126
 
-word rngLfsr = 0xACE1;
+unsigned word rngLfsr = 0xACE1;
 word rngBit = 0;
 
 word rngRand()

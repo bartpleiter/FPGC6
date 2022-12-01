@@ -291,6 +291,7 @@ void GenRecordFxnSize(char* startLabelName, int endLabelNo)
 #define B32PInstrAddr2reg  0x54
 #define B32PInstrLoad32    0x55
 #define B32PInstrNOP       0x56
+#define B32PInstrSHIFTRS   0x57
 
 STATIC
 void GenPrintInstr(int instr, int val)
@@ -330,6 +331,7 @@ void GenPrintInstr(int instr, int val)
   case B32PInstrSUB       : p = "sub"; break;
   case B32PInstrSHIFTL    : p = "shiftl"; break;
   case B32PInstrSHIFTR    : p = "shiftr"; break;
+  case B32PInstrSHIFTRS   : p = "shiftrs"; break;
   case B32PInstrNOT       : p = "not"; break;
   case B32PInstrMULTS     : p = "mults"; break;
   case B32PInstrMULTU     : p = "multu"; break;
@@ -725,7 +727,7 @@ int GenGetBinaryOperatorInstr(int tok)
     return B32PInstrSHIFTL;
   case tokRShift:
   case tokAssignRSh:
-    return B32PInstrSHIFTR; // B32P does not know about signed, so normal shiftr is done instead
+    return B32PInstrSHIFTRS;
   case tokURShift:
   case tokAssignURSh:
     return B32PInstrSHIFTR;

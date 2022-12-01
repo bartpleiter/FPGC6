@@ -63,7 +63,7 @@ word MATH_divmodU(word dividend, word divisor, word mod)
     {
         quotient = quotient << 1;
         remainder = remainder << 1;
-        remainder = remainder | ((dividend & (1 << i)) >> i);
+        remainder = remainder | ((unsigned) (dividend & (1 << i)) >> i);
 
         if((unsigned int) remainder >= (unsigned int) divisor)
         {

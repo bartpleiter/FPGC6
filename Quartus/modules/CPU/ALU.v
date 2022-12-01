@@ -24,7 +24,7 @@ localparam
     OP_SLTU     = 4'b1011, // Set on less than unsigned
     OP_LOAD     = 4'b1100, // Load input B ( y := b )
     OP_LOADHI   = 4'b1101, // Loadhi input B ( y := {(b<<16), a} )
-    OP_U6       = 4'b1110, // Unimplemented
+    OP_SHIFTRS  = 4'b1110, // Shift right with sign extesion
     OP_U7       = 4'b1111; // Unimplemented
 
 always @ (*) 
@@ -35,8 +35,8 @@ begin
         OP_XOR:     y <= a ^ b;
         OP_ADD:     y <= a + b;
         OP_SUB:     y <= a - b;
-        OP_SHIFTL:  y <= a << b[5:0];
-        OP_SHIFTR:  y <= a >> b[5:0];
+        OP_SHIFTL:  y <= a << b;
+        OP_SHIFTR:  y <= a >> b;
         OP_NOTA:    y <= ~a;
         OP_MULTS:   y <= $signed(a) * $signed(b);
         OP_MULTU:   y <= a * b;
@@ -44,7 +44,8 @@ begin
         OP_SLTU:    y <= {{31{1'b0}}, (a < b)};
         OP_LOAD:    y <= b;
         OP_LOADHI:  y <= {b[15:0], a[15:0]};
-        default:    y <= 32'd0;
+        OP_SHIFTRS: y <= $signed(a) >>> b;
+        OP_U7:      y <= 32'd0;
     endcase
 end
 

@@ -39,19 +39,6 @@ word colorMap(word i)
 }
 
 
-word signedShiftRight(word x, word i)
-{
-  word mask = 1 << 31;
-  while (i > 0)
-  {
-    x = x >> 1;
-    x += mask;
-    i--;
-  }
-
-  return x;
-}
-
 int main() 
 {
 
@@ -113,26 +100,17 @@ int main()
         }
 
         y = x*y;
-        if (y < 0)
-          y = signedShiftRight(y, 11);
-        else
-          y = y >> 11;
+        y = y >> 11;
         y += cy;
 
         x = x2 - y2;
         x += cx;
 
         x2 = x * x;
-        if (x2 < 0)
-          x2 = signedShiftRight(x2, 12);
-        else
-          x2 = x2 >> 12;
+        x2 = x2 >> 12;
 
         y2 = y * y;
-        if (y2 < 0)
-          y2 = signedShiftRight(y2, 12);
-        else
-          y2 = y2 >> 12;
+        y2 = y2 >> 12;
 
         iter++;
       }

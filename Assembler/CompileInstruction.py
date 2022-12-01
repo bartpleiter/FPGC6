@@ -515,7 +515,8 @@ def compileARITH(line, opcode):
         "1000" : " * (signed) ",
         "1001" : " * (unsigned) ",
         "1010" : " SLT ",
-        "1011" : " SLTU "
+        "1011" : " SLTU ",
+        "1110" : " >> (signed) "
     }
 
     #create instruction
@@ -554,6 +555,10 @@ def compileSHIFTL(line):
 # compiles SHIFTR instruction
 def compileSHIFTR(line):
     return compileARITH(line, "0110")
+
+# compiles SHIFTRS instruction
+def compileSHIFTRS(line):
+    return compileARITH(line, "1110")
 
 # compiles MULTS instruction
 def compileMULTS(line):

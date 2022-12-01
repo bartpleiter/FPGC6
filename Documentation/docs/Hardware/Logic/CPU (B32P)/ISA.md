@@ -74,6 +74,7 @@ SLT       1010   1 if A < B, else 0 (signed)
 SLTU      1011   1 if A < B, else 0 (unsigned)
 LOAD      1100   16 bit constant (or B)
 LOADHI    1101   {16 bit constant, A[15:0]} (if AREG == DREG, this is equivalent to LOADHI)
+SHIFTRS   1110   A  >>  B with sign extension
 ```
 
 The remaining opcodes are reserved for future operations.

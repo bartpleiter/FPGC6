@@ -183,7 +183,7 @@ void wizWrite(word addr, word cb, char* buf, word len)
   WizSpiBeginTransfer();
 
   // Send address
-  word addrMSB = addr >> 8;
+  word addrMSB = (unsigned) addr >> 8;
   WizSpiTransfer(addrMSB); //msByte
   WizSpiTransfer(addr); //lsByte
 
@@ -207,7 +207,7 @@ word wizWriteSingle(word addr, word cb, word data)
   WizSpiBeginTransfer();
 
   // Send address
-  word addrMSB = addr >> 8;
+  word addrMSB = (unsigned) addr >> 8;
   WizSpiTransfer(addrMSB); //msByte
   WizSpiTransfer(addr); //lsByte
 
@@ -229,7 +229,7 @@ void wizWriteDouble(word addr, word cb, word data)
   WizSpiBeginTransfer();
 
   // Send address
-  word addrMSB = addr >> 8;
+  word addrMSB = (unsigned) addr >> 8;
   WizSpiTransfer(addrMSB); //msByte
   WizSpiTransfer(addr); //lsByte
 
@@ -237,7 +237,7 @@ void wizWriteDouble(word addr, word cb, word data)
   WizSpiTransfer(cb);
 
   // Send data
-  word dataMSB = data >> 8;
+  word dataMSB = (unsigned) data >> 8;
   WizSpiTransfer(dataMSB);
   WizSpiTransfer(data);
 
@@ -250,7 +250,7 @@ void wizRead(word addr, word cb, char* buf, word len)
   WizSpiBeginTransfer();
 
   // Send address
-  word addrMSB = addr >> 8;
+  word addrMSB = (unsigned) addr >> 8;
   WizSpiTransfer(addrMSB); //msByte
   WizSpiTransfer(addr); //lsByte
 
@@ -273,7 +273,7 @@ word wizReadSingle(word addr, word cb)
   WizSpiBeginTransfer();
 
   // Send address
-  word addrMSB = addr >> 8;
+  word addrMSB = (unsigned) addr >> 8;
   WizSpiTransfer(addrMSB); //msByte
   WizSpiTransfer(addr); //lsByte
 
@@ -295,7 +295,7 @@ word wizReadDouble(word addr, word cb)
   WizSpiBeginTransfer();
 
   // Send address
-  word addrMSB = addr >> 8;
+  word addrMSB = (unsigned) addr >> 8;
   WizSpiTransfer(addrMSB); //msByte
   WizSpiTransfer(addr); //lsByte
 
@@ -350,7 +350,7 @@ word wizGetSockReg8(word s, word addr){
   WizSpiBeginTransfer();
 
   // Send address
-  word addrMSB = addr >> 8;
+  word addrMSB = (unsigned) addr >> 8;
   WizSpiTransfer(addrMSB); //msByte
   WizSpiTransfer(addr); //lsByte
 
@@ -376,7 +376,7 @@ void wizSetSockReg16(word s, word addr, word val)
   WizSpiTransfer(0); //msByte
   WizSpiTransfer(addr); //lsByte
   WizSpiTransfer(WIZNET_WRITE_SnR + (s << 5));
-  word valMSB = val >> 8;
+  word valMSB = (unsigned) val >> 8;
   WizSpiTransfer(valMSB);
   WizSpiTransfer(val);
   WizSpiEndTransfer();
@@ -389,7 +389,7 @@ word wizGetSockReg16(word s, word addr)
   WizSpiBeginTransfer();
 
   // Send address
-  word addrMSB = addr >> 8;
+  word addrMSB = (unsigned) addr >> 8;
   WizSpiTransfer(addrMSB); //msByte
   WizSpiTransfer(addr); //lsByte
 

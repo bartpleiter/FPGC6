@@ -117,7 +117,7 @@ INTERACTING WITH PROGRAMMER
 #  so change the delay between ~0.001 and 0.00005
 def sendSingleByte(b):
     port.write(b)
-    sleep(0.00005) # give FPGC time to process byte
+    sleep(0.0004) # give FPGC time to process byte
 
 # Send single byte, wait for ACk from FPGC
 def sendSingleByteWaitForAck(b):

@@ -344,7 +344,7 @@ void SHELL_runFile(char* arg, word useBin)
 
                         // Update the amount of bytes sent
                         bytesSent += partToSend;
-                        b += (partToSend>>2); // divide by 4 because one address is 4 bytes
+                        b += ((unsigned)partToSend>>2); // divide by 4 because one address is 4 bytes
                     }
 
                     // remove the dots

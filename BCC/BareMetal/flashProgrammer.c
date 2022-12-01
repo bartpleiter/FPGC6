@@ -396,7 +396,7 @@ void processCommand()
     else if (currentCommand == COMMAND_FLASH_READ)
     {
 
-        word len = UARTbuffer[1] << 16;
+        word len = zUARTbuffer[1] << 16;
         len += UARTbuffer[2] << 8;
         len += UARTbuffer[3];
 
@@ -425,7 +425,7 @@ void processCommand()
         word addr8 = UARTbuffer[6];
 
         blockErase(addr24, addr16, addr8);
-        word addrCombined = ((addr24 << 16) + (addr16 << 8) + addr8) >> 15;
+        word addrCombined = (unsigned) ((addr24 << 16) + (addr16 << 8) + addr8) >> 15;
 
         GFX_printWindowColored("                                        ", 40, GFX_WindowPosFromXY(0, 8), 0);
         GFX_printWindowColored("Block ", 6, GFX_WindowPosFromXY(0, 8), 0);

@@ -57,7 +57,7 @@ word dirOnScreen = RIGHT; // keep track of the direction of the rendered snake
 
 word gameOver = 0;
 
-word rngLfsr = 0xACE1;
+unsigned word rngLfsr = 0xACE1;
 word rngBit = 0;
 
 word rngRand()

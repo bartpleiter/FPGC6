@@ -811,9 +811,9 @@ def compileDw(line):
 
     for i in line:
         if i != ".dw":
-            number = getNumber(i, False)
-            CheckFitsInBits(number, 32, False)
-            instruction = instruction + " " + '{0:032b}'.format(number)
+            number = getNumber(i, True)
+            CheckFitsInBits(number, 32, True)
+            instruction = instruction + " " + format(number & 0xffffffff, '032b')
 
     return instruction
 

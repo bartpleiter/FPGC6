@@ -8,9 +8,13 @@ module RGB2HDMI(
     input hs,
     input vs,
     output wire rTMDS,
+	 output wire rTMDSn,
     output wire gTMDS,
+	 output wire gTMDSn,
     output wire bTMDS,
-    output wire cTMDS
+	 output wire bTMDSn,
+    output wire cTMDS,
+	 output wire cTMDSn
 );
 
 wire [9:0] encodedRed;
@@ -53,7 +57,6 @@ TMDSenc TMDSb(
 );
 
 
-// Everything is inverted here because of a LVDS polarity swap on the V3 PCB
 ddr ddrR(
     .outclock(clkTMDS),
     .datain_h(shiftRed[0]),
@@ -80,6 +83,34 @@ ddr ddrCLK(
     .datain_h(shiftClk[0]),
     .datain_l(shiftClk[1]),
     .dataout (cTMDS)
+);
+
+ddr ddrRn(
+    .outclock(clkTMDS),
+    .datain_h(!shiftRed[0]),
+    .datain_l(!shiftRed[1]),
+    .dataout (rTMDSn)
+);
+
+ddr ddrGn(
+    .outclock(clkTMDS),
+    .datain_h(!shiftGreen[0]),
+    .datain_l(!shiftGreen[1]),
+    .dataout (gTMDSn)
+);
+
+ddr ddrBn(
+    .outclock(clkTMDS),
+    .datain_h(!shiftBlue[0]),
+    .datain_l(!shiftBlue[1]),
+    .dataout (bTMDSn)
+);
+
+ddr ddrCLKn(
+    .outclock(clkTMDS),
+    .datain_h(!shiftClk[0]),
+    .datain_l(!shiftClk[1]),
+    .dataout (cTMDSn)
 );
 
 

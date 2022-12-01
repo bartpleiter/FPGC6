@@ -32,9 +32,9 @@ module FSX(
     output [13:0]       vram8_addr,
     input  [7:0]        vram8_q,
 
-    //VRAMSPR
-    output [13:0]       vramSPR_addr,
-    input  [8:0]        vramSPR_q,
+    //VRAMpixel
+    output [16:0]       vramPX_addr,
+    input  [7:0]        vramPX_q,
 
     //Interrupt signal
     output              frameDrawn
@@ -154,18 +154,57 @@ BGWrenderer bgwrenderer(
 );
 
 
-assign r_ntsc = (!selectOutput) ? BGW_r : 3'd0;
-assign g_ntsc = (!selectOutput) ? BGW_g : 3'd0;
-assign b_ntsc = (!selectOutput) ? BGW_b : 2'd0;
+wire [2:0] PX_r;
+wire [2:0] PX_g;
+wire [1:0] PX_b;
+
+
+PixelEngine pixelEngine(
+    // Video I/O
+    .clk(clkMuxOut),
+    .hs(hsync),
+    .vs(vsync),
+    .blank(blank),
+
+    .scale2x(selectOutput),
+    
+    // Output colors
+    .r(PX_r),
+    .g(PX_g),
+    .b(PX_b),
+
+    .h_count(h_count),  // line position in pixels including blanking 
+    .v_count(v_count),  // frame position in lines including blanking 
+
+    // VRAM
+    .vram_addr(vramPX_addr),
+    .vram_q(vramPX_q)
+);
+
+
+// Give priority to pixel plane if bgw plane is black
+wire pxPriority = (BGW_r == 3'd0 && BGW_g == 3'd0 && BGW_b == 2'd0);
+
+wire [2:0] rendered_r;
+wire [2:0] rendered_g;
+wire [1:0] rendered_b;
+
+assign rendered_r = (pxPriority) ? PX_r: BGW_r;
+assign rendered_g = (pxPriority) ? PX_g: BGW_g;
+assign rendered_b = (pxPriority) ? PX_b : BGW_b;
+
+assign r_ntsc = (!selectOutput) ? rendered_r : 3'd0;
+assign g_ntsc = (!selectOutput) ? rendered_g : 3'd0;
+assign b_ntsc = (!selectOutput) ? rendered_b : 2'd0;
 
 
 wire [2:0] r_hdmi;
 wire [2:0] g_hdmi;
 wire [1:0] b_hdmi;
 
-assign r_hdmi = (selectOutput) ? BGW_r : 3'd0;
-assign g_hdmi = (selectOutput) ? BGW_g : 3'd0;
-assign b_hdmi = (selectOutput) ? BGW_b : 2'd0;
+assign r_hdmi = (selectOutput) ? rendered_r : 3'd0;
+assign g_hdmi = (selectOutput) ? rendered_g : 3'd0;
+assign b_hdmi = (selectOutput) ? rendered_b : 2'd0;
 
 wire [7:0] rByte;
 wire [7:0] gByte;
@@ -196,20 +235,59 @@ RGB2HDMI rgb2hdmi(
 // Image file generator for simulation
 integer file;
 integer framecounter = 0;
+
+// HDMI
 always @(negedge vsync_hdmi)
 begin
-    file = $fopen($sformatf("/home/bart/Documents/FPGA/FPGC6/Verilog/output/frame%0d.ppm", framecounter), "w");
-    $fwrite(file, "P3\n");
-    $fwrite(file, "640 480\n");
-    $fwrite(file, "255\n");
-    framecounter = framecounter + 1;
+    if (selectOutput == 1'b1)
+    begin
+        file = $fopen($sformatf("/home/bart/Documents/FPGA/FPGC6/Verilog/output/frame%0d.ppm", framecounter), "w");
+        $fwrite(file, "P3\n");
+        $fwrite(file, "640 480\n");
+        $fwrite(file, "255\n");
+        framecounter = framecounter + 1;
+    end
 end
 
 always @(posedge clkPixel)
 begin
-    if (~blank_hdmi)
+    if (selectOutput == 1'b1)
     begin
-        $fwrite(file, "%d  %d  %d\n", rByte, gByte, bByte);
+        if (~blank_hdmi)
+        begin
+            $fwrite(file, "%d  %d  %d\n", rByte, gByte, bByte);
+        end
+    end
+end
+
+wire [7:0] rByte_ntsc;
+wire [7:0] gByte_ntsc;
+wire [7:0] bByte_ntsc;
+assign rByte_ntsc = (r_ntsc == 3'd0) ?  {r_ntsc, 5'b00000} : {r_ntsc, 5'b11111};
+assign gByte_ntsc = (g_ntsc == 3'd0) ?  {g_ntsc, 5'b00000} : {g_ntsc, 5'b11111};
+assign bByte_ntsc = (b_ntsc == 2'd0) ?  {b_ntsc, 6'b000000} : {b_ntsc, 6'b111111};
+
+// NTSC
+always @(negedge vsync_ntsc)
+begin
+    if (selectOutput == 1'b0)
+    begin
+        file = $fopen($sformatf("/home/bart/Documents/FPGA/FPGC6/Verilog/output/frame%0d.ppm", framecounter), "w");
+        $fwrite(file, "P3\n");
+        $fwrite(file, "320 240\n");
+        $fwrite(file, "255\n");
+        framecounter = framecounter + 1;
+    end
+end
+
+always @(posedge clkPixel)
+begin
+    if (selectOutput == 1'b0)
+    begin
+        if (~blank_ntsc)
+        begin
+            $fwrite(file, "%d  %d  %d\n", rByte_ntsc, gByte_ntsc, bByte_ntsc);
+        end
     end
 end
 

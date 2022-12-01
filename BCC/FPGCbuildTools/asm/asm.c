@@ -363,7 +363,7 @@ word Pass1Load32(char* outputAddr, char* outputCursor)
     // split into 16 bit unsigned values
     word mask16Bit = 0xFFFF;
     word lowVal = load32Value & mask16Bit;
-    word highVal = (load32Value >> 16) & mask16Bit;
+    word highVal = ((unsigned) load32Value >> 16) & mask16Bit;
 
     // add lowval
     char buf[16];

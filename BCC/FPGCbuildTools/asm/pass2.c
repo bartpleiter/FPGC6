@@ -28,9 +28,9 @@ word getNumberForLabel(char* labelName)
 // Convert a 32 bit word into an array of 4 bytes
 void instrToByteArray(word instr, char* byteArray)
 {
-    byteArray[0] = (instr >> 24) & 0xFF;
-    byteArray[1] = (instr >> 16) & 0xFF;
-    byteArray[2] = (instr >> 8) & 0xFF;
+    byteArray[0] = ((unsigned)instr >> 24) & 0xFF;
+    byteArray[1] = ((unsigned)instr >> 16) & 0xFF;
+    byteArray[2] = ((unsigned)instr >> 8) & 0xFF;
     byteArray[3] = instr & 0xFF;
 }
 
@@ -54,7 +54,7 @@ void pass2Read(char* outputAddr, char* outputCursor)
     }
 
     // arg1 should fit in 16 bits
-    if ((arg1num >> 16) > 0)
+    if (((unsigned)arg1num >> 16) > 0)
     {
         BDOS_PrintConsole("READ: arg1 is >16 bits\n");
         exit(1);
@@ -113,7 +113,7 @@ void pass2Write(char* outputAddr, char* outputCursor)
     }
 
     // arg1 should fit in 16 bits
-    if ((arg1num >> 16) > 0)
+    if (((unsigned)arg1num >> 16) > 0)
     {
         BDOS_PrintConsole("WRITE: arg1 is >16 bits\n");
         exit(1);
@@ -172,7 +172,7 @@ void pass2Copy(char* outputAddr, char* outputCursor)
     }
 
     // arg1 should fit in 16 bits
-    if ((arg1num >> 16) > 0)
+    if (((unsigned)arg1num >> 16) > 0)
     {
         BDOS_PrintConsole("COPY: arg1 is >16 bits\n");
         exit(1);
@@ -297,7 +297,7 @@ void pass2Jump(char* outputAddr, char* outputCursor)
     }
 
     // arg1 should fit in 27 bits
-    if ((arg1num >> 27) > 0)
+    if (((unsigned)arg1num >> 27) > 0)
     {
         BDOS_PrintConsole("JUMPO: arg1 is >27 bits\n");
         exit(1);
@@ -319,7 +319,7 @@ void pass2Jumpo(char* outputAddr, char* outputCursor)
     word arg1num = getNumberAtArg(1);
 
     // arg1 should fit in 27 bits
-    if ((arg1num >> 27) > 0)
+    if (((unsigned)arg1num >> 27) > 0)
     {
         BDOS_PrintConsole("JUMPO: arg1 is >27 bits\n");
         exit(1);
@@ -342,7 +342,7 @@ void pass2Jumpr(char* outputAddr, char* outputCursor)
     word arg1num = getNumberAtArg(1);
 
     // arg1 should fit in 16 bits
-    if ((arg1num >> 16) > 0)
+    if (((unsigned)arg1num >> 16) > 0)
     {
         BDOS_PrintConsole("JUMPR: arg1 is >16 bits\n");
         exit(1);
@@ -377,7 +377,7 @@ void pass2Load(char* outputAddr, char* outputCursor)
     word arg1num = getNumberAtArg(1);
 
     // arg1 should fit in 16 bits
-    if ((arg1num >> 16) > 0)
+    if (((unsigned)arg1num >> 16) > 0)
     {
         BDOS_PrintConsole("LOAD: arg1 is >16 bits\n");
         exit(1);
@@ -412,7 +412,7 @@ void pass2Loadhi(char* outputAddr, char* outputCursor)
     word arg1num = getNumberAtArg(1);
 
     // arg1 should fit in 16 bits
-    if ((arg1num >> 16) > 0)
+    if (((unsigned)arg1num >> 16) > 0)
     {
         BDOS_PrintConsole("LOADHI: arg1 is >16 bits\n");
         exit(1);
@@ -477,7 +477,7 @@ void pass2Beq(char* outputAddr, char* outputCursor)
     word arg3num = getNumberAtArg(3);
 
     // arg3 should fit in 16 bits
-    if ((arg3num >> 16) > 0)
+    if (((unsigned)arg3num >> 16) > 0)
     {
         BDOS_PrintConsole("BEQ: arg3 is >16 bits\n");
         exit(1);
@@ -527,7 +527,7 @@ void pass2Bne(char* outputAddr, char* outputCursor)
     word arg3num = getNumberAtArg(3);
 
     // arg3 should fit in 16 bits
-    if ((arg3num >> 16) > 0)
+    if (((unsigned)arg3num >> 16) > 0)
     {
         BDOS_PrintConsole("BNE: arg3 is >16 bits\n");
         exit(1);
@@ -577,7 +577,7 @@ void pass2Bgt(char* outputAddr, char* outputCursor)
     word arg3num = getNumberAtArg(3);
 
     // arg3 should fit in 16 bits
-    if ((arg3num >> 16) > 0)
+    if (((unsigned)arg3num >> 16) > 0)
     {
         BDOS_PrintConsole("BGT: arg3 is >16 bits\n");
         exit(1);
@@ -627,7 +627,7 @@ void pass2Bge(char* outputAddr, char* outputCursor)
     word arg3num = getNumberAtArg(3);
 
     // arg3 should fit in 16 bits
-    if ((arg3num >> 16) > 0)
+    if (((unsigned)arg3num >> 16) > 0)
     {
         BDOS_PrintConsole("BGE: arg3 is >16 bits\n");
         exit(1);
@@ -677,7 +677,7 @@ void pass2Bgts(char* outputAddr, char* outputCursor)
     word arg3num = getNumberAtArg(3);
 
     // arg3 should fit in 16 bits
-    if ((arg3num >> 16) > 0)
+    if (((unsigned)arg3num >> 16) > 0)
     {
         BDOS_PrintConsole("BGTS: arg3 is >16 bits\n");
         exit(1);
@@ -729,7 +729,7 @@ void pass2Bges(char* outputAddr, char* outputCursor)
     word arg3num = getNumberAtArg(3);
 
     // arg3 should fit in 16 bits
-    if ((arg3num >> 16) > 0)
+    if (((unsigned)arg3num >> 16) > 0)
     {
         BDOS_PrintConsole("BGES: arg3 is >16 bits\n");
         exit(1);
@@ -806,7 +806,7 @@ void pass2ArithBase(char* outputAddr, char* outputCursor, word arithOpCode)
         arg2num= getNumberAtArg(2);
 
         // arg1 should fit in 11 bits
-        if ((arg2num >> 11) > 0)
+        if (((unsigned)arg2num >> 11) > 0)
         {
             BDOS_PrintConsole("ARITH: const is >11 bits\n");
             exit(1);
@@ -896,7 +896,7 @@ void pass2LoadLabelLow(char* outputAddr, char* outputCursor)
 
     // only use the lowest 16 bits
     arg1num = arg1num << 16;
-    arg1num = arg1num >> 16;
+    arg1num = (unsigned)arg1num >> 16;
 
     instr += (arg1num << 12);
 
@@ -929,7 +929,7 @@ void pass2LoadLabelHigh(char* outputAddr, char* outputCursor)
     word arg1num = getNumberForLabel(arg1buf);
 
     // only use the highest 16 bits
-    arg1num = arg1num >> 16;
+    arg1num = (unsigned)arg1num >> 16;
 
     instr += (arg1num << 12);
 

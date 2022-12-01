@@ -241,6 +241,7 @@ assign vram32_gpu_d     = 32'd0;
 VRAM #(
 .WIDTH(32),
 .WORDS(1056),
+.ADDR_BITS(14),
 .LIST("memory/vram32.list")
 ) vram32(
 // CPU port
@@ -274,6 +275,7 @@ assign vram322_gpu_d     = 32'd0;
 VRAM #(
 .WIDTH(32),
 .WORDS(1056),
+.ADDR_BITS(14),
 .LIST("memory/vram32.list")
 ) vram322(
 // CPU port
@@ -313,6 +315,7 @@ assign vram8_gpu_d      = 8'd0;
 VRAM #(
 .WIDTH(8),
 .WORDS(8194),
+.ADDR_BITS(14),
 .LIST("memory/vram8.list")
 ) vram8(
 // CPU port
@@ -352,6 +355,7 @@ assign vramSPR_gpu_d      = 9'd0;
 VRAM #(
 .WIDTH(9),
 .WORDS(256),
+.ADDR_BITS(14),
 .LIST("memory/vramSPR.list")
 ) vramSPR(
 // CPU port
@@ -367,6 +371,46 @@ VRAM #(
 .gpu_addr   (vramSPR_gpu_addr),
 .gpu_we     (vramSPR_gpu_we),
 .gpu_q      (vramSPR_gpu_q)
+);
+
+
+//--------------------------VRAMPX--------------------------------
+//VRAMPX I/O
+wire        vramPX_gpu_clk;
+wire [16:0] vramPX_gpu_addr;
+wire [7:0]  vramPX_gpu_d;
+wire        vramPX_gpu_we;
+wire [7:0]  vramPX_gpu_q;
+
+wire        vramPX_cpu_clk;
+wire [16:0] vramPX_cpu_addr;
+wire [7:0]  vramPX_cpu_d;
+wire        vramPX_cpu_we;
+wire [7:0]  vramPX_cpu_q;
+
+// FSX will not write to VRAM
+assign vramPX_gpu_we     = 1'b0;
+assign vramPX_gpu_d      = 8'd0;
+
+VRAM #(
+.WIDTH(8),
+.WORDS(76800),
+.ADDR_BITS(17),
+.LIST("memory/vramPX.list")
+) vramPX(
+// CPU port
+.cpu_clk    (clk),
+.cpu_d      (vramPX_cpu_d),
+.cpu_addr   (vramPX_cpu_addr),
+.cpu_we     (vramPX_cpu_we),
+.cpu_q      (vramPX_cpu_q),
+
+// GPU port
+.gpu_clk    (clkMuxOut),
+.gpu_d      (vramPX_gpu_d),
+.gpu_addr   (vramPX_gpu_addr),
+.gpu_we     (vramPX_gpu_we),
+.gpu_q      (vramPX_gpu_q)
 );
 
 
@@ -397,8 +441,8 @@ FSX fsx(
 .clkMuxOut      (clkMuxOut),
 
 // HDMI
-//.TMDS_p         (TMDS_p),
-//.TMDS_n         (TMDS_n),
+.TMDS_p         (TMDS_p),
+.TMDS_n         (TMDS_n),
 
 // NTSC composite
 .composite      (composite),
@@ -421,6 +465,10 @@ FSX fsx(
 // VRAMSPR
 .vramSPR_addr   (vramSPR_gpu_addr),
 .vramSPR_q      (vramSPR_gpu_q),
+
+//VRAMPX
+.vramPX_addr   (vramPX_gpu_addr),
+.vramPX_q      (vramPX_gpu_q),
 
 // Interrupt signal
 .frameDrawn     (frameDrawn)
@@ -498,6 +546,12 @@ MemoryUnit mu(
 .VRAMspr_cpu_addr   (vramSPR_cpu_addr),
 .VRAMspr_cpu_we     (vramSPR_cpu_we),
 .VRAMspr_cpu_q      (vramSPR_cpu_q),
+
+// VRAMpx cpu port
+.VRAMpx_cpu_d      (vramPX_cpu_d),
+.VRAMpx_cpu_addr   (vramPX_cpu_addr),
+.VRAMpx_cpu_we     (vramPX_cpu_we),
+.VRAMpx_cpu_q      (vramPX_cpu_q),
 
 // ROM
 .ROM_addr           (rom_addr),
@@ -666,7 +720,7 @@ LEDvisGPU
 (
 .clk(clk),
 .reset(reset),
-.activity(vram32_cpu_we|vram8_cpu_we|vramSPR_cpu_we),
+.activity(vram32_cpu_we|vram8_cpu_we|vramSPR_cpu_we|vramPX_cpu_we),
 .LED(led_GPU)
 );
 

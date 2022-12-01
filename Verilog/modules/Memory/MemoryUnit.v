@@ -29,8 +29,8 @@ module MemoryUnit(
     output          SDRAM_CKE, SDRAM_RASn,
     output [12:0]   SDRAM_A,
     output [1:0]    SDRAM_BA,
-    output [1:0]    SDRAM_DQM,
-    inout [15:0]    SDRAM_DQ,
+    output [3:0]    SDRAM_DQM,
+    inout [31:0]    SDRAM_DQ,
 
     //VRAM32 cpu port
     output [31:0]   VRAM32_cpu_d,
@@ -49,6 +49,12 @@ module MemoryUnit(
     output [13:0]   VRAMspr_cpu_addr,
     output          VRAMspr_cpu_we,
     input  [8:0]    VRAMspr_cpu_q,
+
+    //VRAMpx cpu port
+    output [7:0]    VRAMpx_cpu_d,
+    output [16:0]   VRAMpx_cpu_addr,
+    output          VRAMpx_cpu_we,
+    input  [7:0]    VRAMpx_cpu_q,
 
     //ROM
     output [8:0]    ROM_addr,
@@ -162,7 +168,8 @@ localparam
     A_TIMER3CTRL = 34,
     //A_SNESPAD = 35,
     A_PS2 = 36,
-    A_BOOTMODE = 37;
+    A_BOOTMODE = 37,
+    A_VRAMPX = 38;
 
 //------------
 //SPI0 (flash) TODO: move this to a separate module
@@ -595,6 +602,11 @@ assign VRAMspr_cpu_addr     = bus_addr - 27'hC02422;
 assign VRAMspr_cpu_d        = bus_data;
 assign VRAMspr_cpu_we       = bus_addr >= 27'hC02422 && bus_addr < 27'hC02522 && bus_we;
 
+//VRAMpx
+assign VRAMpx_cpu_addr     = bus_addr - 27'hD00000;
+assign VRAMpx_cpu_d        = bus_data;
+assign VRAMpx_cpu_we       = bus_addr >= 27'hD00000 && bus_addr < 27'hD12C00 && bus_we;
+
 //ROM
 assign ROM_addr             = bus_addr - 27'hC02522;
 
@@ -692,6 +704,7 @@ begin
     //if (bus_addr == 27'hC0273F) a_sel = A_SNESPAD;
     if (bus_addr == 27'hC02740) a_sel = A_PS2;
     if (bus_addr == 27'hC02741) a_sel = A_BOOTMODE;
+    if (bus_addr >= 27'hD00000 && bus_addr < 27'hD12C00) a_sel = A_VRAMPX;
 end
 
 reg [31:0] bus_q_wire;
@@ -737,6 +750,7 @@ begin
         //A_SNESPAD:      bus_q_wire = {16'd0, SNES_state};
         A_PS2:          bus_q_wire = {24'd0, PS2_scanCode};
         A_BOOTMODE:     bus_q_wire = {31'd0, boot_mode};
+        A_VRAMSPR:      bus_q_wire = VRAMpx_cpu_q;
         default:        bus_q_wire = 32'd0;
     endcase
 end
@@ -944,7 +958,7 @@ begin
                 end
                 */
 
-                A_VRAM8, A_VRAM32, A_VRAMSPR:
+                A_VRAM8, A_VRAM32, A_VRAMSPR, A_VRAMPX:
                 begin
                     if (bus_we)
                         bus_done <= 1'b1;

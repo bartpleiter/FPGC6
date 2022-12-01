@@ -231,6 +231,7 @@ set_global_assignment -name VERILOG_FILE modules/GPU/NTSC/RGBtoYPhaseAmpl.v
 set_global_assignment -name VERILOG_FILE modules/GPU/NTSC/RGB332toNTSC.v
 set_global_assignment -name VERILOG_FILE modules/GPU/NTSC/PhaseGen.v
 set_global_assignment -name VERILOG_FILE modules/GPU/NTSC/NTSC.v
+set_global_assignment -name VERILOG_FILE modules/GPU/PixelEngine.v
 set_global_assignment -name VERILOG_FILE modules/GPU/FSX.v
 set_global_assignment -name VERILOG_FILE modules/GPU/HDMI/TMDSenc.v
 set_global_assignment -name VERILOG_FILE modules/GPU/HDMI/RGB2HDMI.v
@@ -263,7 +264,6 @@ set_global_assignment -name VERILOG_FILE modules/MultiStabilizer.v
 set_global_assignment -name VERILOG_FILE modules/DtrReset.v
 set_global_assignment -name QIP_FILE clock_pll.qip
 set_global_assignment -name QIP_FILE NTSC_pll.qip
-set_global_assignment -name QIP_FILE lvds.qip
 set_global_assignment -name QIP_FILE ddr.qip
 set_global_assignment -name QIP_FILE clock_pll_v.qip
 set_global_assignment -name SIP_FILE clock_pll_v.sip

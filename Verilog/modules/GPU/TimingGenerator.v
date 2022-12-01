@@ -46,18 +46,18 @@ module TimingGenerator
 );
 
 // Horizontal: sync, active, and pixels
-localparam HS_STA = H_FP - 1;           // sync start (first pixel is 0)
-localparam HS_END = HS_STA + H_SYNC;    // sync end
-localparam HA_STA = HS_END + H_BP;      // active start
-localparam HA_END = HA_STA + H_RES;     // active end 
-localparam LINE   = HA_END;             // line pixels 
+localparam HS_STA = H_FP - 1;           // sync start (first pixel is 0)    15
+localparam HS_END = HS_STA + H_SYNC;    // sync end                         111
+localparam HA_STA = HS_END + H_BP;      // active start                     149
+localparam HA_END = HA_STA + H_RES;     // active end                       789
+localparam LINE   = HA_END;             // line pixels
 
 // Vertical: sync, active, and pixels
-localparam VS_STA = V_FP - 1;           // sync start (first line is 0)
-localparam VS_END = VS_STA + V_SYNC;    // sync end
-localparam VA_STA = VS_END + V_BP;      // active start
-localparam VA_END = VA_STA + V_RES;     // active end 
-localparam FRAME  = VA_END;             // frame lines 
+localparam VS_STA = V_FP - 1;           // sync start (first line is 0)     9
+localparam VS_END = VS_STA + V_SYNC;    // sync end                         11
+localparam VA_STA = VS_END + V_BP;      // active start                     44
+localparam VA_END = VA_STA + V_RES;     // active end                       524
+localparam FRAME  = VA_END;             // frame lines
 
 
 always @ (posedge clkPixel)
@@ -80,7 +80,7 @@ assign vsync = V_POL ? (v_count > VS_STA && v_count <= VS_END):
 
 assign csync = ~(hsync ^ vsync);
 
-assign blank = ~(h_count > HA_STA && h_count <= HA_END && v_count > VA_STA && v_count <= VA_END); 
+assign blank = ~(h_count > HA_STA && h_count <= HA_END && v_count > VA_STA && v_count <= VA_END);
      
 // Interrupt signal for CPU, high for some ticks when last frame is drawn
 assign frameDrawn = (v_count == 0 && h_count < INTERRUPT_TICKS);

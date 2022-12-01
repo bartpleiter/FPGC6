@@ -210,6 +210,7 @@ def compileLine(line):
         "sub"       : CompileInstruction.compileSUB,
         "shiftl"    : CompileInstruction.compileSHIFTL,
         "shiftr"    : CompileInstruction.compileSHIFTR,
+        "shiftrs"   : CompileInstruction.compileSHIFTRS,
         "not"       : CompileInstruction.compileNOT,
         "mults"     : CompileInstruction.compileMULTS,
         "multu"     : CompileInstruction.compileMULTU,

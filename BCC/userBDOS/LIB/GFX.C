@@ -436,6 +436,43 @@ void GFX_clearParameters()
 }
 
 
+// Clear Pixel Engine framebuffer
+void GFX_clearPXframebuffer()
+{
+  asm(
+  "; backup registers\n"
+  "push r1\n"
+  "push r2\n"
+  "push r3\n"
+  "push r4\n"
+  "push r5\n"
+
+  "; vram address\n"
+  "load32 0xD00000 r1      ; r1 = framebuffer base addr 0xD00000\n"
+
+  "; loop variables\n"
+  "load 0 r3           ; r3 = loopvar\n"
+  "load32 76800 r4    ; r4 = loopmax\n"
+  "or r1 r0 r5         ; r5 = fb addr with offset\n"
+
+  "; copy loop\n"
+  "GFX_clearPXframebufferLoop:\n"
+  "  write 0 r5 r0       ; clear pixel\n"
+  "  add r5 1 r5       ; incr vram address\n"
+  "  add r3 1 r3       ; incr counter\n"
+  "  beq r3 r4 2       ; keep looping until all pixels are cleared\n"
+  "  jump GFX_clearPXframebufferLoop\n"
+
+  "; restore registers\n"
+  "pop r5\n"
+  "pop r4\n"
+  "pop r3\n"
+  "pop r2\n"
+  "pop r1\n"
+  );
+}
+
+
 // clears and initializes VRAM (excluding pattern and palette data table)
 void GFX_initVram() 
 {

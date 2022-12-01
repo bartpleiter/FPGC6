@@ -98,3 +98,13 @@ word MATH_modU(word dividend, word divisor)
 {
   return MATH_divmodU(dividend, divisor, 1);
 }
+
+
+// Returns absolute value
+word MATH_abs(word x)
+{
+  if (x >= 0)
+    return x;
+  else
+    return -x;
+}

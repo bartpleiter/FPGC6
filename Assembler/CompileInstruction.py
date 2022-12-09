@@ -812,7 +812,10 @@ def compileDw(line):
     for i in line:
         if i != ".dw":
             number = getNumber(i, True)
-            CheckFitsInBits(number, 32, True)
+            if i[0] == '-' and int(i, 10) < 0:
+                CheckFitsInBits(number, 33, True)
+            else:
+                CheckFitsInBits(number, 32, False)
             instruction = instruction + " " + format(number & 0xffffffff, '032b')
 
     return instruction

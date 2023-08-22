@@ -32,6 +32,10 @@ module FSX(
     output [13:0]       vram8_addr,
     input  [7:0]        vram8_q,
 
+    //VRAMSPR
+    output [13:0]       vramSPR_addr,
+    input  [8:0]        vramSPR_q,
+
     //VRAMpixel
     output [16:0]       vramPX_addr,
     input  [7:0]        vramPX_q,

@@ -73,25 +73,23 @@ reg             sdc_we      = 1'b0;     // write enable
 reg             sdc_start   = 1'b0;     // start trigger
 
 // outputs
-wire [255:0]    sdc_q;                  // cache line output
-wire            sdc_ack;                // start ack signal
-wire            sdc_busy;               // busy status
+wire [31:0]     sdc_q;                  // memory output
+wire            sdc_done;               // output ready
 
 SDRAMcontroller sdramcontroller(
 // clock/reset inputs
 .clk        (clk),
 .reset      (reset),
 
-// signal inputs
+// interface inputs
 .sdc_addr   (sdc_addr),
 .sdc_data   (sdc_data),
 .sdc_we     (sdc_we),
 .sdc_start  (sdc_start),
 
-// signal outputs
+// interface outputs
 .sdc_q      (sdc_q),
-.sdc_ack    (sdc_ack),
-.sdc_busy   (sdc_busy),
+.sdc_done    (sdc_done),
 
 // SDRAM signals
 .SDRAM_CKE  (SDRAM_CKE),
@@ -113,8 +111,39 @@ begin
     
     clk = 1'b0;
     reset = 1'b0;
+    #10 
 
-    repeat(100000) #10 clk = ~clk;
+    // startup
+    repeat(120)
+    begin
+        clk = ~clk;
+        #10 clk = ~clk;
+        #10;
+    end
+
+    // write
+    sdc_addr = 24'd21;
+    sdc_data = 32'hABCDEF23;
+    sdc_we = 1'b1;
+    sdc_start = 1'b1; // stays high until done received
+
+    repeat(6)
+    begin
+        clk = ~clk;
+        #10 clk = ~clk;
+        #10;
+    end
+
+    sdc_data = 32'd0;
+    sdc_we = 1'b0;
+
+    repeat(30)
+    begin
+        clk = ~clk;
+        #10 clk = ~clk;
+        #10;
+    end
+
 
     #1 $finish;
 end

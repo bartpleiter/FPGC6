@@ -32,6 +32,14 @@ module CPU(
     input [31:0]  bus_q,
     input         bus_done,
 
+    // sdram bus
+    output [23:0] sdc_addr,     // bus_addr
+    output [31:0] sdc_data,     // bus_data
+    output        sdc_we,       // bus_we
+    output        sdc_start,    // bus_start
+    input [31:0]  sdc_q,        // bus_q
+    input         sdc_done,     // bus_done
+
     input int1, int2, int3, int4, int5, int6, int7, int8, int9, int10,
 
     output [26:0] PC
@@ -51,11 +59,34 @@ wire [31:0] addr_a;
 wire [31:0] data_a;
 wire        we_a;
 wire        start_a;
+wire        done_a;
 
 wire [31:0] addr_b;
 wire [31:0] data_b;
 wire        we_b;
 wire        start_b;
+wire        done_b;
+
+wire [26:0] arbiter_bus_addr;     // bus_addr
+wire [31:0] arbiter_bus_data;     // bus_data
+wire        arbiter_bus_we;       // bus_we
+wire        arbiter_bus_start;    // bus_start
+wire [31:0] arbiter_bus_q;        // bus_q
+wire        arbiter_bus_done;     // bus_done
+
+// bus splitter
+assign sdc_addr =   (arbiter_bus_addr < 27'h800000) ? arbiter_bus_addr: 24'd0;
+assign sdc_data =   (arbiter_bus_addr < 27'h800000) ? arbiter_bus_data: 32'd0;
+assign sdc_we =     (arbiter_bus_addr < 27'h800000) ? arbiter_bus_we: 1'b0;
+assign sdc_start =  (arbiter_bus_addr < 27'h800000) ? arbiter_bus_start: 1'b0;
+
+assign bus_addr =   (arbiter_bus_addr < 27'h800000) ? 27'd0: arbiter_bus_addr;
+assign bus_data =   (arbiter_bus_addr < 27'h800000) ? 32'd0: arbiter_bus_data;
+assign bus_we =     (arbiter_bus_addr < 27'h800000) ? 1'b0: arbiter_bus_we;
+assign bus_start =  (arbiter_bus_addr < 27'h800000) ? 1'b0: arbiter_bus_start;
+
+assign arbiter_bus_q =      (arbiter_bus_addr < 27'h800000) ? sdc_q: bus_q;
+assign arbiter_bus_done =   (arbiter_bus_addr < 27'h800000) ? sdc_done: bus_done;
 
 Arbiter arbiter (
 .clk(clk),
@@ -79,12 +110,12 @@ Arbiter arbiter (
 .q(arbiter_q),
 
 // bus
-.bus_addr(bus_addr),
-.bus_data(bus_data),
-.bus_we(bus_we),
-.bus_start(bus_start),
-.bus_q(bus_q),
-.bus_done(bus_done)
+.bus_addr(arbiter_bus_addr),
+.bus_data(arbiter_bus_data),
+.bus_we(arbiter_bus_we),
+.bus_start(arbiter_bus_start),
+.bus_q(arbiter_bus_q),
+.bus_done(arbiter_bus_done)
 );
 
 

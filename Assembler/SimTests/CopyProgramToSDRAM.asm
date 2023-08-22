@@ -22,10 +22,10 @@ Main:
         jump 0 ; jump to sdram
 
     CodeToCopy:
-    .dw 0b00011100000000000000010100010001 ;Set r1 to 5                                    //27
-    .dw 0b00011100000000000000001000100010 ;Set r2 to 2                                    //28 [Done, -> int]
-    .dw 0b00000011000000000000000100100011 ;Compute r1 + r2 and write result to r3         //29 
-    .dw 0b00000011000000000000001100100011 ;Compute r3 + r2 and write result to r3         //2A
+    .dw 0b00011100000001000000000000010001 ; Set r1 to 1024
+    .dw 0b00011100000000000001000001010101 ; Set r5 to 16
+    .dw 0b11010000000000000000010100010000 ; Write value in r1 to address in r5 with offset 0
+    .dw 0b11100000000000000000010100000010 ; Read from address in r5 to r2
     .dw 0b11111111111111111111111111111111 ; Halt
     .dw 6 7 8 9 10 11 12 13 14 15 16
 

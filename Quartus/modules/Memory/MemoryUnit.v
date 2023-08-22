@@ -4,7 +4,6 @@
 module MemoryUnit(
     // Clocks
     input           clk,
-    input           clk_SDRAM,
     input           reset,
 
     // Bus
@@ -23,14 +22,6 @@ module MemoryUnit(
     inout           SPIflash_data, SPIflash_q, SPIflash_wp, SPIflash_hold,
     output          SPIflash_cs,
     output          SPIflash_clk,
-
-    //SDRAM
-    output          SDRAM_CSn, SDRAM_WEn, SDRAM_CASn,
-    output          SDRAM_CKE, SDRAM_RASn,
-    output [12:0]   SDRAM_A,
-    output [1:0]    SDRAM_BA,
-    output [3:0]    SDRAM_DQM,
-    inout [31:0]    SDRAM_DQ,
 
     //VRAM32 cpu port
     output [31:0]   VRAM32_cpu_d,
@@ -258,49 +249,6 @@ assign io0_in = (~SPIcombined_OutputEnable) ? SPIflash_data : 1'bz;
 assign io1_in = (~SPIcombined_OutputEnable) ? SPIflash_q    : 1'bz;
 assign io2_in = (~SPIcombined_OutputEnable) ? SPIflash_wp   : 1'bz;
 assign io3_in = (~SPIcombined_OutputEnable) ? SPIflash_hold : 1'bz;
-
-
-
-
-//------------
-//SDRAM
-//------------
-reg        sd_we    = 1'b0;
-reg        sd_start = 1'b0;
-reg [31:0] sd_d     = 32'd0;
-reg [23:0] sd_addr  = 24'd0;
-
-wire        sd_busy;
-wire        sd_initDone;
-wire        sd_q_ready;
-wire [31:0] sd_q;
-
-SDRAMcontroller sdramcontroller(
-.clk        (clk_SDRAM), // now must be 100MHz
-//.reset      (reset),
-
-.busy       (sd_busy),       // high if controller is busy
-.addr       (sd_addr),       // addr to read or write
-.d          (sd_d),          // data to write
-.we         (sd_we),         // high if write, low if read
-.q          (sd_q),          // read data output
-.q_ready    (sd_q_ready),  // read data ready
-.start      (sd_start),
-.initDone   (sd_initDone),
-
-// SDRAM
-.SDRAM_CKE  (SDRAM_CKE),
-.SDRAM_CSn  (SDRAM_CSn),
-.SDRAM_WEn  (SDRAM_WEn),
-.SDRAM_CASn (SDRAM_CASn),
-.SDRAM_RASn (SDRAM_RASn),
-.SDRAM_A    (SDRAM_A),
-.SDRAM_BA   (SDRAM_BA),
-.SDRAM_DQM  (SDRAM_DQM),
-.SDRAM_DQ   (SDRAM_DQ)
-);
-
-
 
 
 //------------
@@ -712,7 +660,7 @@ reg [31:0] bus_q_wire_reg = 32'd0;
 always @(*)
 begin
     case (a_sel)
-        A_SDRAM:        bus_q_wire = sd_q;
+        A_SDRAM:        bus_q_wire = 32'd0; //sd_q; sdram is removed now!
         A_FLASH:        bus_q_wire = SPIflashReader_q;
         A_VRAM32:       bus_q_wire = VRAM32_cpu_q;
         A_VRAM8:        bus_q_wire = VRAM8_cpu_q;
@@ -750,7 +698,7 @@ begin
         //A_SNESPAD:      bus_q_wire = {16'd0, SNES_state};
         A_PS2:          bus_q_wire = {24'd0, PS2_scanCode};
         A_BOOTMODE:     bus_q_wire = {31'd0, boot_mode};
-        A_VRAMSPR:      bus_q_wire = VRAMpx_cpu_q;
+        A_VRAMPX:      bus_q_wire = VRAMpx_cpu_q;
         default:        bus_q_wire = 32'd0;
     endcase
 end
@@ -767,7 +715,7 @@ begin
         bus_d_reg <= bus_data; // latch for copy instructions to SRAM/regs
 
         // latch output
-        if (bus_done || bus_done_next || sd_q_ready || SPIflashReader_recvDone) // TODO: Should probably add more ready statements here
+        if (bus_done || bus_done_next || SPIflashReader_recvDone) // TODO: Should probably add more ready statements here
             bus_q_wire_reg <= bus_q_wire;
     end
 end
@@ -786,10 +734,6 @@ begin
         SPI0_enable <= 1'b0;
         bus_done <= 1'b0;
         bus_done_next <= 1'b0;
-        sd_addr     <= 27'd0;
-        sd_d        <= 32'd0;
-        sd_we       <= 1'b0;
-        sd_start    <= 1'b0;
         SPI0_cs     <= 1'b1;
         SPI1_cs     <= 1'b1;
         SPI2_cs     <= 1'b1;
@@ -816,20 +760,7 @@ begin
             case (a_sel)
                 A_SDRAM:
                 begin
-                    if (sd_q_ready && sd_initDone)
-                    begin
-                        bus_done <= 1'b1;
-                        sd_addr     <= 24'd0;
-                        sd_d        <= 32'd0;
-                        sd_we       <= 1'b0;
-                        sd_start    <= 1'b0;
-                    end
-                    else begin
-                        sd_addr     <= bus_addr;
-                        sd_d        <= bus_data;
-                        sd_we       <= bus_we;
-                        sd_start    <= bus_start;
-                    end
+                    bus_done <= 1'b0; // this is to make sure bus_done from MU will never be used when SDRAM access
                 end
                 A_FLASH:
                 begin

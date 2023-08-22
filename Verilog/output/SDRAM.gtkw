@@ -1,23 +1,38 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Sun Nov 20 16:24:51 2022
+[*] Tue Aug 22 13:34:09 2023
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Sun Nov 20 16:22:26 2022"
-[dumpfile_size] 50713
+[dumpfile_mtime] "Tue Aug 22 11:55:06 2023"
+[dumpfile_size] 25820
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/SDRAM.gtkw"
-[timestart] 1539000
-[size] 1920 1027
+[timestart] 1217000
+[size] 2560 1387
 [pos] -1 -1
-*-17.666576 1741000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.666576 1569000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] SDRAM_tb.
 [sst_width] 227
 [signals_width] 451
 [sst_expanded] 1
-[sst_vpaned_height] 286
+[sst_vpaned_height] 410
 @28
 SDRAM_tb.clk
 SDRAM_tb.reset
+@200
+-
+-Bus
+@22
+SDRAM_tb.sdc_addr[23:0]
+SDRAM_tb.sdc_data[31:0]
+@28
+SDRAM_tb.sdc_we
+SDRAM_tb.sdc_start
+@200
+-
+@22
+SDRAM_tb.sdc_q[31:0]
+@28
+SDRAM_tb.sdc_done
 @200
 -
 -SDRAM
@@ -36,9 +51,12 @@ SDRAM_tb.SDRAM_DQ[31:0]
 @200
 -
 -Controller
-@25
-SDRAM_tb.sdramcontroller.state[4:0]
 @24
+SDRAM_tb.sdramcontroller.state[4:0]
 SDRAM_tb.sdramcontroller.startup_counter[15:0]
+@25
+SDRAM_tb.sdramcontroller.refresh_counter[9:0]
+@28
+SDRAM_tb.sdramcontroller.is_refreshing
 [pattern_trace] 1
 [pattern_trace] 0

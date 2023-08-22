@@ -47,6 +47,7 @@
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/GPU/FSX.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/GPU/BGWrenderer.v"
 //`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/GPU/Spriterenderer.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/GPU/PixelEngine.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/GPU/TimingGenerator.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/GPU/HDMI/RGB2HDMI.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/GPU/HDMI/TMDSenc.v"
@@ -85,18 +86,20 @@ W25Q128JV spiFlash (
 
 //SDRAM
 wire             SDRAM_CLK;     // SDRAM clock
-wire    [15 : 0] SDRAM_DQ;      // SDRAM I/O
-wire    [12 : 0] SDRAM_A;    // SDRAM Address
+wire    [31 : 0] SDRAM_DQ;      // SDRAM I/O
+wire    [12 : 0] SDRAM_A;       // SDRAM Address
 wire    [1 : 0]  SDRAM_BA;      // Bank Address
 wire             SDRAM_CKE;     // Synchronous Clock Enable
-wire             SDRAM_CSn;    // CS#
-wire             SDRAM_RASn;   // RAS#
-wire             SDRAM_CASn;   // CAS#
-wire             SDRAM_WEn;    // WE#
-wire    [1 : 0]  SDRAM_DQM;     // Mask
+wire             SDRAM_CSn;     // CS#
+wire             SDRAM_RASn;    // RAS#
+wire             SDRAM_CASn;    // CAS#
+wire             SDRAM_WEn;     // WE#
+wire    [3 : 0]  SDRAM_DQM;     // Mask
 
-mt48lc16m16a2 sdram (
-.Dq     (SDRAM_DQ), 
+assign SDRAM_CLK = clk_SDRAM;
+
+mt48lc16m16a2 sdram1 (
+.Dq     (SDRAM_DQ[15:0]), 
 .Addr   (SDRAM_A), 
 .Ba     (SDRAM_BA), 
 .Clk    (SDRAM_CLK), 
@@ -105,7 +108,20 @@ mt48lc16m16a2 sdram (
 .Ras_n  (SDRAM_RASn), 
 .Cas_n  (SDRAM_CASn), 
 .We_n   (SDRAM_WEn), 
-.Dqm    (SDRAM_DQM)
+.Dqm    (SDRAM_DQM[1:0])
+);
+
+mt48lc16m16a2 sdram2 (
+.Dq     (SDRAM_DQ[31:16]), 
+.Addr   (SDRAM_A), 
+.Ba     (SDRAM_BA), 
+.Clk    (SDRAM_CLK), 
+.Cke    (SDRAM_CKE), 
+.Cs_n   (SDRAM_CSn), 
+.Ras_n  (SDRAM_RASn), 
+.Cas_n  (SDRAM_CASn), 
+.We_n   (SDRAM_WEn), 
+.Dqm    (SDRAM_DQM[3:2])
 );
 
 //HDMI
@@ -285,7 +301,9 @@ begin
 
     GPI = 4'b1111;
 
-    DIPS = 4'b0001;
+    DIPS = 4'b0000;
+
+    DIPS[0] = 0; // spi = 0, uart = 1
 
 
     repeat(10)

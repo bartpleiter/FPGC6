@@ -425,6 +425,45 @@ ROM rom(
 );
 
 
+//----------------SDRAM Controller------------------
+// inputs
+wire [23:0]      sdc_addr;  // address to write or to start reading from
+wire [31:0]      sdc_data;  // data to write
+wire             sdc_we;    // write enable
+wire             sdc_start; // start trigger
+
+// outputs
+wire [31:0]     sdc_q;      // memory output
+wire            sdc_done;   // output ready
+
+SDRAMcontroller sdramcontroller(
+// clock/reset inputs
+.clk        (clk_SDRAM),
+.reset      (reset),
+
+// interface inputs
+.sdc_addr   (sdc_addr),
+.sdc_data   (sdc_data),
+.sdc_we     (sdc_we),
+.sdc_start  (sdc_start),
+
+// interface outputs
+.sdc_q      (sdc_q),
+.sdc_done   (sdc_done),
+
+// SDRAM signals
+.SDRAM_CKE  (SDRAM_CKE),
+.SDRAM_CSn  (SDRAM_CSn),
+.SDRAM_WEn  (SDRAM_WEn),
+.SDRAM_CASn (SDRAM_CASn),
+.SDRAM_RASn (SDRAM_RASn),
+.SDRAM_A    (SDRAM_A),
+.SDRAM_BA   (SDRAM_BA),
+.SDRAM_DQM  (SDRAM_DQM),
+.SDRAM_DQ   (SDRAM_DQ)
+);
+
+
 //-----------------------FSX-------------------------
 // FSX I/O
 
@@ -493,7 +532,6 @@ wire        SPI0_QSPI;
 MemoryUnit mu(
 // Clocks
 .clk            (clk),
-.clk_SDRAM      (clk_SDRAM),
 .reset          (reset),
 
 // Bus
@@ -515,17 +553,6 @@ MemoryUnit mu(
 .SPIflash_hold  (SPI0_hold),
 .SPIflash_cs    (SPI0_cs),
 .SPIflash_clk   (SPI0_clk),
-
-// SDRAM
-.SDRAM_CSn      (SDRAM_CSn),
-.SDRAM_WEn      (SDRAM_WEn),
-.SDRAM_CASn     (SDRAM_CASn),
-.SDRAM_CKE      (SDRAM_CKE),
-.SDRAM_RASn     (SDRAM_RASn),
-.SDRAM_A        (SDRAM_A),
-.SDRAM_BA       (SDRAM_BA),
-.SDRAM_DQM      (SDRAM_DQM),
-.SDRAM_DQ       (SDRAM_DQ),
 
 // VRAM32 cpu port
 .VRAM32_cpu_d       (vram32_cpu_d),
@@ -659,7 +686,15 @@ CPU cpu(
 .bus_start      (bus_start),
 .bus_q          (bus_q),
 .bus_done       (bus_done),
-.PC             (PC)
+.PC             (PC),
+
+// sdram bus
+.sdc_addr       (sdc_addr),
+.sdc_data       (sdc_data),
+.sdc_we         (sdc_we),
+.sdc_start      (sdc_start),
+.sdc_q          (sdc_q),
+.sdc_done       (sdc_done)
 );
 
 

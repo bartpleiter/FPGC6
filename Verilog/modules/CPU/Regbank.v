@@ -28,7 +28,7 @@ begin
     if (we && addr_d != 4'd0)
     begin
         regs[addr_d] <= data_d;
-        $display("%d: reg%d := %d", $time, addr_d, data_d);
+        //$display("%d: reg%d := %d", $time, addr_d, data_d);
     end
 end
 

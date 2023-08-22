@@ -463,7 +463,7 @@ word Pass1Dw(char* outputAddr, char* outputCursor)
 
 void Pass1Db(char* outputAddr, char* outputCursor)
 {
-    BDOS_PrintConsole(".DB is not yet implemented!\n");
+    BDOS_PrintConsole(".db is not yet implemented!\n");
     exit(1);
 }
 
@@ -534,8 +534,8 @@ void doPass1()
     word filePass1Cursor = 0;
 
     // add userBDOS header instructions
-    memcpy(outfilePass1Addr, "jump Main\njump Int1\njump Int2\njump Int3\njump Int4\n", 50);
-    filePass1Cursor += 50;
+    memcpy(outfilePass1Addr, "jump Main\njump Int\njump Main\njump Main\n", 39);
+    filePass1Cursor += 39;
     globalLineCursor += 5;
 
     while (readMemLine(outfileCodeAddr) != EOF)
@@ -558,8 +558,8 @@ void LinePass2(char* outputAddr, char* outputCursor)
         pass2Read(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "write ", 6))
         pass2Write(outputAddr, outputCursor);
-    else if (memcmp(lineBuffer, "copy ", 5))
-        pass2Copy(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "readintid ", 10))
+        pass2Readintid(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "push ", 5))
         pass2Push(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "pop ", 4))
@@ -570,22 +570,28 @@ void LinePass2(char* outputAddr, char* outputCursor)
         pass2Jumpo(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "jumpr ", 6))
         pass2Jumpr(outputAddr, outputCursor);
-    else if (memcmp(lineBuffer, "load ", 5))
-        pass2Load(outputAddr, outputCursor);
-    else if (memcmp(lineBuffer, "loadhi ", 7))
-        pass2Loadhi(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "jumpro ", 7))
+        pass2Jumpr(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "beq ", 4))
         pass2Beq(outputAddr, outputCursor);
-    else if (memcmp(lineBuffer, "bne ", 4))
-        pass2Bne(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "bgt ", 4))
         pass2Bgt(outputAddr, outputCursor);
-    else if (memcmp(lineBuffer, "bge ", 4))
-        pass2Bge(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "bgts ", 5))
         pass2Bgts(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "bge ", 4))
+        pass2Bge(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "bges ", 5))
         pass2Bges(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "bne ", 4))
+        pass2Bne(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "blt ", 4))
+        pass2Blt(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "blts ", 5))
+        pass2Blts(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "ble ", 4))
+        pass2Ble(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "bles ", 5))
+        pass2Bles(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "savpc ", 6))
         pass2Savpc(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "reti", 4))
@@ -604,10 +610,22 @@ void LinePass2(char* outputAddr, char* outputCursor)
         pass2Shiftl(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "shiftr ", 7))
         pass2Shiftr(outputAddr, outputCursor);
-    else if (memcmp(lineBuffer, "mult ", 5))
-        pass2Mult(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "shiftrs ", 8))
+        pass2Shiftrs(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "not ", 4))
         pass2Not(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "mults ", 6))
+        pass2Mults(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "multu ", 6))
+        pass2Multu(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "slt ", 4))
+        pass2Slt(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "sltu ", 5))
+        pass2Sltu(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "load ", 5))
+        pass2Load(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "loadhi ", 7))
+        pass2Loadhi(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "loadLabelLow ", 13))
         pass2LoadLabelLow(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "loadLabelHigh ", 14))
@@ -618,8 +636,6 @@ void LinePass2(char* outputAddr, char* outputCursor)
         pass2Dw(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, ".dl ", 4))
         pass2Dl(outputAddr, outputCursor);
-    else if (memcmp(lineBuffer, "readintid ", 10))
-        pass2Readintid(outputAddr, outputCursor);
     else
     {
         BDOS_PrintConsole("Unknown instruction!\n");

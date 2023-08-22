@@ -114,7 +114,7 @@ begin
     clk = 1'b0;
     reset = 1'b0;
 
-    repeat(1000) #10 clk = ~clk;
+    repeat(100000) #10 clk = ~clk;
 
     #1 $finish;
 end

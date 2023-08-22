@@ -2757,6 +2757,7 @@ word divCheckAndCalc(word tok, word* psl, word sr, word Unsigned, word ConstExpr
 {
   word div0 = 0;
   word sl = *psl;
+  word int_min = INT_MIN;
 
   if (!ConstExpr[1])
     return !div0;
@@ -2780,7 +2781,7 @@ word divCheckAndCalc(word tok, word* psl, word sr, word Unsigned, word ConstExpr
   {
     return !div0;
   }
-  else if (!Unsigned && ((sl == INT_MIN && sr == -1) || division(sl , sr) != truncInt(division(sl , sr))))
+  else if (!Unsigned && ((sl == int_min && sr == -1) || division(sl , sr) != truncInt(division(sl , sr))))
   {
     div0 = 1;
   }

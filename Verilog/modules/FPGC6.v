@@ -626,6 +626,37 @@ MemoryUnit mu(
 );
 
 
+//------------L2 Cache--------------
+//CPU bus
+wire [23:0]      l2_addr;  // address to write or to start reading from
+wire [31:0]      l2_data;  // data to write
+wire             l2_we;    // write enable
+wire             l2_start; // start trigger
+wire [31:0]      l2_q;     // memory output
+wire             l2_done;  // output ready
+
+L2cache l2cache(
+.clk            (clk),
+.reset          (reset),
+
+// CPU bus
+.l2_addr       (l2_addr),
+.l2_data       (l2_data),
+.l2_we         (l2_we),
+.l2_start      (l2_start),
+.l2_q          (l2_q),
+.l2_done       (l2_done),
+
+// sdram bus
+.sdc_addr       (sdc_addr),
+.sdc_data       (sdc_data),
+.sdc_we         (sdc_we),
+.sdc_start      (sdc_start),
+.sdc_q          (sdc_q),
+.sdc_done       (sdc_done)
+);
+
+
 //---------------CPU----------------
 //CPU I/O
 wire [26:0] PC;
@@ -643,12 +674,12 @@ CPU cpu(
 .bus_done       (bus_done),
 
 // sdram bus
-.sdc_addr       (sdc_addr),
-.sdc_data       (sdc_data),
-.sdc_we         (sdc_we),
-.sdc_start      (sdc_start),
-.sdc_q          (sdc_q),
-.sdc_done       (sdc_done),
+.sdc_addr       (l2_addr),
+.sdc_data       (l2_data),
+.sdc_we         (l2_we),
+.sdc_start      (l2_start),
+.sdc_q          (l2_q),
+.sdc_done       (l2_done),
 
 .int1           (OST1_int),            //OStimer1
 .int2           (OST2_int),            //OStimer2

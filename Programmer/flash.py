@@ -18,7 +18,7 @@ PAGESIZE = 256
 
 parser = argparse.ArgumentParser(description='Interface to FPGC SPI Flash Programmer')
 
-parser.add_argument('-d', dest='device', default='/dev/ttyUSB0',
+parser.add_argument('-d', dest='device', default='/dev/ttyUSB1',
                     help='serial port to communicate with')
 
 parser.add_argument('-i', dest='input', default='code.bin',

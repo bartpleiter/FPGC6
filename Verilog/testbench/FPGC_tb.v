@@ -34,6 +34,8 @@
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/SPIreader.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/ROM.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/MemoryUnit.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/L2cache.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/L1cache.v"
 
 // io
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/IO/Keyboard.v"

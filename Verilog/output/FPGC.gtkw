@@ -1,27 +1,28 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Tue Aug 22 17:56:45 2023
+[*] Wed Aug 23 17:50:19 2023
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Tue Aug 22 17:50:32 2023"
-[dumpfile_size] 31918841
+[dumpfile_mtime] "Wed Aug 23 17:45:34 2023"
+[dumpfile_size] 31356655
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw"
-[timestart] 327955000
+[timestart] 265530000
 [size] 2560 1387
 [pos] -1 -1
-*-17.666576 328685000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-22.666576 290320000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] FPGC_tb.
 [treeopen] FPGC_tb.fpgc.
 [treeopen] FPGC_tb.fpgc.cpu.arbiter.
 [sst_width] 227
-[signals_width] 451
+[signals_width] 713
 [sst_expanded] 1
-[sst_vpaned_height] 407
+[sst_vpaned_height] 562
 @28
 FPGC_tb.fpgc.clk
 @22
 FPGC_tb.fpgc.cpu.PC[26:0]
 @200
+-
 -
 -Arbiter
 @22
@@ -90,15 +91,16 @@ FPGC_tb.fpgc.sdramcontroller.sdc_start
 FPGC_tb.fpgc.sdramcontroller.state[4:0]
 @28
 FPGC_tb.fpgc.sdramcontroller.is_refreshing
-@23
+@22
 FPGC_tb.fpgc.sdramcontroller.sdc_q[31:0]
 @200
 -
 -
 @22
 FPGC_tb.fpgc.sdramcontroller.SDRAM_A[12:0]
-@28
+@29
 FPGC_tb.fpgc.sdramcontroller.SDRAM_BA[1:0]
+@28
 FPGC_tb.fpgc.sdramcontroller.SDRAM_CASn
 FPGC_tb.fpgc.sdramcontroller.SDRAM_CKE
 @22
@@ -188,5 +190,126 @@ FPGC_tb.fpgc.mu.bus_q_wire_reg[31:0]
 FPGC_tb.fpgc.mu.bus_done
 @22
 FPGC_tb.fpgc.mu.UART0_rx.o_Rx_Byte[7:0]
+@200
+-
+@28
+FPGC_tb.fpgc.cpu.intDisabled
+FPGC_tb.fpgc.cpu.interruptValid
+@200
+-InstrMem
+@28
+FPGC_tb.fpgc.cpu.instrMem.clk
+@200
+-
+@22
+FPGC_tb.fpgc.cpu.instrMem.addr[31:0]
+FPGC_tb.fpgc.cpu.instrMem.q[31:0]
+@28
+FPGC_tb.fpgc.cpu.instrMem.ignoreNext
+FPGC_tb.fpgc.cpu.instrMem.clear
+FPGC_tb.fpgc.cpu.instrMem.hit
+FPGC_tb.fpgc.cpu.instrMem.hold
+@200
+-
+@22
+FPGC_tb.fpgc.cpu.instrMem.bus_addr[31:0]
+FPGC_tb.fpgc.cpu.instrMem.bus_data[31:0]
+@28
+FPGC_tb.fpgc.cpu.instrMem.bus_done
+@22
+FPGC_tb.fpgc.cpu.instrMem.bus_q[31:0]
+@28
+FPGC_tb.fpgc.cpu.instrMem.bus_start
+FPGC_tb.fpgc.cpu.instrMem.bus_we
+@200
+-
+-DataMem
+@22
+FPGC_tb.fpgc.cpu.dataMem.bus_addr[31:0]
+FPGC_tb.fpgc.cpu.dataMem.bus_data[31:0]
+FPGC_tb.fpgc.cpu.dataMem.bus_q[31:0]
+@28
+FPGC_tb.fpgc.cpu.dataMem.bus_we
+FPGC_tb.fpgc.cpu.dataMem.bus_start
+FPGC_tb.fpgc.cpu.dataMem.bus_done
+@200
+-
+@24
+FPGC_tb.fpgc.cpu.dataMem.bus_addr[31:0]
+@28
+FPGC_tb.fpgc.cpu.dataMem.busy
+@22
+FPGC_tb.fpgc.cpu.dataMem.qreg[31:0]
+FPGC_tb.fpgc.cpu.dataMem.q[31:0]
+@200
+-
+-L2Cache
+@28
+FPGC_tb.fpgc.l2cache.clk
+FPGC_tb.fpgc.l2cache.reset
+@200
+-
+@24
+FPGC_tb.fpgc.l2cache.l2_addr[23:0]
+@28
+FPGC_tb.fpgc.l2cache.l2_start
+@22
+FPGC_tb.fpgc.l2cache.l2_data[31:0]
+@28
+FPGC_tb.fpgc.l2cache.l2_we
+@22
+FPGC_tb.fpgc.l2cache.l2_q[31:0]
+@28
+FPGC_tb.fpgc.l2cache.l2_done
+@200
+-
+@22
+FPGC_tb.fpgc.l2cache.sdc_addr[23:0]
+FPGC_tb.fpgc.l2cache.sdc_data[31:0]
+@28
+FPGC_tb.fpgc.l2cache.sdc_done
+@22
+FPGC_tb.fpgc.l2cache.sdc_q[31:0]
+@28
+FPGC_tb.fpgc.l2cache.sdc_start
+FPGC_tb.fpgc.l2cache.sdc_we
+@200
+-
+@22
+FPGC_tb.fpgc.l2cache.sdc_addr_reg[23:0]
+FPGC_tb.fpgc.l2cache.sdc_data_reg[31:0]
+@28
+FPGC_tb.fpgc.l2cache.sdc_start_reg
+FPGC_tb.fpgc.l2cache.sdc_we_reg
+FPGC_tb.fpgc.l2cache.l2_done_reg
+@22
+FPGC_tb.fpgc.l2cache.l2_q_reg[31:0]
+@200
+-
+@28
+FPGC_tb.fpgc.l2cache.l2_start
+FPGC_tb.fpgc.l2cache.start_prev
+@c00024
+FPGC_tb.fpgc.l2cache.state[2:0]
+@28
+(0)FPGC_tb.fpgc.l2cache.state[2:0]
+(1)FPGC_tb.fpgc.l2cache.state[2:0]
+(2)FPGC_tb.fpgc.l2cache.state[2:0]
+@1401200
+-group_end
+@200
+-
+@22
+FPGC_tb.fpgc.l2cache.cache_reset
+FPGC_tb.fpgc.l2cache.cache_we
+@200
+-
+@28
+FPGC_tb.fpgc.l2cache.valid_d
+FPGC_tb.fpgc.l2cache.valid_we
+FPGC_tb.fpgc.l2cache.valid_q
+@200
+-
+-
 [pattern_trace] 1
 [pattern_trace] 0

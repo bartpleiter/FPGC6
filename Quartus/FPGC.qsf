@@ -226,6 +226,8 @@ set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to GPI[3]
 set_global_assignment -name SDC_FILE FPGC.sdc
 set_global_assignment -name QIP_FILE clkMux/synthesis/clkMux.qip
 set_global_assignment -name VERILOG_FILE modules/FPGC.v
+set_global_assignment -name VERILOG_FILE modules/Memory/L1cache.v
+set_global_assignment -name VERILOG_FILE modules/Memory/L2cache.v
 set_global_assignment -name VERILOG_FILE Source/Test02_project_key.v
 set_global_assignment -name VERILOG_FILE modules/GPU/NTSC/RGBtoYPhaseAmpl.v
 set_global_assignment -name VERILOG_FILE modules/GPU/NTSC/RGB332toNTSC.v

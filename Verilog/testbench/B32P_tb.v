@@ -64,29 +64,8 @@ wire        bus_start;
 wire [31:0] bus_q;
 wire        bus_done;
 
-CPU cpu(
-.clk        (clk),
-.reset      (reset),
 
-.int1(int1),
-.int2(int2),
-.int3(int3),
-.int4(int4),
-.int5(int5),
-.int6(int6),
-.int7(int7),
-.int8(int8),
-.int9(int9),
-.int10(int10),
 
-// bus
-.bus_addr(bus_addr),
-.bus_data(bus_data),
-.bus_we(bus_we),
-.bus_start(bus_start),
-.bus_q(bus_q),
-.bus_done(bus_done)
-);
 
 //----------DEV-------------
 
@@ -276,21 +255,20 @@ W25Q128JV spiFlash (
 
 //SDRAM
 wire             SDRAM_CLK;     // SDRAM clock
-wire    [15 : 0] SDRAM_DQ;      // SDRAM I/O
-wire    [12 : 0] SDRAM_A;    // SDRAM Address
+wire    [31 : 0] SDRAM_DQ;      // SDRAM I/O
+wire    [12 : 0] SDRAM_A;       // SDRAM Address
 wire    [1 : 0]  SDRAM_BA;      // Bank Address
 wire             SDRAM_CKE;     // Synchronous Clock Enable
-wire             SDRAM_CSn;    // CS#
-wire             SDRAM_RASn;   // RAS#
-wire             SDRAM_CASn;   // CAS#
-wire             SDRAM_WEn;    // WE#
-wire    [1 : 0]  SDRAM_DQM;     // Mask
+wire             SDRAM_CSn;     // CS#
+wire             SDRAM_RASn;    // RAS#
+wire             SDRAM_CASn;    // CAS#
+wire             SDRAM_WEn;     // WE#
+wire    [3 : 0]  SDRAM_DQM;     // Mask
 
-//Run SDRAM at 100MHz
 assign SDRAM_CLK = clk_SDRAM;
 
-mt48lc16m16a2 sdram (
-.Dq     (SDRAM_DQ), 
+mt48lc16m16a2 sdram1 (
+.Dq     (SDRAM_DQ[15:0]), 
 .Addr   (SDRAM_A), 
 .Ba     (SDRAM_BA), 
 .Clk    (SDRAM_CLK), 
@@ -299,8 +277,102 @@ mt48lc16m16a2 sdram (
 .Ras_n  (SDRAM_RASn), 
 .Cas_n  (SDRAM_CASn), 
 .We_n   (SDRAM_WEn), 
-.Dqm    (SDRAM_DQM)
+.Dqm    (SDRAM_DQM[1:0])
 );
+
+mt48lc16m16a2 sdram2 (
+.Dq     (SDRAM_DQ[31:16]), 
+.Addr   (SDRAM_A), 
+.Ba     (SDRAM_BA), 
+.Clk    (SDRAM_CLK), 
+.Cke    (SDRAM_CKE), 
+.Cs_n   (SDRAM_CSn), 
+.Ras_n  (SDRAM_RASn), 
+.Cas_n  (SDRAM_CASn), 
+.We_n   (SDRAM_WEn), 
+.Dqm    (SDRAM_DQM[3:2])
+);
+
+
+//----------------SDRAM Controller------------------
+// inputs
+wire [23:0]      sdc_addr;  // address to write or to start reading from
+wire [31:0]      sdc_data;  // data to write
+wire             sdc_we;    // write enable
+wire             sdc_start; // start trigger
+
+// outputs
+wire [31:0]     sdc_q;      // memory output
+wire            sdc_done;   // output ready
+
+SDRAMcontroller sdramcontroller(
+// clock/reset inputs
+.clk        (clk_SDRAM),
+.reset      (reset),
+
+// interface inputs
+.sdc_addr   (sdc_addr),
+.sdc_data   (sdc_data),
+.sdc_we     (sdc_we),
+.sdc_start  (sdc_start),
+
+// interface outputs
+.sdc_q      (sdc_q),
+.sdc_done   (sdc_done),
+
+// SDRAM signals
+.SDRAM_CKE  (SDRAM_CKE),
+.SDRAM_CSn  (SDRAM_CSn),
+.SDRAM_WEn  (SDRAM_WEn),
+.SDRAM_CASn (SDRAM_CASn),
+.SDRAM_RASn (SDRAM_RASn),
+.SDRAM_A    (SDRAM_A),
+.SDRAM_BA   (SDRAM_BA),
+.SDRAM_DQM  (SDRAM_DQM),
+.SDRAM_DQ   (SDRAM_DQ)
+);
+
+
+//---------------CPU----------------
+//CPU I/O
+wire [26:0] PC;
+
+CPU cpu(
+.clk            (clk),
+.reset          (reset),
+
+// bus
+.bus_addr       (bus_addr),
+.bus_data       (bus_data),
+.bus_we         (bus_we),
+.bus_start      (bus_start),
+.bus_q          (bus_q),
+.bus_done       (bus_done),
+
+// sdram bus
+.sdc_addr       (sdc_addr),
+.sdc_data       (sdc_data),
+.sdc_we         (sdc_we),
+.sdc_start      (sdc_start),
+.sdc_q          (sdc_q),
+.sdc_done       (sdc_done),
+
+.int1(int1),
+.int2(int2),
+.int3(int3),
+.int4(int4),
+.int5(int5),
+.int6(int6),
+.int7(int7),
+.int8(int8),
+.int9(int9),
+.int10(int10),
+
+.PC             (PC)
+);
+
+
+
 
 //HDMI
 wire [3:0] TMDS_p;
@@ -378,7 +450,6 @@ wire        SPI0_QSPI;
 MemoryUnit mu(
 //clock
 .clk            (clk),
-.clk_SDRAM      (clk_SDRAM),
 .reset          (reset),
 
 //CPU connection (Bus)
@@ -400,17 +471,6 @@ MemoryUnit mu(
 .SPIflash_hold  (SPI0_hold),
 .SPIflash_cs    (SPI0_cs), 
 .SPIflash_clk   (SPI0_clk),
-
-//SDRAM
-.SDRAM_CSn      (SDRAM_CSn), 
-.SDRAM_WEn      (SDRAM_WEn), 
-.SDRAM_CASn     (SDRAM_CASn),
-.SDRAM_CKE      (SDRAM_CKE), 
-.SDRAM_RASn     (SDRAM_RASn),
-.SDRAM_A        (SDRAM_A),
-.SDRAM_BA       (SDRAM_BA),
-.SDRAM_DQM      (SDRAM_DQM),
-.SDRAM_DQ       (SDRAM_DQ),
 
 //VRAM32 cpu port
 .VRAM32_cpu_d       (vram32_cpu_d),

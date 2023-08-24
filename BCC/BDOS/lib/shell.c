@@ -393,6 +393,7 @@ void SHELL_runFile(char* arg, word useBin)
                         "push r14\n"
                         "push r15\n"
 
+                        "ccache\n"
                         "savpc r1\n"
                         "push r1\n"
                         "jump 0x400000\n"

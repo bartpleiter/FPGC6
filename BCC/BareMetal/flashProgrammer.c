@@ -195,7 +195,12 @@ void readAndPrint(word len, word addr24, word addr16, word addr8)
     word i;
     for (i = 0; i < l; i++)
     {
-        uprintc(SpiTransfer(0x00));
+        word x = SpiTransfer(0x00);
+        // delay a bit here
+        word n = 3;
+        word m = 4;
+        word f = n*m;
+        uprintc(x);
     }
 
     SpiEndTransfer();
@@ -396,7 +401,7 @@ void processCommand()
     else if (currentCommand == COMMAND_FLASH_READ)
     {
 
-        word len = zUARTbuffer[1] << 16;
+        word len = UARTbuffer[1] << 16;
         len += UARTbuffer[2] << 8;
         len += UARTbuffer[3];
 

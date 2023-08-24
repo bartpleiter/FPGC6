@@ -619,6 +619,36 @@ begin
     endcase
 end
 
+//------------L1d Cache--------------
+//CPU bus
+wire [31:0]      l1d_addr;  // address to write or to start reading from
+wire [31:0]      l1d_data;  // data to write
+wire             l1d_we;    // write enable
+wire             l1d_start; // start trigger
+wire [31:0]      l1d_q;     // memory output
+wire             l1d_done;  // output ready
+
+L1cache l1dcache(
+.clk            (clk),
+.reset          (reset),
+
+// CPU bus
+.l2_addr       (l1d_addr),
+.l2_data       (l1d_data),
+.l2_we         (l1d_we),
+.l2_start      (l1d_start),
+.l2_q          (l1d_q),
+.l2_done       (l1d_done),
+
+// sdram bus
+.sdc_addr       (addr_b),
+.sdc_data       (data_b),
+.sdc_we         (we_b),
+.sdc_start      (start_b),
+.sdc_q          (arbiter_q),
+.sdc_done       (done_b)
+);
+
 
 // Data Memory
 //  should eventually become a memory with variable latency
@@ -638,12 +668,12 @@ DataMem dataMem(
 .busy(datamem_busy_MEM),
 
 // bus
-.bus_addr(addr_b),
-.bus_data(data_b),
-.bus_we(we_b),
-.bus_start(start_b),
-.bus_q(arbiter_q),
-.bus_done(done_b),
+.bus_addr(l1d_addr),
+.bus_data(l1d_data),
+.bus_we(l1d_we),
+.bus_start(l1d_start),
+.bus_q(l1d_q),
+.bus_done(l1d_done),
 
 .hold(stall_MEM),
 .clear(flush_MEM)

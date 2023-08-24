@@ -1,22 +1,23 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Wed Aug 23 17:50:19 2023
+[*] Thu Aug 24 18:45:36 2023
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Wed Aug 23 17:45:34 2023"
-[dumpfile_size] 31356655
+[dumpfile_mtime] "Thu Aug 24 18:34:31 2023"
+[dumpfile_size] 26427340
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw"
-[timestart] 265530000
+[timestart] 301564000
 [size] 2560 1387
 [pos] -1 -1
-*-22.666576 290320000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.666576 303319000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] FPGC_tb.
 [treeopen] FPGC_tb.fpgc.
+[treeopen] FPGC_tb.fpgc.cpu.
 [treeopen] FPGC_tb.fpgc.cpu.arbiter.
 [sst_width] 227
 [signals_width] 713
 [sst_expanded] 1
-[sst_vpaned_height] 562
+[sst_vpaned_height] 775
 @28
 FPGC_tb.fpgc.clk
 @22
@@ -98,9 +99,8 @@ FPGC_tb.fpgc.sdramcontroller.sdc_q[31:0]
 -
 @22
 FPGC_tb.fpgc.sdramcontroller.SDRAM_A[12:0]
-@29
-FPGC_tb.fpgc.sdramcontroller.SDRAM_BA[1:0]
 @28
+FPGC_tb.fpgc.sdramcontroller.SDRAM_BA[1:0]
 FPGC_tb.fpgc.sdramcontroller.SDRAM_CASn
 FPGC_tb.fpgc.sdramcontroller.SDRAM_CKE
 @22
@@ -160,8 +160,9 @@ FPGC_tb.fpgc.cpu.instr_hit_FE
 -
 @28
 FPGC_tb.fpgc.cpu.intDisabled
-@22
+@23
 FPGC_tb.fpgc.cpu.interruptValid
+@22
 FPGC_tb.fpgc.cpu.pc_FE[31:0]
 FPGC_tb.fpgc.cpu.pc_FE_backup[31:0]
 FPGC_tb.fpgc.cpu.PC_backup_current[31:0]
@@ -192,6 +193,8 @@ FPGC_tb.fpgc.mu.bus_done
 FPGC_tb.fpgc.mu.UART0_rx.o_Rx_Byte[7:0]
 @200
 -
+@22
+FPGC_tb.DIPS[3:0]
 @28
 FPGC_tb.fpgc.cpu.intDisabled
 FPGC_tb.fpgc.cpu.interruptValid
@@ -242,6 +245,30 @@ FPGC_tb.fpgc.cpu.dataMem.busy
 FPGC_tb.fpgc.cpu.dataMem.qreg[31:0]
 FPGC_tb.fpgc.cpu.dataMem.q[31:0]
 @200
+-
+@22
+FPGC_tb.fpgc.cpu.l1dcache.cache_addr[9:0]
+FPGC_tb.fpgc.cpu.l1dcache.cache_d[45:0]
+FPGC_tb.fpgc.cpu.l1dcache.cache_q[45:0]
+@28
+FPGC_tb.fpgc.cpu.l1dcache.cache_we
+@200
+-
+@22
+FPGC_tb.fpgc.cpu.l1dcache.valid_a[9:0]
+@28
+FPGC_tb.fpgc.cpu.l1dcache.valid_q
+FPGC_tb.fpgc.cpu.l1dcache.valid_d
+FPGC_tb.fpgc.cpu.l1dcache.valid_we
+@a2
+FPGC_tb.fpgc.cpu.l1dcache.valid_bits[1023:0]
+@200
+-
+@24
+FPGC_tb.fpgc.cpu.l1dcache.state[2:0]
+@200
+-
+-
 -
 -L2Cache
 @28
@@ -308,6 +335,8 @@ FPGC_tb.fpgc.l2cache.cache_we
 FPGC_tb.fpgc.l2cache.valid_d
 FPGC_tb.fpgc.l2cache.valid_we
 FPGC_tb.fpgc.l2cache.valid_q
+@22
+FPGC_tb.fpgc.l2cache.valid_bits[1023:0]
 @200
 -
 -

@@ -324,7 +324,7 @@ begin
 
     nreset = 1;
 
-    repeat(40000)
+    repeat(30000)
     begin
         #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
         #5 clk_SDRAM = ~clk_SDRAM; //100MHz

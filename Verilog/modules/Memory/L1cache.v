@@ -99,9 +99,11 @@ begin
     end
 end
 
+reg [31:0] addr_prev = 32'd0;
 
 always @(posedge clk) 
 begin
+	addr_prev <= l2_addr;
     start_prev <= l2_start;
     l2_done_reg <= 1'b0;
     cache_we <= 1'b0;
@@ -124,7 +126,7 @@ begin
             valid_a <= l2_addr[index_size-1:0];
             if (l2_addr < 27'h800000)
             begin
-                if (l2_start && !start_prev)
+                if ( (l2_start && !start_prev) || addr_prev >= 27'h800000 && l2_start)
                 begin
                     if (l2_we)
                     begin

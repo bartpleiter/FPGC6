@@ -458,6 +458,14 @@ def compileReti(line):
     return "01000000000000000000000000000000 //Return from interrupt"
 
 
+#compiles CCACHE instruction
+#should have 0 arguments
+def compileCcache(line):
+    if len(line) != 1:
+        raise Exception("Incorrect number of arguments. Expected 0, but got " + str(len(line)-1))
+
+    return "01110000000000000000000000000000 //Clear L1 Cache"
+
 #compiles ARITH/ARITHC instructions, except LOAD/LOADHI
 #should have 3 arguments
 #arg1 should be a valid register

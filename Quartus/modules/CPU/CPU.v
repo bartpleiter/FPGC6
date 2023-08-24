@@ -217,6 +217,37 @@ begin
 end
 
 
+//------------L1i Cache--------------
+//CPU bus
+wire [31:0]      l1i_addr;  // address to write or to start reading from
+wire [31:0]      l1i_data;  // data to write
+wire             l1i_we;    // write enable
+wire             l1i_start; // start trigger
+wire [31:0]      l1i_q;     // memory output
+wire             l1i_done;  // output ready
+
+L1cache l1icache(
+.clk            (clk),
+.reset          (reset | clearCache_EX),
+
+// CPU bus
+.l2_addr       (l1i_addr),
+.l2_data       (l1i_data),
+.l2_we         (l1i_we),
+.l2_start      (l1i_start),
+.l2_q          (l1i_q),
+.l2_done       (l1i_done),
+
+// sdram bus
+.sdc_addr       (addr_a),
+.sdc_data       (data_a),
+.sdc_we         (we_a),
+.sdc_start      (start_a),
+.sdc_q          (arbiter_q),
+.sdc_done       (done_a)
+);
+
+
 // Instruction Memory
 //  should eventually become a memory with variable latency
 // writes directly to next stage
@@ -230,12 +261,12 @@ InstrMem instrMem(
 .hit(instr_hit_FE),
 
 // bus
-.bus_addr(addr_a),
-.bus_data(data_a),
-.bus_we(we_a),
-.bus_start(start_a),
-.bus_q(arbiter_q),
-.bus_done(done_a),
+.bus_addr(l1i_addr),
+.bus_data(l1i_data),
+.bus_we(l1i_we),
+.bus_start(l1i_start),
+.bus_q(l1i_q),
+.bus_done(l1i_done),
 
 .hold(stall_FE),
 .clear(flush_FE)
@@ -285,7 +316,7 @@ wire alu_use_const_DE;
 wire push_DE, pop_DE;
 wire dreg_we_DE;
 wire mem_write_DE, mem_read_DE;
-wire jumpc_DE, jumpr_DE, branch_DE, halt_DE, reti_DE;
+wire jumpc_DE, jumpr_DE, branch_DE, halt_DE, reti_DE, clearCache_DE;
 wire getIntID_DE, getPC_DE;
 ControlUnit controlUnit(
 // in
@@ -305,7 +336,8 @@ ControlUnit controlUnit(
 .reti           (reti_DE),
 .branch         (branch_DE),
 .getIntID       (getIntID_DE),
-.getPC          (getPC_DE)
+.getPC          (getPC_DE),
+.clearCache     (clearCache_DE)
 );
 
 
@@ -361,14 +393,14 @@ wire alu_use_const_EX;
 wire push_EX, pop_EX;
 wire dreg_we_EX;
 wire mem_write_EX, mem_read_EX;
-wire jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX;
+wire jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX, clearCache_EX;
 wire getIntID_EX, getPC_EX;
-Regr #(.N(13)) regr_cuflags_DE_EX(
+Regr #(.N(14)) regr_cuflags_DE_EX(
 .clk        (clk),
 .hold       (stall_DE),
 .clear      (reset||flush_DE || stall_DE),
-.in         ({alu_use_const_DE, push_DE, pop_DE, dreg_we_DE, mem_write_DE, mem_read_DE, jumpc_DE, jumpr_DE, halt_DE, reti_DE, branch_DE, getIntID_DE, getPC_DE}),
-.out        ({alu_use_const_EX, push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX, getIntID_EX, getPC_EX})
+.in         ({alu_use_const_DE, push_DE, pop_DE, dreg_we_DE, mem_write_DE, mem_read_DE, jumpc_DE, jumpr_DE, halt_DE, reti_DE, branch_DE, getIntID_DE, getPC_DE, clearCache_DE}),
+.out        ({alu_use_const_EX, push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX, getIntID_EX, getPC_EX, clearCache_EX})
 );
 
 
@@ -479,13 +511,13 @@ Regr #(.N(32)) regr_pc4_EX_MEM(
 wire push_MEM, pop_MEM;
 wire dreg_we_MEM;
 wire mem_write_MEM, mem_read_MEM;
-wire jumpc_MEM, jumpr_MEM, halt_MEM, reti_MEM, branch_MEM;
-Regr #(.N(10)) regr_cuflags_EX_MEM(
+wire jumpc_MEM, jumpr_MEM, halt_MEM, reti_MEM, branch_MEM, clearCache_MEM;
+Regr #(.N(11)) regr_cuflags_EX_MEM(
 .clk        (clk),
 .hold       (stall_EX),
 .clear      (reset||flush_EX),
-.in         ({push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX}),
-.out        ({push_MEM, pop_MEM, dreg_we_MEM, mem_write_MEM, mem_read_MEM, jumpc_MEM, jumpr_MEM, halt_MEM, reti_MEM, branch_MEM})
+.in         ({push_EX, pop_EX, dreg_we_EX, mem_write_EX, mem_read_EX, jumpc_EX, jumpr_EX, halt_EX, reti_EX, branch_EX, clearCache_EX}),
+.out        ({push_MEM, pop_MEM, dreg_we_MEM, mem_write_MEM, mem_read_MEM, jumpc_MEM, jumpr_MEM, halt_MEM, reti_MEM, branch_MEM, clearCache_MEM})
 );
 
 wire [31:0] alu_result_MEM;
@@ -630,7 +662,7 @@ wire             l1d_done;  // output ready
 
 L1cache l1dcache(
 .clk            (clk),
-.reset          (reset),
+.reset          (reset | clearCache_MEM),
 
 // CPU bus
 .l2_addr       (l1d_addr),

@@ -203,6 +203,7 @@ def compileLine(line):
         "bles"      : CompileInstruction.compileBLES,
         "savpc"     : CompileInstruction.compileSavPC,
         "reti"      : CompileInstruction.compileReti,
+        "ccache"    : CompileInstruction.compileCcache,
         "or"        : CompileInstruction.compileOR,
         "and"       : CompileInstruction.compileAND,
         "xor"       : CompileInstruction.compileXOR,

@@ -12,7 +12,7 @@ Each instruction is 32 bits and can be one of the following instructions:
 6 POP      1  0  1  0| x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x |--D REG---|
 7 JUMP     1  0  0  1||--------------------------------27 BIT CONSTANT--------------------------------||O|
 8 JUMPR    1  0  0  0||----------------16 BIT CONSTANT---------------| x  x  x  x |--B REG---| x  x  x |O|
-9 XXX
+9 CCACHE   0  1  1  1| x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x 
 10 BRANCH  0  1  1  0||----------------16 BIT CONSTANT---------------||--A REG---||--B REG---||-OPCODE||S|
 11 SAVPC   0  1  0  1| x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x |--D REG---|
 12 RETI    0  1  0  0| x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x 
@@ -30,7 +30,7 @@ Each instruction is 32 bits and can be one of the following instructions:
 6.  `POP`:    Pops value from stack into DREG.
 7.  `JUMP`:   Set PC to 27 bit constant if O is 0. If O is 1, then add the 27 bit constant to PC. 
 8.  `JUMPR`:  Set PC to BREG + (signed) 16 bit constant if O is 0. If O is 1, then add the value from BREG + (signed) 16 bit constant to PC. 
-9.  `XXX`:    Currently reserved for future instructions
+9.  `CCACHE`: Clear all l1 cache by setting all valid bits to 0.
 10. `BRANCH`: Compare AREG to BREG depending on the branch opcode. If S is 1, then used signed comparison. If branch pass, add (signed) 16 bit constant to PC.
 11. `SAVPC`:  Save current PC to DREG.
 12. `RETI`:   Restore PC after interrupt and re-enable interrupts.

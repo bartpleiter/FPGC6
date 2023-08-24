@@ -11,7 +11,7 @@ module ControlUnit(
     output reg          dreg_we,
     output reg          mem_write, mem_read,
     output reg          jumpc, jumpr, branch, halt, reti,
-    output reg          getIntID, getPC
+    output reg          getIntID, getPC, clearCache
 );
 
 // Instruction Opcodes
@@ -24,7 +24,7 @@ localparam
     OP_POP      = 4'b1010,
     OP_JUMP     = 4'b1001,
     OP_JUMPR    = 4'b1000,
-    OP_UNDEF1   = 4'b0111, // undefined
+    OP_CCACHE   = 4'b0111,
     OP_BRANCH   = 4'b0110,
     OP_SAVPC    = 4'b0101,
     OP_RETI     = 4'b0100,
@@ -49,6 +49,7 @@ always @(*) begin
     branch          <= 1'b0;
     halt            <= 1'b0;
     reti            <= 1'b0;
+    clearCache      <= 1'b0;
 
     case (instrOP)
         OP_HALT:
@@ -108,6 +109,11 @@ always @(*) begin
         OP_RETI:
         begin
             reti <= 1'b1;
+        end
+
+        OP_CCACHE:
+        begin
+            clearCache <= 1'b1;
         end
 
         OP_ARITH:

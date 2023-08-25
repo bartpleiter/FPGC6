@@ -228,7 +228,8 @@ wire             l1i_done;  // output ready
 
 L1cache l1icache(
 .clk            (clk),
-.reset          (reset | clearCache_EX),
+.reset          (reset),
+.cache_reset    (clearCache_EX | clearCache_MEM),
 
 // CPU bus
 .l2_addr       (l1i_addr),
@@ -662,7 +663,8 @@ wire             l1d_done;  // output ready
 
 L1cache l1dcache(
 .clk            (clk),
-.reset          (reset | clearCache_MEM),
+.reset          (reset),
+.cache_reset    (clearCache_EX | clearCache_MEM),
 
 // CPU bus
 .l2_addr       (l1d_addr),

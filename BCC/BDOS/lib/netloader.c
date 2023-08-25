@@ -140,10 +140,13 @@ void NETLOADER_runProgramFromMemory()
         "push r15\n"
 
         "ccache\n"
+        "ccache\n"
+        "ccache\n"
         "savpc r1\n"
         "push r1\n"
         "jump 0x400000\n"
 
+        "ccache\n"
         "; restore registers\n"
         "pop r15\n"
         "pop r14\n"

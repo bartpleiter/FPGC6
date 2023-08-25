@@ -39,9 +39,11 @@ word* syscall(word ID)
     "push r13\n"
     "push r14\n"
     "push r15\n"
+    "ccache\n"
     "savpc r1\n"
     "push r1\n"
     "jump 4\n"
+    "ccache\n"
     "pop r15\n"
     "pop r14\n"
     "pop r13\n"
@@ -64,6 +66,7 @@ word* syscall(word ID)
 // quit the user program and return to BDOS in a somewhat controlled way
 void exit()
 {
+  asm("ccache\n");
   asm("jump Return_BDOS\n");
 }
 

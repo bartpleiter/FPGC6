@@ -670,6 +670,14 @@ wire             l2_start; // start trigger
 wire [31:0]      l2_q;     // memory output
 wire             l2_done;  // output ready
 
+// Currently, L2 cache decreases performance, so we skip it
+assign sdc_addr =   l2_addr;
+assign sdc_data =  l2_data;
+assign sdc_we =    l2_we;
+assign sdc_start =  l2_start;
+assign l2_q =        sdc_q;
+assign l2_done =   sdc_done;
+/*
 L2cache l2cache(
 .clk            (clk),
 .reset          (reset),
@@ -690,7 +698,7 @@ L2cache l2cache(
 .sdc_q          (sdc_q),
 .sdc_done       (sdc_done)
 );
-
+*/
 
 //---------------CPU----------------
 // CPU I/O

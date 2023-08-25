@@ -81,139 +81,162 @@ begin
     begin
         valid_bits <= 1024'd0;
     end
-    valid_q <= valid_bits[valid_a];
-    if (valid_we)
+    else
     begin
-        valid_bits[valid_a] <= valid_d;
-        //$display("%d: wrote valid bit", $time);
+        valid_q <= valid_bits[valid_a];
+        if (valid_we)
+        begin
+            valid_bits[valid_a] <= valid_d;
+            //$display("%d: wrote valid bit", $time);
+        end
     end
 end
 
 
 always @(posedge clk) 
 begin
-    start_prev <= l2_start;
-    l2_done_reg <= 1'b0;
-    cache_we <= 1'b0;
+    if (reset)
+    begin
+        valid_a <= 10'd0;
+        valid_d <= 1'b0;
+        valid_we <= 1'b0;
 
-    valid_a <= 10'd0;
-    valid_d <= 1'b0;
-    valid_we <= 1'b0;
-    
+        l2_q_reg <= 32'd0;
+        l2_done_reg <= 1'b0;
+        sdc_addr_reg <= 24'd0;
+        sdc_data_reg <= 32'd0;
+        sdc_we_reg <= 1'b0;
+        sdc_start_reg <= 1'b0;
 
-    // NOTE: make sure to use latched l2_addr from rising start to make sure all addresses are correct!
-    //  as l2_addr can change during a clear/skipresult (e.g. when jump or other pipeline flush)
+        start_prev <= 1'b0;
 
-    case(state)
-        state_init: 
-        begin
-            state <= state_idle;
-        end
+        state <= state_init;
+    end
+    else
+    begin
 
-        state_idle: 
-        begin
-            valid_a <= l2_addr[index_size-1:0];
-            if (l2_addr < 27'h800000)
+        start_prev <= l2_start;
+        l2_done_reg <= 1'b0;
+        cache_we <= 1'b0;
+
+        valid_a <= 10'd0;
+        valid_d <= 1'b0;
+        valid_we <= 1'b0;
+        
+
+        // NOTE: make sure to use latched l2_addr from rising start to make sure all addresses are correct!
+        //  as l2_addr can change during a clear/skipresult (e.g. when jump or other pipeline flush)
+
+        case(state)
+            state_init: 
             begin
-                if (l2_start && !start_prev)
+                state <= state_idle;
+            end
+
+            state_idle: 
+            begin
+                valid_a <= l2_addr[index_size-1:0];
+                if (l2_addr < 27'h800000)
                 begin
-                    if (l2_we)
+                    if (l2_start && !start_prev)
                     begin
-                        // update cache and write SDRAM
-                        state <= state_writing;
-                        sdc_addr_reg <= l2_addr;
-                        sdc_we_reg <= 1'b1;
-                        sdc_start_reg <= 1'b1;
-                        sdc_data_reg <= l2_data;
+                        if (l2_we)
+                        begin
+                            // update cache and write SDRAM
+                            state <= state_writing;
+                            sdc_addr_reg <= l2_addr;
+                            sdc_we_reg <= 1'b1;
+                            sdc_start_reg <= 1'b1;
+                            sdc_data_reg <= l2_data;
 
-                        cache_we <= 1'b1;
-                        cache_d <= {l2_addr[23:index_size], l2_data}; // tag + data
-                        cache_addr <= l2_addr[index_size-1:0];
-                        
-                        valid_d <= 1'b1;
-                        valid_we <= 1'b1;
-                    end
-                    else
-                    begin
-                        // wait a cycle for cache to be read
-                        cache_addr <= l2_addr[index_size-1:0];
-                        state <= state_delay_cache;
+                            cache_we <= 1'b1;
+                            cache_d <= {l2_addr[23:index_size], l2_data}; // tag + data
+                            cache_addr <= l2_addr[index_size-1:0];
+                            
+                            valid_d <= 1'b1;
+                            valid_we <= 1'b1;
+                        end
+                        else
+                        begin
+                            // wait a cycle for cache to be read
+                            cache_addr <= l2_addr[index_size-1:0];
+                            state <= state_delay_cache;
 
-                        // just in case we have a cache miss in the next cycle, prepare address on sdram controller bus
-                        sdc_addr_reg <= l2_addr;
-                        sdc_we_reg <= 1'b0;
+                            // just in case we have a cache miss in the next cycle, prepare address on sdram controller bus
+                            sdc_addr_reg <= l2_addr;
+                            sdc_we_reg <= 1'b0;
+                        end
                     end
                 end
             end
-        end
 
-        state_delay_cache:
-        begin
-            state <= state_check_cache;
-            //valid_a <= cache_addr;
-        end
-
-        state_writing: 
-        begin
-            if (sdc_done)
+            state_delay_cache:
             begin
-                state <= state_idle;
-
-                sdc_addr_reg <= 24'd0;
-                sdc_we_reg <= 1'b0;
-                sdc_start_reg <= 1'b0;
-                sdc_data_reg <= 32'd0;
-
-                cache_we <= 1'b0;
-
-                l2_done_reg <= 1'b1;
+                state <= state_check_cache;
+                //valid_a <= cache_addr;
             end
-        end
 
-        state_check_cache: 
-        begin
-            // check cache. if hit, return cached item
-            if (valid_q && sdc_addr_reg[23:index_size] == cache_q[45:32]) // valid and tag check
+            state_writing: 
             begin
-                state <= state_idle;
+                if (sdc_done)
+                begin
+                    state <= state_idle;
 
-                l2_done_reg <= 1'b1;
-                l2_q_reg <= cache_q[31:0];
+                    sdc_addr_reg <= 24'd0;
+                    sdc_we_reg <= 1'b0;
+                    sdc_start_reg <= 1'b0;
+                    sdc_data_reg <= 32'd0;
+
+                    cache_we <= 1'b0;
+
+                    l2_done_reg <= 1'b1;
+                end
             end
-            // if miss, read from ram, place in cache, return cached item
-            else
+
+            state_check_cache: 
             begin
-                state <= state_miss_read_ram;
+                // check cache. if hit, return cached item
+                if (valid_q && sdc_addr_reg[23:index_size] == cache_q[45:32]) // valid and tag check
+                begin
+                    state <= state_idle;
 
-                sdc_start_reg <= 1'b1;
+                    l2_done_reg <= 1'b1;
+                    l2_q_reg <= cache_q[31:0];
+                end
+                // if miss, read from ram, place in cache, return cached item
+                else
+                begin
+                    state <= state_miss_read_ram;
+
+                    sdc_start_reg <= 1'b1;
+                end
             end
-        end
 
-        state_miss_read_ram: 
-        begin
-            if (sdc_done)
+            state_miss_read_ram: 
             begin
-                state <= state_idle;
+                if (sdc_done)
+                begin
+                    state <= state_idle;
 
-                // we received item from ram, now write to cache and return
-                sdc_addr_reg <= 24'd0;
-                sdc_start_reg <= 1'b0;
+                    // we received item from ram, now write to cache and return
+                    sdc_addr_reg <= 24'd0;
+                    sdc_start_reg <= 1'b0;
 
-                cache_we <= 1'b1;
-                cache_d <= {sdc_addr_reg[23:index_size], sdc_q}; // tag + data
-                
-                //valid_bits[cache_addr] <= 1'b1;
-                valid_a <= cache_addr;
-                valid_d <= 1'b1;
-                valid_we <= 1'b1;
+                    cache_we <= 1'b1;
+                    cache_d <= {sdc_addr_reg[23:index_size], sdc_q}; // tag + data
+                    
+                    //valid_bits[cache_addr] <= 1'b1;
+                    valid_a <= cache_addr;
+                    valid_d <= 1'b1;
+                    valid_we <= 1'b1;
 
-                l2_done_reg <= 1'b1;
-                l2_q_reg <= sdc_q;
+                    l2_done_reg <= 1'b1;
+                    l2_q_reg <= sdc_q;
+                end
             end
-        end
 
-    endcase
-
+        endcase
+    end
 end
 
 

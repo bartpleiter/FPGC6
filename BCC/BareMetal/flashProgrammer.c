@@ -110,6 +110,7 @@ word SpiTransfer(word dataByte)
 {
     word retval = 0;
     asm(
+        "ccache\n"
         "load32 W5500_SPI0_ADDR r2          ; r2 = W5500_SPI0_ADDR\n"
         "write 0 r2 r4                      ; write r4 over SPI0\n"
         "read 0 r2 r2                       ; read return value\n"

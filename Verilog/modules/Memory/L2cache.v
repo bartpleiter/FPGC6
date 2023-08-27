@@ -1,6 +1,7 @@
 /*
 * L2 Cache
 * Sits between CPU and SDRAM controller
+* Made to run at 100MHz
 */
 module L2cache(
     // clock/reset inputs
@@ -75,6 +76,7 @@ parameter state_writing         = 3'd2;
 parameter state_check_cache     = 3'd3;
 parameter state_miss_read_ram   = 3'd4;
 parameter state_delay_cache     = 3'd5;
+parameter state_done_high       = 3'd6;
 
 //wire cache_hit = valid_bits[cache_addr] && l2_addr[23:index_size] == cache_q[42:32];
 
@@ -86,7 +88,7 @@ reg valid_q = 1'b0;
 reg valid_we = 1'b0;
 always @(posedge clk) 
 begin
-    if (reset)
+    if (reset | cache_reset)
     begin
         valid_bits <= 1024'd0;
     end
@@ -96,11 +98,12 @@ begin
         if (valid_we)
         begin
             valid_bits[valid_a] <= valid_d;
-            $display("%d: wrote valid bit", $time);
+            $display("%d: wrote valid bit l2", $time);
         end
     end
 end
 
+reg [31:0] addr_prev = 32'd0;
 
 always @(posedge clk) 
 begin
@@ -117,18 +120,19 @@ begin
         sdc_we_reg <= 1'b0;
         sdc_start_reg <= 1'b0;
 
+        addr_prev <= 32'd0;
+        
+        // Make sure the next cycle a new request can be detected!
         start_prev <= 1'b0;
-
-        state <= state_init;
+        state <= state_idle;
     end
     else
     begin
-
+        addr_prev <= l2_addr;
         start_prev <= l2_start;
         l2_done_reg <= 1'b0;
         cache_we <= 1'b0;
 
-        valid_a <= 10'd0;
         valid_d <= 1'b0;
         valid_we <= 1'b0;
         
@@ -147,7 +151,7 @@ begin
                 valid_a <= l2_addr[index_size-1:0];
                 if (l2_addr < 27'h800000)
                 begin
-                    if (l2_start && !start_prev)
+                    if ( (l2_start && !start_prev) || addr_prev >= 27'h800000 && l2_start)
                     begin
                         if (l2_we)
                         begin
@@ -158,12 +162,9 @@ begin
                             sdc_start_reg <= 1'b1;
                             sdc_data_reg <= l2_data;
 
-                            cache_we <= 1'b1;
                             cache_d <= {l2_addr[23:index_size], l2_data}; // tag + data
                             cache_addr <= l2_addr[index_size-1:0];
                             
-                            valid_d <= 1'b1;
-                            valid_we <= 1'b1;
                         end
                         else
                         begin
@@ -182,21 +183,22 @@ begin
             state_delay_cache:
             begin
                 state <= state_check_cache;
-                //valid_a <= cache_addr;
             end
 
-            state_writing: 
+            state_writing: // Currently disabled setting valid bit to 0. Otherwise causes crashes after a few seconds in L1D cache.
             begin
                 if (sdc_done)
                 begin
-                    state <= state_idle;
+                    state <= state_done_high;
 
                     sdc_addr_reg <= 24'd0;
                     sdc_we_reg <= 1'b0;
                     sdc_start_reg <= 1'b0;
                     sdc_data_reg <= 32'd0;
 
-                    cache_we <= 1'b0;
+                    cache_we <= 1'b1; // as long as valid_d <= 0, this does not matter
+                    valid_d <= 1'b1;
+                    valid_we <= 1'b1;
 
                     l2_done_reg <= 1'b1;
                 end
@@ -207,7 +209,7 @@ begin
                 // check cache. if hit, return cached item
                 if (valid_q && sdc_addr_reg[23:index_size] == cache_q[45:32]) // valid and tag check
                 begin
-                    state <= state_idle;
+                    state <= state_done_high;
 
                     l2_done_reg <= 1'b1;
                     l2_q_reg <= cache_q[31:0];
@@ -225,7 +227,7 @@ begin
             begin
                 if (sdc_done)
                 begin
-                    state <= state_idle;
+                    state <= state_done_high;
 
                     // we received item from ram, now write to cache and return
                     sdc_addr_reg <= 24'd0;
@@ -234,8 +236,6 @@ begin
                     cache_we <= 1'b1;
                     cache_d <= {sdc_addr_reg[23:index_size], sdc_q}; // tag + data
                     
-                    //valid_bits[cache_addr] <= 1'b1;
-                    valid_a <= cache_addr;
                     valid_d <= 1'b1;
                     valid_we <= 1'b1;
 
@@ -244,14 +244,18 @@ begin
                 end
             end
 
+            state_done_high:
+            begin
+                // keep done high for one cycle as we run on double clock speed from CPU
+                l2_done_reg <= 1'b1;
+                state <= state_idle;
+            end
+
         endcase
     end
 end
 
-
-
-
-
+// passthrough when above SDRAM memory range
 assign sdc_addr =   (l2_addr < 27'h800000) ? sdc_addr_reg   : l2_addr;
 assign sdc_data =   (l2_addr < 27'h800000) ? sdc_data_reg   : l2_data;
 assign sdc_we =     (l2_addr < 27'h800000) ? sdc_we_reg     : l2_we;

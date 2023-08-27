@@ -167,7 +167,7 @@ word WizSpiTransfer(word dataByte)
 {
     word retval = 0;
     asm(
-        "ccache\n"
+        //"ccache\n"
         "load32 W5500_SPI3_ADDR r2          ; r2 = W5500_SPI3_ADDR\n"
         "write 0 r2 r4                      ; write r4 over SPI3\n"
         "read 0 r2 r2                       ; read return value\n"

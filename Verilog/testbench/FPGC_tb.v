@@ -35,7 +35,8 @@
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/ROM.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/MemoryUnit.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/L2cache.v"
-`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/L1cache.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/L1Icache.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/Memory/L1Dcache.v"
 
 // io
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/IO/Keyboard.v"
@@ -135,6 +136,7 @@ wire SPI1_clk;
 wire SPI1_cs;
 wire SPI1_mosi;
 wire SPI1_miso;
+assign SPI1_miso = 1'b1;
 wire SPI1_rst;
 reg  SPI1_nint;
 
@@ -330,7 +332,7 @@ begin
         #5 clk_SDRAM = ~clk_SDRAM; //100MHz
     end
 
-    repeat(2000)
+    repeat(20000)
     begin
         #5 clk_SDRAM = ~clk_SDRAM; clk = ~clk; //50MHz
         #5 clk_SDRAM = ~clk_SDRAM; //100MHz

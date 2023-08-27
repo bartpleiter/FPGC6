@@ -226,7 +226,7 @@ wire             l1i_start; // start trigger
 wire [31:0]      l1i_q;     // memory output
 wire             l1i_done;  // output ready
 
-L1cache l1icache(
+L1Icache l1icache(
 .clk            (clk),
 .reset          (reset),
 .cache_reset    (clearCache_EX | clearCache_MEM),
@@ -661,7 +661,7 @@ wire             l1d_start; // start trigger
 wire [31:0]      l1d_q;     // memory output
 wire             l1d_done;  // output ready
 
-L1cache l1dcache(
+L1Dcache l1dcache(
 .clk            (clk),
 .reset          (reset),
 .cache_reset    (clearCache_EX | clearCache_MEM),

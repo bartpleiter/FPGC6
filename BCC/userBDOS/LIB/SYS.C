@@ -39,7 +39,7 @@ word* syscall(word ID)
     "push r13\n"
     "push r14\n"
     "push r15\n"
-    "ccache\n"
+    //"ccache\n"
     "savpc r1\n"
     "push r1\n"
     "jump 4\n"

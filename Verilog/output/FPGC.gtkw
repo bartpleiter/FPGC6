@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Sun Aug 27 09:16:09 2023
+[*] Sun Aug 27 13:38:25 2023
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Sun Aug 27 09:15:50 2023"
-[dumpfile_size] 30040315
+[dumpfile_mtime] "Sun Aug 27 13:36:03 2023"
+[dumpfile_size] 16357434
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw"
-[timestart] 310055000
+[timestart] 204900
 [size] 2560 1387
 [pos] -1 -1
-*-17.666576 310851000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.666576 525000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] FPGC_tb.
 [treeopen] FPGC_tb.fpgc.
 [treeopen] FPGC_tb.fpgc.cpu.
@@ -26,25 +26,50 @@ FPGC_tb.fpgc.cpu.PC[26:0]
 -
 -
 -Arbiter
+-
 @22
 FPGC_tb.fpgc.cpu.arbiter.addr_a[31:0]
 FPGC_tb.fpgc.cpu.arbiter.data_a[31:0]
 @28
-FPGC_tb.fpgc.cpu.arbiter.done_a
-FPGC_tb.fpgc.cpu.arbiter.start_a
 FPGC_tb.fpgc.cpu.arbiter.we_a
-FPGC_tb.fpgc.cpu.arbiter.busy_a
+FPGC_tb.fpgc.cpu.arbiter.start_a
+FPGC_tb.fpgc.cpu.arbiter.done_a
+@22
+FPGC_tb.fpgc.cpu.arbiter.q[31:0]
 @200
+-
 -
 @22
 FPGC_tb.fpgc.cpu.arbiter.addr_b[31:0]
 FPGC_tb.fpgc.cpu.arbiter.data_b[31:0]
 @28
-FPGC_tb.fpgc.cpu.arbiter.done_b
-FPGC_tb.fpgc.cpu.arbiter.start_b
 FPGC_tb.fpgc.cpu.arbiter.we_b
-FPGC_tb.fpgc.cpu.arbiter.busy_b
+FPGC_tb.fpgc.cpu.arbiter.start_b
+FPGC_tb.fpgc.cpu.arbiter.done_b
+@22
+FPGC_tb.fpgc.cpu.arbiter.q[31:0]
 @200
+-
+@201
+-
+@22
+FPGC_tb.fpgc.cpu.arbiter.bus_addr[26:0]
+FPGC_tb.fpgc.cpu.arbiter.bus_data[31:0]
+@28
+FPGC_tb.fpgc.cpu.arbiter.bus_we
+FPGC_tb.fpgc.cpu.arbiter.bus_start
+FPGC_tb.fpgc.cpu.arbiter.bus_done
+@200
+-
+-
+@24
+FPGC_tb.fpgc.cpu.arbiter.state[2:0]
+@200
+-
+-
+-
+-
+-
 -
 @22
 FPGC_tb.fpgc.cpu.arbiter_bus_addr[26:0]
@@ -206,7 +231,7 @@ FPGC_tb.fpgc.cpu.interruptValid
 FPGC_tb.fpgc.cpu.instrMem.clk
 @200
 -
-@25
+@24
 FPGC_tb.fpgc.cpu.instrMem.addr[31:0]
 @22
 FPGC_tb.fpgc.cpu.instrMem.q[31:0]
@@ -229,15 +254,6 @@ FPGC_tb.fpgc.cpu.instrMem.bus_start
 FPGC_tb.fpgc.cpu.instrMem.bus_we
 @200
 -
-@24
-FPGC_tb.fpgc.cpu.l1icache.valid_a[9:0]
-@28
-FPGC_tb.fpgc.cpu.l1icache.valid_d
-FPGC_tb.fpgc.cpu.l1icache.valid_q
-FPGC_tb.fpgc.cpu.l1icache.valid_we
-@a2
-FPGC_tb.fpgc.cpu.l1icache.valid_bits[1023:0]
-@200
 -
 @28
 FPGC_tb.fpgc.cpu.clearCache_DE
@@ -245,20 +261,7 @@ FPGC_tb.fpgc.cpu.clearCache_EX
 FPGC_tb.fpgc.cpu.clearCache_MEM
 @200
 -
-@24
-FPGC_tb.fpgc.cpu.l1icache.state[2:0]
-@22
-FPGC_tb.fpgc.cpu.l1icache.addr_prev[31:0]
-@200
 -
-@22
-FPGC_tb.fpgc.cpu.l1icache.cache_addr[9:0]
-FPGC_tb.fpgc.cpu.l1icache.cache_d[45:0]
-@28
-FPGC_tb.fpgc.cpu.l1icache.cache_we
-@22
-FPGC_tb.fpgc.cpu.l1icache.cache_q[45:0]
-@200
 -
 -DataMem
 @22
@@ -280,27 +283,8 @@ FPGC_tb.fpgc.cpu.dataMem.qreg[31:0]
 FPGC_tb.fpgc.cpu.dataMem.q[31:0]
 @200
 -
-@22
-FPGC_tb.fpgc.cpu.l1dcache.cache_addr[9:0]
-FPGC_tb.fpgc.cpu.l1dcache.cache_d[45:0]
-FPGC_tb.fpgc.cpu.l1dcache.cache_q[45:0]
-@28
-FPGC_tb.fpgc.cpu.l1dcache.cache_we
-@200
 -
-@22
-FPGC_tb.fpgc.cpu.l1dcache.valid_a[9:0]
-@28
-FPGC_tb.fpgc.cpu.l1dcache.valid_q
-FPGC_tb.fpgc.cpu.l1dcache.valid_d
-FPGC_tb.fpgc.cpu.l1dcache.valid_we
-@a2
-FPGC_tb.fpgc.cpu.l1dcache.valid_bits[1023:0]
-@200
 -
-@24
-FPGC_tb.fpgc.cpu.l1dcache.state[2:0]
-@200
 -
 @28
 FPGC_tb.fpgc.cpu.clearCache_DE

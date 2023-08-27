@@ -174,9 +174,13 @@ assign PC = pc_FE;
 wire [31:0] PC_backup_current;
 assign PC_backup_current = pc4_EX - PCincrease;
 
-wire interruptValid;
-// instr_hit_FE to align with the pipeline
-assign interruptValid = (intCPU && !intDisabled && instr_hit_FE && PC_backup_current < PCstart);
+// branch_MEM (for some reason) aligns interrupt with pipeline, removing all instability since the addition of caching
+assign interruptValid = (
+    intCPU && 
+    !intDisabled && 
+    PC_backup_current < PCstart && 
+    branch_MEM
+);
 
 always @(posedge clk) 
 begin

@@ -128,7 +128,6 @@ word FS_spiTransfer(word dataByte)
 {
   word retval = 0;
   asm(
-    //"ccache\n"
     "load32 0xC0272B r2       ; r2 = 0xC0272B\n"
     "write 0 r2 r4            ; write r4 over SPI1\n"
     "read 0 r2 r2             ; read return value\n"

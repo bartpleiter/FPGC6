@@ -12,3 +12,6 @@ The values of this memory at power up are all zero.
 ## SpriteVRAM
 SpriteVRAM is the 9 bit wide dual port dual clock video RAM (SRAM/Block RAM) used by the CPU and the GPU. It contains the sprite table for the GPU. It is implemented using internal SRAM/Block RAM. The memory has room for 64 sprites, where each sprite as a separate address for X position, Y position, tile index and color index+flags.
 The values of this memory at power up are all zero.
+
+## PixelVRAM
+TODO: add this

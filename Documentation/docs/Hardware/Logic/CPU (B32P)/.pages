@@ -1,0 +1,7 @@
+nav:
+    - ISA.md
+    - pipeline.md
+    - regbank.md
+    - stack.md
+    - interrupts.md
+    - l1cache.md

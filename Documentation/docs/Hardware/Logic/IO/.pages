@@ -1,0 +1,9 @@
+nav:
+    - UART.md
+    - SPI.md
+    - USB.md
+    - Ethernet.md
+    - OSTimer.md
+    - PS2.md
+    - GPIO.md
+    - Audio.md

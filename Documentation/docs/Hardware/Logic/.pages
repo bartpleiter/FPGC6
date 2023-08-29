@@ -1,0 +1,6 @@
+nav:
+    - arch.md
+    - CPU (B32P)
+    - Memory
+    - IO
+    - Graphics

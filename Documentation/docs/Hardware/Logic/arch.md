@@ -1,30 +1,34 @@
 # Architecture
-The FPGC consists of three main parts: the CPU, GPU and MU.
+The FPGC consists of three main parts: the CPU, GPU and MU. The SDRAM controller is now separate from the MU.
 
-The CPU, called the B32P, executes the instructions. It reads from and writes to the MU.
- 
+## CPU
+The CPU, called the B32P, executes the instructions. It reads from and writes to the MU or SDRAM controller.
+
+## GPU
 The GPU, called the FSX2, is completely separate from the CPU. It contains the logic for generating a video signal and for creating an image on this signal based on the contents of VRAM. The GPU has its own read port with clock on the dual port VRAM (SRAM/FPGA block RAM), allowing it to run on a completely different clock domain than the rest of the FPGC.
 
-The MU, or memory unit, handles all memory access between the CPU and all the different memories and I/O devices used in the FPGC. The most important memories here are SDRAM, ROM, VRAM and SPI flash. The goal of the MU is to have the CPU access all memories without the CPU having to care about the type or timing of the memory, making an easy memory interface for the CPU. This is achieved a memory map and a bus protocol with a busy/wait signal. However, this currently does cost one cycle of overhead per operation on the MU in most cases.
+## MU & SDRAM controller
+The MU, or memory unit, handles all memory access between the CPU and all the different memories (except SDRAM) and I/O devices used in the FPGC. The most important memories here are ROM, VRAM and SPI flash. The goal of the MU is to have the CPU access all these memories without the CPU having to care about the type or timing of the memory, making an easy memory interface for the CPU. This is achieved a memory map and a bus protocol with a busy/wait signal. However, this currently does cost one cycle of overhead per operation on the MU in most cases. The SDRAM controller, which has a cache layer in between, behaves similar to the MU in terms of the bus protocol. It is made separate to remove the one cycle of overhead.
 
-Block diagram of FPGC:
+## Block diagram
+Simplified block diagram of FPGC:
 
 ``` text
                   +---------------------+
-                  |                     |
-                  |        B32P         |
-                  |         CPU         |
-                  |                     |
-                  |                     |
+                  |                     |       +---------+       +---------+
+                  |        B32P         |       |         |       |         |
+                  |         CPU         |<----->|  Cache  |<----->|  SDRAM  |
+                  |                     |       |         |       |         |
+                  |                     |       +---------+       +---------+
                   +---------------------+
                              ^
                              |
                              v
-+---------+       +---------------------+       +---------+       +---------+
-|         |       |                     |       |         |       |         |
-|  SDRAM  |<----->|                     |       |         |       |         |
-|         |       |                     |       |         |       |         |
-+---------+       |                     |       |         |       |  FSX2   |
+                  +---------------------+       +---------+       +---------+
+                  |                     |       |         |       |         |
+                  |                     |       |         |       |         |
+                  |                     |       |         |       |         |
+                  |                     |       |         |       |  FSX2   |
                   |       Memory        |<----->|  VRAM   |<----->|   GPU   |
 +---------+       |        Unit         |       |         |       |         |
 |         |       |                     |       |         |       |         |

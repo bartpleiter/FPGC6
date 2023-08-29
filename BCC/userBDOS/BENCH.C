@@ -149,11 +149,11 @@ int main()
   BDOS_PrintDecConsole(loopBench());
   BDOS_PrintcConsole('\n');
 
-  BDOS_PrintConsole("CountMillionBench: ");
+  BDOS_PrintConsole("\nCountMillionBench: ");
   BDOS_PrintDecConsole(countMillionBench());
   BDOS_PrintConsole(" frames\n");
 
-  BDOS_PrintConsole("PiBench256:\n");
+  BDOS_PrintConsole("\nPiBench256:\n");
   spigotPiBench();
 
   return 'q';

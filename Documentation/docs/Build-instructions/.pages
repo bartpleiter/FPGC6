@@ -1,0 +1,7 @@
+nav:
+    - verilog.md
+    - quartus.md
+    - programmer.md
+    - asm.md
+    - bcc.md
+    - wiki.md

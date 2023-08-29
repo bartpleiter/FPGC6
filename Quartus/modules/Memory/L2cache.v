@@ -185,7 +185,7 @@ begin
                 state <= state_check_cache;
             end
 
-            state_writing: // Currently disabled setting valid bit to 0. Otherwise causes crashes after a few seconds in L1D cache.
+            state_writing:
             begin
                 if (sdc_done)
                 begin
@@ -196,7 +196,7 @@ begin
                     sdc_start_reg <= 1'b0;
                     sdc_data_reg <= 32'd0;
 
-                    cache_we <= 1'b1; // as long as valid_d <= 0, this does not matter
+                    cache_we <= 1'b1;
                     valid_d <= 1'b1;
                     valid_we <= 1'b1;
 

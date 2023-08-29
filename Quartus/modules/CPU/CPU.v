@@ -174,12 +174,15 @@ assign PC = pc_FE;
 wire [31:0] PC_backup_current;
 assign PC_backup_current = pc4_EX - PCincrease;
 
-// branch_MEM (for some reason) aligns interrupt with pipeline, removing all instability since the addition of caching
+// branch/jump/halt properly aligns interrupt with pipeline, as if it was a normal jump
+//  this fixed all instability since the addition of caching (because this decreased the time to obtain instructions)
 assign interruptValid = (
     intCPU && 
     !intDisabled && 
     PC_backup_current < PCstart && 
-    branch_MEM
+    (
+        branch_MEM || jumpr_MEM || jumpc_MEM || halt_MEM
+    )
 );
 
 always @(posedge clk) 

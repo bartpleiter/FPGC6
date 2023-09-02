@@ -6,8 +6,8 @@ module FSX(
     //Clocks
     input clkPixel,
     input clkTMDShalf,
-    input clk14,
-    input clk114,
+    //input clk14,
+    //input clk114,
     input clkMuxOut,
 
     //HDMI
@@ -15,10 +15,10 @@ module FSX(
     output [3:0] TMDS_n,
 
     //NTSC composite
-    output [7:0] composite,
+    //output [7:0] composite,
 
     //Select output method
-    input selectOutput,
+    //input selectOutput,
 
     //VRAM32
     output [13:0]       vram32_addr,
@@ -43,6 +43,8 @@ module FSX(
     //Interrupt signal
     output              frameDrawn
 );
+
+wire selectOutput = 1'b1; // always HDMI, as I no longer wish to include NTSC as a tiny HDMI monitor is now used as primary display
 
 // LVDS Converter
 wire [3:0] TMDS;
@@ -81,7 +83,7 @@ TimingGenerator timingGenerator(
     .frameDrawn(frameDrawn_hdmi)
 );
 
-
+/*
 wire [2:0] r_ntsc;
 wire [2:0] g_ntsc;
 wire [1:0] b_ntsc;
@@ -110,7 +112,7 @@ RGB332toNTSC rgb2ntsc(
     .composite(composite), // video output signal
     .frameDrawn(frameDrawn_ntsc) // interrupt signal
 );
-
+*/
 
 wire hsync;
 wire vsync;
@@ -118,12 +120,22 @@ wire blank;
 wire [11:0] h_count;
 wire [11:0] v_count;
 
+/*
 assign frameDrawn   = (selectOutput == 1'b1) ? frameDrawn_hdmi : frameDrawn_ntsc;
 assign hsync        = (selectOutput == 1'b1) ? hsync_hdmi : hsync_ntsc;
 assign vsync        = (selectOutput == 1'b1) ? vsync_hdmi : ~vsync_ntsc; // ntsc vsync is inverted
 assign blank        = (selectOutput == 1'b1) ? blank_hdmi : blank_ntsc;
 assign h_count      = (selectOutput == 1'b1) ? h_count_hdmi : h_count_ntsc;
 assign v_count      = (selectOutput == 1'b1) ? v_count_hdmi : v_count_ntsc;
+*/
+
+assign frameDrawn   = frameDrawn_hdmi;
+assign hsync        = hsync_hdmi;
+assign vsync        = vsync_hdmi;
+assign blank        = blank_hdmi;
+assign h_count      = h_count_hdmi;
+assign v_count      = v_count_hdmi;
+
 
 
 wire [2:0] BGW_r;
@@ -197,18 +209,25 @@ assign rendered_r = (pxPriority) ? PX_r: BGW_r;
 assign rendered_g = (pxPriority) ? PX_g: BGW_g;
 assign rendered_b = (pxPriority) ? PX_b : BGW_b;
 
+/*
 assign r_ntsc = (!selectOutput) ? rendered_r : 3'd0;
 assign g_ntsc = (!selectOutput) ? rendered_g : 3'd0;
 assign b_ntsc = (!selectOutput) ? rendered_b : 2'd0;
-
+*/
 
 wire [2:0] r_hdmi;
 wire [2:0] g_hdmi;
 wire [1:0] b_hdmi;
 
+/*
 assign r_hdmi = (selectOutput) ? rendered_r : 3'd0;
 assign g_hdmi = (selectOutput) ? rendered_g : 3'd0;
 assign b_hdmi = (selectOutput) ? rendered_b : 2'd0;
+*/
+
+assign r_hdmi = rendered_r;
+assign g_hdmi = rendered_g;
+assign b_hdmi = rendered_b;
 
 wire [7:0] rByte;
 wire [7:0] gByte;
@@ -264,6 +283,7 @@ begin
     end
 end
 
+/*
 wire [7:0] rByte_ntsc;
 wire [7:0] gByte_ntsc;
 wire [7:0] bByte_ntsc;
@@ -294,5 +314,6 @@ begin
         end
     end
 end
+*/
 
 endmodule

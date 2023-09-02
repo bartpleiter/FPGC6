@@ -28,9 +28,9 @@ module L2cache(
 wire cache_reset;
 assign cache_reset = 1'b0;
 
-parameter cache_size = 1024;                // cache size in words. 8129*4bytes = 32KiB
-parameter index_size = 10;                  // index size: log2(cache_size)
-parameter tag_size = 14;                    // mem_add_bits-index_size = 24-13 = 11
+parameter cache_size = 32768;               // cache size in words. 8129*4bytes = 32KiB
+parameter index_size = 15;                  // index size: log2(cache_size)
+parameter tag_size = 9;                     // mem_addr_bits-index_size = 24-13 = 11
 parameter cache_line_size = tag_size+32+1;  // tag + word + valid bit
 
 reg [cache_line_size-1:0] cache [0:cache_size-1];   // cache memory
@@ -41,14 +41,14 @@ initial
 begin
     for (i = 0; i < cache_size; i = i + 1)
     begin
-        cache[i] = 47'd0;
+        cache[i] = 42'd0;
     end
 end
 
-reg [index_size-1:0]        cache_addr = 10'd0;
-reg [cache_line_size-1:0]   cache_d = 47'd0;
+reg [index_size-1:0]        cache_addr = 15'd0;
+reg [cache_line_size-1:0]   cache_d = 42'd0;
 reg                         cache_we = 1'b0;
-reg [cache_line_size-1:0]   cache_q = 47'd0;
+reg [cache_line_size-1:0]   cache_q = 42'd0;
 always @(posedge clk) 
 begin
     cache_q <= cache[cache_addr];
@@ -139,7 +139,7 @@ begin
                 begin
                     clear_cache_counter <= clear_cache_counter + 1'b1;
                     cache_we <= 1'b1;
-                    cache_d <= 47'd0;
+                    cache_d <= 42'd0;
                     cache_addr <= clear_cache_counter;
                 end
                 
@@ -204,7 +204,7 @@ begin
             state_check_cache: 
             begin
                 // check cache. if hit, return cached item
-                if (cache_q[46] && sdc_addr_reg[23:index_size] == cache_q[45:32]) // valid and tag check
+                if (cache_q[41] && sdc_addr_reg[23:index_size] == cache_q[40:32]) // valid and tag check
                 begin
                     state <= state_done_high;
 

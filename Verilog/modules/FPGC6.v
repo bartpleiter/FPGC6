@@ -438,8 +438,8 @@ FSX fsx(
 //Clocks
 .clkPixel       (clkPixel),
 .clkTMDShalf    (clkTMDShalf),
-.clk14          (clk14),
-.clk114         (clk114),
+//.clk14          (clk14),
+//.clk114         (clk114),
 .clkMuxOut      (clkMuxOut),
 
 
@@ -448,10 +448,10 @@ FSX fsx(
 .TMDS_n         (TMDS_n),
 
 //NTSC composite
-.composite      (composite),
+//.composite      (composite),
 
 //Select output method
-.selectOutput   (selectOutput),
+//.selectOutput   (selectOutput),
 
 //VRAM32
 .vram32_addr    (vram32_gpu_addr),

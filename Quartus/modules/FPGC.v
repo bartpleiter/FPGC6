@@ -124,7 +124,9 @@ clock_pll clkPll(
 .areset (1'b0),
 .c0     (clk_SDRAM),
 .c1     (SDRAM_CLK),
-.c2     (clk)
+.c2     (clk),
+.c3     (clkPixel),
+.c4     (clkTMDShalf)
 );
 
 wire clk14; //14.31818MHz (50*63/220)
@@ -138,18 +140,21 @@ wire clk114; //14.31818 * 8 MHz = 114.5454MHz (50*(63*2)/55)
 //.outclk_3     (clkTMDShalf)
 //);
 
+/*
 NTSC_pll ntscPll(
 .inclk0 (clk),
 .areset (1'b0),
-.c0     (clk14),
-.c1     (clk114),
+//.c0     (clk14),
+//.c1     (clk114),
 .c2     (clkPixel), // 25.2MHz dirty fix to allow ALTCLKBUF
 .c3     (clkTMDShalf)
 );
+*/
 
 wire clkMuxOut;
-wire selectOutput;    // 1 -> HDMI, 0 -> Composite
+//wire selectOutput;    // 1 -> HDMI, 0 -> Composite
 
+/*
 clkMux clkmux(
 .inclk0x(clock),
 .inclk1x(clock),
@@ -158,6 +163,8 @@ clkMux clkmux(
 .clkselect({1'b1, selectOutput}),
 .outclk(clkMuxOut)
 );
+*/
+assign clkMuxOut = clkPixel;
 
 //--------------------Reset&Stabilizers-----------------------
 // Reset signals
@@ -191,9 +198,9 @@ MultiStabilizer multistabilizer(
 .u6     (frameDrawn),
 .s6     (frameDrawn_stable),
 .u7     (DIPS[0]),
-.s7     (boot_mode_stable),
-.u8     (DIPS[1]),
-.s8     (selectOutput)
+.s7     (boot_mode_stable)
+//.u8     (DIPS[1]),
+//.s8     (selectOutput)
 );
 
 //assign selectOutput = 1'b0;
@@ -473,8 +480,8 @@ FSX fsx(
 // Clocks
 .clkPixel       (clkPixel),
 .clkTMDShalf    (clkTMDShalf),
-.clk14          (clk14),
-.clk114         (clk114),
+//.clk14          (clk14),
+//.clk114         (clk114),
 .clkMuxOut      (clkMuxOut),
 
 // HDMI
@@ -482,10 +489,10 @@ FSX fsx(
 .TMDS_n         (TMDS_n),
 
 // NTSC composite
-.composite      (composite),
+//.composite      (composite),
 
 // Select output method
-.selectOutput   (selectOutput),
+//.selectOutput   (selectOutput),
 
 // VRAM32
 .vram32_addr    (vram32_gpu_addr),
@@ -731,7 +738,7 @@ CPU cpu(
 
 //-----------STATUS LEDS-----------
 assign led_Booted = (PC >= 27'hC02522 | reset);
-assign led_HDMI = (~selectOutput | reset);
+assign led_HDMI = 1'b0; //(~selectOutput | reset);
 assign led_QSPI = (~SPI0_QSPI | reset);
 
 LEDvisualizer #(.MIN_CLK(100000))

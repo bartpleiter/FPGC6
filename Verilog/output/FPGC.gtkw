@@ -1,23 +1,22 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Sun Aug 27 13:38:25 2023
+[*] Sat Sep  2 15:51:57 2023
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Sun Aug 27 13:36:03 2023"
-[dumpfile_size] 16357434
+[dumpfile_mtime] "Sat Sep  2 15:42:56 2023"
+[dumpfile_size] 48021003
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw"
-[timestart] 204900
-[size] 2560 1387
+[timestart] 0
+[size] 1920 1054
 [pos] -1 -1
-*-16.666576 525000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-26.666576 407400000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] FPGC_tb.
 [treeopen] FPGC_tb.fpgc.
-[treeopen] FPGC_tb.fpgc.cpu.
 [treeopen] FPGC_tb.fpgc.cpu.arbiter.
 [sst_width] 227
-[signals_width] 713
+[signals_width] 366
 [sst_expanded] 1
-[sst_vpaned_height] 985
+[sst_vpaned_height] 495
 @28
 FPGC_tb.fpgc.clk
 @22
@@ -50,7 +49,6 @@ FPGC_tb.fpgc.cpu.arbiter.done_b
 FPGC_tb.fpgc.cpu.arbiter.q[31:0]
 @200
 -
-@201
 -
 @22
 FPGC_tb.fpgc.cpu.arbiter.bus_addr[26:0]
@@ -293,7 +291,22 @@ FPGC_tb.fpgc.cpu.clearCache_MEM
 @200
 -
 -L2Cache
+@24
+FPGC_tb.fpgc.l2cache.state[2:0]
+FPGC_tb.fpgc.l2cache.clear_cache_counter[15:0]
+@200
 -
+@29
+FPGC_tb.fpgc.l2cache.start_registered
+@24
+FPGC_tb.fpgc.l2cache.cache_addr[9:0]
+@22
+FPGC_tb.fpgc.l2cache.cache_d[46:0]
+@28
+FPGC_tb.fpgc.l2cache.cache_we
+@22
+FPGC_tb.fpgc.l2cache.cache_q[46:0]
+@200
 -
 -
 -

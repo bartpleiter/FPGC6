@@ -31,7 +31,7 @@ assign cache_reset = 1'b0;
 parameter cache_size = 1024;                // cache size in words. 8129*4bytes = 32KiB
 parameter index_size = 10;                  // index size: log2(cache_size)
 parameter tag_size = 14;                    // mem_add_bits-index_size = 24-13 = 11
-parameter cache_line_size = tag_size+32;    // tag + word
+parameter cache_line_size = tag_size+32+1;  // tag + word + valid bit
 
 reg [cache_line_size-1:0] cache [0:cache_size-1];   // cache memory
 
@@ -41,14 +41,14 @@ initial
 begin
     for (i = 0; i < cache_size; i = i + 1)
     begin
-        cache[i] = 46'd0;
+        cache[i] = 47'd0;
     end
 end
 
 reg [index_size-1:0]        cache_addr = 10'd0;
-reg [cache_line_size-1:0]   cache_d = 46'd0;
+reg [cache_line_size-1:0]   cache_d = 47'd0;
 reg                         cache_we = 1'b0;
-reg [cache_line_size-1:0]   cache_q = 46'd0;
+reg [cache_line_size-1:0]   cache_q = 47'd0;
 always @(posedge clk) 
 begin
     cache_q <= cache[cache_addr];
@@ -77,42 +77,18 @@ parameter state_check_cache     = 3'd3;
 parameter state_miss_read_ram   = 3'd4;
 parameter state_delay_cache     = 3'd5;
 parameter state_done_high       = 3'd6;
-
-//wire cache_hit = valid_bits[cache_addr] && l2_addr[23:index_size] == cache_q[42:32];
-
-// uninferrable valid bit memory
-reg [cache_size-1:0] valid_bits = 1024'd0;
-reg [9:0] valid_a = 10'd0;
-reg valid_d = 1'b0;
-reg valid_q = 1'b0;
-reg valid_we = 1'b0;
-always @(posedge clk) 
-begin
-    if (reset | cache_reset)
-    begin
-        valid_bits <= 1024'd0;
-    end
-    else
-    begin
-        valid_q <= valid_bits[valid_a];
-        if (valid_we)
-        begin
-            valid_bits[valid_a] <= valid_d;
-            $display("%d: wrote valid bit l2", $time);
-        end
-    end
-end
+parameter state_clear_cache     = 3'd7;
 
 reg [31:0] addr_prev = 32'd0;
+
+reg [15:0] clear_cache_counter = 16'd0; // 64k max
+
+reg start_registered = 1'b0;
 
 always @(posedge clk) 
 begin
     if (reset)
     begin
-        valid_a <= 10'd0;
-        valid_d <= 1'b0;
-        valid_we <= 1'b0;
-
         l2_q_reg <= 32'd0;
         l2_done_reg <= 1'b0;
         sdc_addr_reg <= 24'd0;
@@ -124,7 +100,11 @@ begin
         
         // Make sure the next cycle a new request can be detected!
         start_prev <= 1'b0;
-        state <= state_idle;
+        state <= state_clear_cache;
+
+        clear_cache_counter <= 16'd0;
+
+        start_registered <= 1'b0;
     end
     else
     begin
@@ -132,9 +112,6 @@ begin
         start_prev <= l2_start;
         l2_done_reg <= 1'b0;
         cache_we <= 1'b0;
-
-        valid_d <= 1'b0;
-        valid_we <= 1'b0;
         
 
         // NOTE: make sure to use latched l2_addr from rising start to make sure all addresses are correct!
@@ -143,16 +120,38 @@ begin
         case(state)
             state_init: 
             begin
-                state <= state_idle;
+                state <= state_clear_cache;
+            end
+
+            state_clear_cache:
+            begin
+                if (l2_addr < 27'h800000 && ( (l2_start && !start_prev) || addr_prev >= 27'h800000 && l2_start) )
+                begin
+                    start_registered <= 1'b1;
+                end
+
+                if (clear_cache_counter == cache_size)
+                begin
+                    clear_cache_counter <= 16'd0;
+                    state <= state_idle;
+                end
+                else
+                begin
+                    clear_cache_counter <= clear_cache_counter + 1'b1;
+                    cache_we <= 1'b1;
+                    cache_d <= 47'd0;
+                    cache_addr <= clear_cache_counter;
+                end
+                
             end
 
             state_idle: 
             begin
-                valid_a <= l2_addr[index_size-1:0];
                 if (l2_addr < 27'h800000)
                 begin
-                    if ( (l2_start && !start_prev) || addr_prev >= 27'h800000 && l2_start)
+                    if ( ( (l2_start && !start_prev) || addr_prev >= 27'h800000 && l2_start) || start_registered)
                     begin
+                        start_registered <= 1'b0;
                         if (l2_we)
                         begin
                             // update cache and write SDRAM
@@ -162,7 +161,7 @@ begin
                             sdc_start_reg <= 1'b1;
                             sdc_data_reg <= l2_data;
 
-                            cache_d <= {l2_addr[23:index_size], l2_data}; // tag + data
+                            cache_d <= {1'b1, l2_addr[23:index_size], l2_data}; // tag + data
                             cache_addr <= l2_addr[index_size-1:0];
                             
                         end
@@ -197,8 +196,6 @@ begin
                     sdc_data_reg <= 32'd0;
 
                     cache_we <= 1'b1;
-                    valid_d <= 1'b1;
-                    valid_we <= 1'b1;
 
                     l2_done_reg <= 1'b1;
                 end
@@ -207,7 +204,7 @@ begin
             state_check_cache: 
             begin
                 // check cache. if hit, return cached item
-                if (valid_q && sdc_addr_reg[23:index_size] == cache_q[45:32]) // valid and tag check
+                if (cache_q[46] && sdc_addr_reg[23:index_size] == cache_q[45:32]) // valid and tag check
                 begin
                     state <= state_done_high;
 
@@ -234,10 +231,8 @@ begin
                     sdc_start_reg <= 1'b0;
 
                     cache_we <= 1'b1;
-                    cache_d <= {sdc_addr_reg[23:index_size], sdc_q}; // tag + data
+                    cache_d <= {1'b1, sdc_addr_reg[23:index_size], sdc_q}; // tag + data
                     
-                    valid_d <= 1'b1;
-                    valid_we <= 1'b1;
 
                     l2_done_reg <= 1'b1;
                     l2_q_reg <= sdc_q;

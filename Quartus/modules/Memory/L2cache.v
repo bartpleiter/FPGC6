@@ -188,7 +188,7 @@ begin
             begin
                 if (sdc_done)
                 begin
-                    state <= state_idle;
+                    state <= state_done_high;
 
                     sdc_addr_reg <= 24'd0;
                     sdc_we_reg <= 1'b0;
@@ -206,7 +206,7 @@ begin
                 // check cache. if hit, return cached item
                 if (cache_q[46] && sdc_addr_reg[23:index_size] == cache_q[45:32]) // valid and tag check
                 begin
-                    state <= state_idle;
+                    state <= state_done_high;
 
                     l2_done_reg <= 1'b1;
                     l2_q_reg <= cache_q[31:0];
@@ -224,7 +224,7 @@ begin
             begin
                 if (sdc_done)
                 begin
-                    state <= state_idle;
+                    state <= state_done_high;
 
                     // we received item from ram, now write to cache and return
                     sdc_addr_reg <= 24'd0;

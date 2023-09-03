@@ -223,9 +223,8 @@ set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to GPI[0]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to GPI[1]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to GPI[2]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to GPI[3]
-set_global_assignment -name OPTIMIZATION_MODE BALANCED
+set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
 set_global_assignment -name SDC_FILE FPGC.sdc
-set_global_assignment -name QIP_FILE clkMux/synthesis/clkMux.qip
 set_global_assignment -name VERILOG_FILE modules/FPGC.v
 set_global_assignment -name VERILOG_FILE modules/Memory/L1Icache.v
 set_global_assignment -name VERILOG_FILE modules/Memory/L1Dcache.v
@@ -265,9 +264,10 @@ set_global_assignment -name VERILOG_FILE modules/Memory/ROM.v
 set_global_assignment -name VERILOG_FILE modules/Memory/MemoryUnit.v
 set_global_assignment -name VERILOG_FILE modules/MultiStabilizer.v
 set_global_assignment -name VERILOG_FILE modules/DtrReset.v
-set_global_assignment -name QIP_FILE clock_pll.qip
-set_global_assignment -name QIP_FILE NTSC_pll.qip
 set_global_assignment -name QIP_FILE ddr.qip
-set_global_assignment -name QIP_FILE clock_pll_v.qip
-set_global_assignment -name SIP_FILE clock_pll_v.sip
+set_global_assignment -name QIP_FILE mainpll.qip
+set_global_assignment -name SIP_FILE mainpll.sip
+set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
+set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
+set_global_assignment -name ALM_REGISTER_PACKING_EFFORT LOW
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -119,6 +119,7 @@ wire clk;               // System clock                         (50MHz)
 //.outclk_4     (clk)
 //);
 
+/*
 clock_pll clkPll(
 .inclk0 (clock),
 .areset (1'b0),
@@ -127,6 +128,17 @@ clock_pll clkPll(
 .c2     (clk),
 .c3     (clkPixel),
 .c4     (clkTMDShalf)
+);
+*/
+
+mainpll mainClkPll(
+.refclk      (clock),
+.rst  		 (1'b0),
+.outclk_0     (clk_SDRAM),
+.outclk_1     (SDRAM_CLK),
+.outclk_2     (clk),
+.outclk_3     (clkPixel),
+.outclk_4     (clkTMDShalf)
 );
 
 wire clk14; //14.31818MHz (50*63/220)

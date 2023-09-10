@@ -215,6 +215,7 @@ def compileLine(line):
         "not"       : CompileInstruction.compileNOT,
         "mults"     : CompileInstruction.compileMULTS,
         "multu"     : CompileInstruction.compileMULTU,
+        "multfp"    : CompileInstruction.compileMULTFP,
         "slt"       : CompileInstruction.compileSLT,
         "sltu"      : CompileInstruction.compileSLTU,
         "load"      : CompileInstruction.compileLoad,

@@ -111,11 +111,25 @@ void BDOS_PrintlnConsole(char* str)
 
 void BDOS_PrintDecConsole(word i)
 {
-  char buffer[11];
-  itoa(i, buffer);
+  char buffer[12];
+
+  if (i < 0)
+  {
+    buffer[0] = '-';
+    itoa(MATH_abs(i), &buffer[1]);
+  }
+  else
+  {
+    itoa(i, buffer);
+  }
   BDOS_PrintConsole(buffer);
 }
 
+void BDOS_PrintlnDecConsole(word i)
+{
+  BDOS_PrintDecConsole(i);
+  BDOS_PrintcConsole('\n');
+}
 
 void BDOS_PrintHexConsole(word i)
 {

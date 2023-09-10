@@ -524,7 +524,8 @@ def compileARITH(line, opcode):
         "1001" : " * (unsigned) ",
         "1010" : " SLT ",
         "1011" : " SLTU ",
-        "1110" : " >> (signed) "
+        "1110" : " >> (signed) ",
+        "1111" : " * (signed FP) "
     }
 
     #create instruction
@@ -575,6 +576,10 @@ def compileMULTS(line):
 # compiles MULTU instruction
 def compileMULTU(line):
     return compileARITH(line, "1001")
+
+# compiles MULTFP instruction
+def compileMULTFP(line):
+    return compileARITH(line, "1111")
 
 # compiles SLT instruction
 def compileSLT(line):

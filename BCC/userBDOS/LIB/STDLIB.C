@@ -167,6 +167,21 @@ word strcmp(char* a, char* b)
 
 
 /*
+Returns a pointer to the first occurrence of the character c in the string s, or 0 if the character is not found.
+*/
+char* strchr (const char *s, char c)
+{
+  do {
+    if (*s == c)
+      {
+        return (char*)s;
+      }
+  } while (*s++);
+  return 0;
+}
+
+
+/*
 Recursive helper function for itoa
 Eventually returns the number of digits in n
 s is the output buffer
@@ -312,11 +327,39 @@ word strToInt(char* str)
     i--;
   }
 
-  word currentDigit = str[i] - '0';
-  word toAdd = multiplier * currentDigit;
-  retval += toAdd;
+  // Check for negative
+  if (str[i] == '-')
+  {
+    retval *= -1;
+  }
+  else
+  {
+    word currentDigit = str[i] - '0';
+    word toAdd = multiplier * currentDigit;
+    retval += toAdd;
+  }
 
   return retval;
+}
+
+
+/*
+Speed optimized function to get the number of decimals for a given digit
+*/
+word numberOfDecimals(word n)
+{
+  if (n < 0) n = -n; // Ignore for now the INT_MIN case where this does not work
+  if (n < 10) return 1;
+  if (n < 100) return 2;
+  if (n < 1000) return 3;
+  if (n < 10000) return 4;
+  if (n < 100000) return 5;
+  if (n < 1000000) return 6;
+  if (n < 10000000) return 7;
+  if (n < 100000000) return 8;
+  if (n < 1000000000) return 9;
+  // Cannot be > 10 for a 32bit integer
+  return 10;
 }
 
 

@@ -246,9 +246,17 @@ word strToInt(char* str)
         i--;
     }
 
-    word currentDigit = str[i] - '0';
-    word toAdd = multiplier * currentDigit;
-    retval += toAdd;
+    // Check for negative
+    if (str[i] == '-')
+    {
+        retval *= -1;
+    }
+    else
+    {
+        word currentDigit = str[i] - '0';
+        word toAdd = multiplier * currentDigit;
+        retval += toAdd;
+    }
 
     return retval;
 }

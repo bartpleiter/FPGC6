@@ -23,6 +23,8 @@ fixed_point_t CALC_b = 0;
 
 char CALC_state = CALC_STATE_INPUTSTART;
 
+
+
 word calcLoop()
 {
   if (CALC_state == CALC_STATE_INPUTSTART)
@@ -65,6 +67,17 @@ word calcLoop()
         BDOS_PrintlnConsole("*");
         char buffer[24];
         FP_FPtoString(FP_Mult(CALC_a, CALC_b), buffer, 5);
+        BDOS_PrintConsole("Result =      ");
+        BDOS_PrintlnConsole(buffer);
+        CALC_state = CALC_STATE_INPUTA;
+        BDOS_PrintConsole("\n\nInput A:      ");
+      }
+
+      else if (c == '/')
+      {
+        BDOS_PrintlnConsole("/");
+        char buffer[24];
+        FP_FPtoString(FP_Div(CALC_a, CALC_b), buffer, 5);
         BDOS_PrintConsole("Result =      ");
         BDOS_PrintlnConsole(buffer);
         CALC_state = CALC_STATE_INPUTA;

@@ -45,6 +45,7 @@
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/IO/UARTrx.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/IO/SimpleSPI.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/IO/LEDvisualizer.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/IO/Divider.v"
 
 // gpu
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/GPU/FSX.v"

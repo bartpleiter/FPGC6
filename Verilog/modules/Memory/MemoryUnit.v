@@ -160,7 +160,9 @@ localparam
     //A_SNESPAD = 35,
     A_PS2 = 36,
     A_BOOTMODE = 37,
-    A_VRAMPX = 38;
+    A_VRAMPX = 38,
+    A_DIVWA = 39,
+    A_DIVSTART = 40;
 
 //------------
 //SPI0 (flash) TODO: move this to a separate module
@@ -525,6 +527,29 @@ Keyboard PS2Keyboard (
 );
 
 
+wire [31:0] div_input;
+wire div_write_a;
+wire div_busy;
+
+wire [31:0] div_val;
+
+
+Divider divider(
+.clk        (clk), 
+.rst        (reset),
+.start      (div_start),  // start calculation
+.write_a    (div_write_a),
+.busy       (div_busy),   // calculation in progress
+//.done       (div_done),   // calculation is complete (high for one tick)
+//.valid      (valid),  // result is valid
+//.dbz        (dbz),    // divide by zero
+//.ovf        (ovf),    // overflow
+.a_in       (bus_data),   // dividend (numerator)
+.b          (bus_data),   // divisor (denominator)
+.val        (div_val)  // result value: quotient
+);
+
+
 reg [31:0] bus_d_reg = 32'd0;
 
 //----
@@ -606,6 +631,9 @@ assign OST3_trigger     = (bus_addr == 27'hC0273E && bus_we);
 //SNES
 //assign SNES_start       = bus_addr == 27'hC0273F && bus_start;
 
+//Divider
+assign div_write_a      = (bus_addr == 27'hC02742 && bus_we);
+assign div_start        = (bus_addr == 27'hC02743 && bus_we);
 
 
 reg [5:0] a_sel;
@@ -652,6 +680,8 @@ begin
     //if (bus_addr == 27'hC0273F) a_sel = A_SNESPAD;
     if (bus_addr == 27'hC02740) a_sel = A_PS2;
     if (bus_addr == 27'hC02741) a_sel = A_BOOTMODE;
+    if (bus_addr == 27'hC02742) a_sel = A_DIVWA;
+    if (bus_addr == 27'hC02743) a_sel = A_DIVSTART;
     if (bus_addr >= 27'hD00000 && bus_addr < 27'hD12C00) a_sel = A_VRAMPX;
 end
 
@@ -698,7 +728,8 @@ begin
         //A_SNESPAD:      bus_q_wire = {16'd0, SNES_state};
         A_PS2:          bus_q_wire = {24'd0, PS2_scanCode};
         A_BOOTMODE:     bus_q_wire = {31'd0, boot_mode};
-        A_VRAMPX:      bus_q_wire = VRAMpx_cpu_q;
+        A_VRAMPX:       bus_q_wire = VRAMpx_cpu_q;
+        A_DIVSTART:     bus_q_wire = div_val;
         default:        bus_q_wire = 32'd0;
     endcase
 end
@@ -900,6 +931,12 @@ begin
                 A_ROM:
                 begin
                     bus_done <= 1'b1;
+                end
+
+                A_DIVSTART:
+                begin
+                    if (!div_busy)
+                        if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 
                 default:

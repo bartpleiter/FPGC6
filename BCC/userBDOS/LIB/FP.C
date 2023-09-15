@@ -165,3 +165,19 @@ fixed_point_t FP_Mult(fixed_point_t a, fixed_point_t b)
 
   return retval;
 }
+
+// Divide two fixed-point numbers using MU (a/b)
+fixed_point_t FP_Div(fixed_point_t a, fixed_point_t b)
+{
+  // r4: a, r5: b
+  fixed_point_t retval = 0;
+  asm(
+    "load32 0xC02742 r2 ; r2 = addr div_writea\n"
+    "write 0 r2 r4 ; write a to divider\n"
+    "write 1 r2 r5 ; write b to divider and perform division\n"
+    "read 1 r2 r2  ; read result to r2\n"
+    "write -4 r14 r2  ; write result to stack for return\n"
+    );
+
+  return retval;
+}

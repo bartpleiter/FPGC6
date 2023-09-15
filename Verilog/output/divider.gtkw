@@ -1,0 +1,43 @@
+[*]
+[*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
+[*] Fri Sep 15 17:19:10 2023
+[*]
+[dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
+[dumpfile_mtime] "Fri Sep 15 17:05:26 2023"
+[dumpfile_size] 7596
+[savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/divider.gtkw"
+[timestart] 0
+[size] 1920 1054
+[pos] -1 -1
+*-8.000000 567 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] divider_tb.
+[sst_width] 227
+[signals_width] 169
+[sst_expanded] 1
+[sst_vpaned_height] 293
+@28
+divider_tb.clk
+divider_tb.reset
+@200
+-
+@24
+divider_tb.a[31:0]
+divider_tb.b[31:0]
+divider_tb.val[31:0]
+divider_tb.val_int[15:0]
+@200
+-
+@22
+divider_tb.divider.a[31:0]
+@23
+divider_tb.divider.b[31:0]
+@28
+divider_tb.write_a
+divider_tb.start
+divider_tb.busy
+divider_tb.done
+divider_tb.valid
+divider_tb.dbz
+divider_tb.ovf
+[pattern_trace] 1
+[pattern_trace] 0

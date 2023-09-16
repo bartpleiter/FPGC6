@@ -92,7 +92,14 @@ $C02722 +------------------------+
         | Timer3_ctrl    $C0273E |
         | Unused         $C0273F |
         | PS/2 Keyboard  $C02740 |
-        | BOOT_MODE      $C02741 | $C02741
+        | BOOT_MODE      $C02741 |
+        | FP_div_writea  $C02742 |
+        | FP_div_divb    $C02743 |
+        | I_div_writea   $C02744 |
+        | I_div_divbs    $C02745 |
+        | I_div_divbu    $C02746 |
+        | I_div_mods     $C02747 |
+        | I_div_modu     $C02748 | $C02748
 $C02742 +------------------------+
         |                        |
         |        Nothing         |

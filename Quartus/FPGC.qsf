@@ -229,7 +229,8 @@ set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 set_global_assignment -name ALM_REGISTER_PACKING_EFFORT LOW
 set_global_assignment -name SDC_FILE FPGC.sdc
 set_global_assignment -name VERILOG_FILE modules/FPGC.v
-set_global_assignment -name VERILOG_FILE modules/IO/Divider.v
+set_global_assignment -name VERILOG_FILE modules/IO/IDivider.v
+set_global_assignment -name VERILOG_FILE modules/IO/FPDivider.v
 set_global_assignment -name VERILOG_FILE modules/Memory/L1Icache.v
 set_global_assignment -name VERILOG_FILE modules/Memory/L1Dcache.v
 set_global_assignment -name VERILOG_FILE modules/Memory/L2cache.v

@@ -161,8 +161,13 @@ localparam
     A_PS2 = 36,
     A_BOOTMODE = 37,
     A_VRAMPX = 38,
-    A_DIVWA = 39,
-    A_DIVSTART = 40;
+    A_FPDIVWA = 39,
+    A_FPDIVSTART = 40,
+    A_IDIVWA = 41,
+    A_IDIVSTARTS = 42,
+    A_IDIVSTARTU = 43,
+    A_IDIVMODS = 44,
+    A_IDIVMODU = 45;
 
 //------------
 //SPI0 (flash) TODO: move this to a separate module
@@ -527,26 +532,53 @@ Keyboard PS2Keyboard (
 );
 
 
-wire [31:0] div_input;
-wire div_write_a;
-wire div_busy;
+wire [31:0] fpdiv_input;
+wire fpdiv_write_a;
+wire fpdiv_busy;
+wire fpdiv_start;
 
-wire [31:0] div_val;
+wire [31:0] fpdiv_val;
 
 
-Divider divider(
+FPDivider fpdivider(
 .clk        (clk), 
 .rst        (reset),
-.start      (div_start),  // start calculation
-.write_a    (div_write_a),
-.busy       (div_busy),   // calculation in progress
-//.done       (div_done),   // calculation is complete (high for one tick)
+.start      (fpdiv_start),  // start calculation
+.write_a    (fpdiv_write_a),
+.busy       (fpdiv_busy),   // calculation in progress
+//.done       (fpdiv_done),   // calculation is complete (high for one tick)
 //.valid      (valid),  // result is valid
 //.dbz        (dbz),    // divide by zero
 //.ovf        (ovf),    // overflow
 .a_in       (bus_data),   // dividend (numerator)
 .b          (bus_data),   // divisor (denominator)
-.val        (div_val)  // result value: quotient
+.val        (fpdiv_val)  // result value: quotient
+);
+
+
+
+wire [31:0] idiv_input;
+wire idiv_write_a;
+wire idiv_ready;
+wire idiv_start;
+wire idiv_signed;
+
+wire [31:0] idiv_q;
+wire [31:0] idiv_r;
+
+
+IDivider idivider(
+.clk        (clk), 
+.rst        (reset),
+.start      (idiv_start),  // start calculation
+.write_a    (idiv_write_a),
+.ready      (idiv_ready),   // !calculation in progress
+.flush      (1'b0),
+.signed_ope (idiv_signed), // signed or unsiged
+.a          (bus_data),   // dividend (numerator)
+.b          (bus_data),   // divisor (denominator)
+.quotient   (idiv_q),  // result value: quotient
+.remainder  (idiv_r)
 );
 
 
@@ -632,8 +664,19 @@ assign OST3_trigger     = (bus_addr == 27'hC0273E && bus_we);
 //assign SNES_start       = bus_addr == 27'hC0273F && bus_start;
 
 //Divider
-assign div_write_a      = (bus_addr == 27'hC02742 && bus_we);
-assign div_start        = (bus_addr == 27'hC02743 && bus_we);
+assign fpdiv_write_a      = (bus_addr == 27'hC02742 && bus_we);
+assign fpdiv_start        = (bus_addr == 27'hC02743 && bus_we);
+
+assign idiv_write_a      = (bus_addr == 27'hC02744 && bus_we);
+assign idiv_start        = (
+                            (bus_addr == 27'hC02745 ||
+                                bus_addr == 27'hC02746 || 
+                                bus_addr == 27'hC02747 || 
+                                bus_addr == 27'hC02748
+                            ) 
+                            && bus_we
+                           );
+assign idiv_signed       = ((bus_addr == 27'hC02745 || bus_addr == 27'hC02747) && bus_we);
 
 
 reg [5:0] a_sel;
@@ -680,8 +723,13 @@ begin
     //if (bus_addr == 27'hC0273F) a_sel = A_SNESPAD;
     if (bus_addr == 27'hC02740) a_sel = A_PS2;
     if (bus_addr == 27'hC02741) a_sel = A_BOOTMODE;
-    if (bus_addr == 27'hC02742) a_sel = A_DIVWA;
-    if (bus_addr == 27'hC02743) a_sel = A_DIVSTART;
+    if (bus_addr == 27'hC02742) a_sel = A_FPDIVWA;
+    if (bus_addr == 27'hC02743) a_sel = A_FPDIVSTART;
+    if (bus_addr == 27'hC02744) a_sel = A_IDIVWA;
+    if (bus_addr == 27'hC02745) a_sel = A_IDIVSTARTS;
+    if (bus_addr == 27'hC02746) a_sel = A_IDIVSTARTU;
+    if (bus_addr == 27'hC02747) a_sel = A_IDIVMODS;
+    if (bus_addr == 27'hC02748) a_sel = A_IDIVMODU;
     if (bus_addr >= 27'hD00000 && bus_addr < 27'hD12C00) a_sel = A_VRAMPX;
 end
 
@@ -729,7 +777,11 @@ begin
         A_PS2:          bus_q_wire = {24'd0, PS2_scanCode};
         A_BOOTMODE:     bus_q_wire = {31'd0, boot_mode};
         A_VRAMPX:       bus_q_wire = VRAMpx_cpu_q;
-        A_DIVSTART:     bus_q_wire = div_val;
+        A_FPDIVSTART:   bus_q_wire = fpdiv_val;
+        A_IDIVSTARTS:   bus_q_wire = idiv_q;
+        A_IDIVSTARTU:   bus_q_wire = idiv_q;
+        A_IDIVMODS:     bus_q_wire = idiv_r;
+        A_IDIVMODU:     bus_q_wire = idiv_r;
         default:        bus_q_wire = 32'd0;
     endcase
 end
@@ -933,9 +985,15 @@ begin
                     bus_done <= 1'b1;
                 end
 
-                A_DIVSTART:
+                A_FPDIVSTART:
                 begin
-                    if (!div_busy)
+                    if (!fpdiv_busy)
+                        if (!bus_done_next) bus_done_next <= 1'b1;
+                end
+
+                A_IDIVSTARTS, A_IDIVSTARTU, A_IDIVMODS, A_IDIVMODU:
+                begin
+                    if (idiv_ready)
                         if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 

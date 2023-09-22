@@ -395,22 +395,22 @@ VRAM #(
 //VRAMPX I/O
 wire        vramPX_gpu_clk;
 wire [16:0] vramPX_gpu_addr;
-wire [7:0]  vramPX_gpu_d;
+wire [23:0]  vramPX_gpu_d;
 wire        vramPX_gpu_we;
-wire [7:0]  vramPX_gpu_q;
+wire [23:0]  vramPX_gpu_q;
 
 wire        vramPX_cpu_clk;
 wire [16:0] vramPX_cpu_addr;
-wire [7:0]  vramPX_cpu_d;
+wire [23:0]  vramPX_cpu_d;
 wire        vramPX_cpu_we;
-wire [7:0]  vramPX_cpu_q;
+wire [23:0]  vramPX_cpu_q;
 
 // FSX will not write to VRAM
 assign vramPX_gpu_we     = 1'b0;
-assign vramPX_gpu_d      = 8'd0;
+assign vramPX_gpu_d      = 24'd0;
 
 VRAM #(
-.WIDTH(8),
+.WIDTH(24),
 .WORDS(76800),
 .ADDR_BITS(17),
 .LIST("memory/vramPX.list")

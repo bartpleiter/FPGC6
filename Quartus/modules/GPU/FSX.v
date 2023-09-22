@@ -38,7 +38,7 @@ module FSX(
 
     //VRAMpixel
     output [16:0]       vramPX_addr,
-    input  [7:0]        vramPX_q,
+    input  [23:0]       vramPX_q,
 
     //Interrupt signal
     output              frameDrawn
@@ -159,9 +159,9 @@ BGWrenderer bgwrenderer(
 );
 
 
-wire [2:0] PX_r;
-wire [2:0] PX_g;
-wire [1:0] PX_b;
+wire [7:0] PX_r;
+wire [7:0] PX_g;
+wire [7:0] PX_b;
 
 
 PixelEngine pixelEngine(
@@ -186,44 +186,25 @@ PixelEngine pixelEngine(
     .vram_q(vramPX_q)
 );
 
+
 // Give priority to pixel plane if bgw plane is black
 wire pxPriority = (BGW_r == 3'd0 && BGW_g == 3'd0 && BGW_b == 2'd0);
 
-wire [2:0] rendered_r;
-wire [2:0] rendered_g;
-wire [1:0] rendered_b;
+wire [7:0] BGW_r_Byte;
+wire [7:0] BGW_g_Byte;
+wire [7:0] BGW_b_Byte;
 
-assign rendered_r = (pxPriority) ? PX_r: BGW_r;
-assign rendered_g = (pxPriority) ? PX_g: BGW_g;
-assign rendered_b = (pxPriority) ? PX_b : BGW_b;
-
-/*
-assign r_ntsc = (!selectOutput) ? rendered_r : 3'd0;
-assign g_ntsc = (!selectOutput) ? rendered_g : 3'd0;
-assign b_ntsc = (!selectOutput) ? rendered_b : 2'd0;
-*/
-
-wire [2:0] r_hdmi;
-wire [2:0] g_hdmi;
-wire [1:0] b_hdmi;
-
-/*
-assign r_hdmi = (selectOutput) ? rendered_r : 3'd0;
-assign g_hdmi = (selectOutput) ? rendered_g : 3'd0;
-assign b_hdmi = (selectOutput) ? rendered_b : 2'd0;
-*/
-
-assign r_hdmi = rendered_r;
-assign g_hdmi = rendered_g;
-assign b_hdmi = rendered_b;
+assign BGW_r_Byte = (BGW_r == 3'd0) ?  {BGW_r, 5'b00000} : {BGW_r, 5'b11111};
+assign BGW_g_Byte = (BGW_g == 3'd0) ?  {BGW_g, 5'b00000} : {BGW_g, 5'b11111};
+assign BGW_b_Byte = (BGW_b == 2'd0) ?  {BGW_b, 6'b000000} : {BGW_b, 6'b111111};
 
 wire [7:0] rByte;
 wire [7:0] gByte;
 wire [7:0] bByte;
 
-assign rByte = (r_hdmi == 3'd0) ?  {r_hdmi, 5'b00000} : {r_hdmi, 5'b11111};
-assign gByte = (g_hdmi == 3'd0) ?  {g_hdmi, 5'b00000} : {g_hdmi, 5'b11111};
-assign bByte = (b_hdmi == 2'd0) ?  {b_hdmi, 6'b000000} : {b_hdmi, 6'b111111};
+assign rByte = (pxPriority) ? PX_r: BGW_r_Byte;
+assign gByte = (pxPriority) ? PX_g: BGW_g_Byte;
+assign bByte = (pxPriority) ? PX_b : BGW_b_Byte;
 
 
 // Convert VGA signal to HDMI signals

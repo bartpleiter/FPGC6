@@ -9,10 +9,6 @@ from PIL import Image
 
 TEXTURE_NAME = "colorstone"
 
-rmap = [0,36,72,109,145,182,218,255]
-gmap = [0,36,72,109,145,182,218,255]
-bmap = [0,85,170,255]
-
 # print(str(doubleToFP16(planeY)) + ", ", end='')
 
 im = Image.open("Textures/" + TEXTURE_NAME + ".png")
@@ -24,10 +20,7 @@ for x in range(tex_array.shape[0]):
         r = tex_array[x][y][0]
         g = tex_array[x][y][1]
         b = tex_array[x][y][2]
-        rval = min(range(len(rmap)), key=lambda i: abs(rmap[i]-r))
-        gval = min(range(len(gmap)), key=lambda i: abs(gmap[i]-g))
-        bval = min(range(len(bmap)), key=lambda i: abs(bmap[i]-b))
-        print(str(rval*32+gval*4+bval) + ", ", end='')
+        print(str(r*2**16+g*2**8+b) + ", ", end='')
     print()
 
 print("},")

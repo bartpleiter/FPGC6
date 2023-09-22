@@ -42,10 +42,10 @@ module MemoryUnit(
     input  [8:0]    VRAMspr_cpu_q,
 
     //VRAMpx cpu port
-    output [7:0]    VRAMpx_cpu_d,
+    output [23:0]   VRAMpx_cpu_d,
     output [16:0]   VRAMpx_cpu_addr,
     output          VRAMpx_cpu_we,
-    input  [7:0]    VRAMpx_cpu_q,
+    input  [23:0]   VRAMpx_cpu_q,
 
     //ROM
     output [8:0]    ROM_addr,

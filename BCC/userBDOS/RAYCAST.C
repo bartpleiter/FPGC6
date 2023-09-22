@@ -10,11 +10,18 @@
 #include "LIB/GFX.C"
 #include "LIB/FP.C"
 
+// Note: these are also hardcoded in the render assembly, so update there as well!
+#define FB_ADDR 0xD00000
 #define screenWidth 320
 #define screenHeight 240
+#define texWidth 64
+#define texHeight 64
+
+// Map
 #define mapWidth 24
 #define mapHeight 24
 
+// Input
 #define BTN_LEFT 256
 #define BTN_RIGHT 257
 #define BTN_UP 258
@@ -32,11 +39,6 @@
 #define COLOR_YELLOW      0xFC
 #define COLOR_DARK_YELLOW 0x90
 
-#define texWidth 64
-#define texHeight 64
-
-#define FB_ADDR 0xD00000
-#define TEX_ADDR 0x440000
 
 // Framebuffer. fb[Y][X] (bottom right is [239][319])
 char (*fb)[screenWidth] = (char (*)[screenWidth]) FB_ADDR;
@@ -181,95 +183,6 @@ word LUTplaneY[360] = {
 42459, 42597, 42721, 42833, 42931, 43017, 43089, 43148, 43194, 43227, 43247, 43254
 };
 
-word worldMap[mapWidth][mapHeight]=
-{
-  {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,7,7,7,7,7,7,7,7},
-  {4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7},
-  {4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
-  {4,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
-  {4,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7},
-  {4,0,4,0,0,0,0,5,5,5,5,5,5,5,5,5,7,7,0,7,7,7,7,7},
-  {4,0,5,0,0,0,0,5,0,5,0,5,0,5,0,5,7,0,0,0,7,7,7,1},
-  {4,0,6,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,0,0,0,8},
-  {4,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,1},
-  {4,0,8,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,0,0,0,8},
-  {4,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,7,7,7,1},
-  {4,0,0,0,0,0,0,5,5,5,5,0,5,5,5,5,7,7,7,7,7,7,7,1},
-  {6,6,6,6,6,6,6,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6},
-  {8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {6,6,6,6,6,6,0,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6},
-  {4,4,4,4,4,4,0,4,4,4,6,0,6,2,2,2,2,2,2,2,3,3,3,3},
-  {4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,0,0,0,2},
-  {4,0,0,0,0,0,0,0,0,0,0,0,6,2,0,0,5,0,0,2,0,0,0,2},
-  {4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,2,0,2,2},
-  {4,0,6,0,6,0,0,0,0,4,6,0,0,0,0,0,5,0,0,0,0,0,0,2},
-  {4,0,0,5,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,2,0,2,2},
-  {4,0,6,0,6,0,0,0,0,4,6,0,6,2,0,0,5,0,0,2,0,0,0,2},
-  {4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,0,0,0,2},
-  {4,4,4,4,4,4,4,4,4,4,1,1,1,2,2,2,2,2,2,3,3,3,3,3}
-};
-
-// Render vertical line in pixel plane
-// INPUT:
-//   r4 = x (which vertical line)
-//   r5 = y when to start drawing line
-//   r6 = y when to stop drawing line
-//   r7 = color of line
-void RAYFX_drawVertLine(word x, word start, word end, char color)
-{
-  // reg 4 5 6 7 and 2 (retval) are safe
-  asm(
-  "; backup registers\n"
-  "push r9\n"
-  );
-
-  asm(
-
-  "load32 0xD00000 r9   ; r9 = framebuffer addr\n"
-  "add r9 r4 r4         ; r4 = first pixel in line\n"
-
-  "multu r5 320 r9      ; r9 = start with line offset\n"
-  "add r9 r4 r5         ; r5 = fb addr of start\n"
-  
-  "multu r6 320 r9      ; r9 = end with line offset\n"
-  "add r9 r4 r6         ; r6 = fb addr of start\n"
-
-  "load 239 r2          ; r2 = y endloop\n"
-  "multu r2 320 r9      ; r9 = start line offset\n"
-  "add r9 r4 r2         ; r2 = fb addr of final pixel\n"
-
-  "; draw until start\n"
-  "RAYFX_drawVlineLoopCeiling:\n"
-  "  write 0 r4 r0     ; write black pixel\n"
-  "  add r4 320 r4     ; go to next line pixel\n"
-
-  "  bge r4 r5 2       ; keep looping until reached start\n"
-  "  jump RAYFX_drawVlineLoopCeiling\n"
-
-  "; draw until end\n"
-  "RAYFX_drawVlineLoopWall:\n"
-  "  write 0 r4 r7     ; write color pixel\n"
-  "  add r4 320 r4     ; go to next line pixel\n"
-
-  "  bge r4 r6 2       ; keep looping until reached end\n"
-  "  jump RAYFX_drawVlineLoopWall\n"
-
-
-  "; draw until final pixel\n"
-  "RAYFX_drawVlineLoopFloor:\n"
-  "  write 0 r4 r0     ; write black pixel\n"
-  "  add r4 320 r4     ; go to next line pixel\n"
-
-  "  bge r4 r2 2       ; keep looping until reached end of screen\n"
-  "  jump RAYFX_drawVlineLoopFloor\n"
-  );
-
-  asm(
-  "; restore registers\n"
-  "pop r9\n"
-  );
-
-}
 
 word texture[8][texWidth*texHeight]=
 {
@@ -820,6 +733,191 @@ word texture[8][texWidth*texHeight]=
 }
 ;
 
+
+
+word worldMap[mapWidth][mapHeight]=
+{
+  {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,7,7,7,7,7,7,7,7},
+  {4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7},
+  {4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+  {4,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+  {4,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7},
+  {4,0,4,0,0,0,0,2,2,2,2,2,2,2,2,2,7,7,0,7,7,7,7,7},
+  {4,0,5,0,0,0,0,2,0,1,0,1,0,1,0,2,7,0,0,0,7,7,7,1},
+  {4,0,6,0,0,0,0,2,0,0,0,0,0,0,0,2,7,0,0,0,0,0,0,8},
+  {4,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,1},
+  {4,0,8,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,0,0,0,8},
+  {4,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,7,7,7,1},
+  {4,0,0,0,0,0,0,5,5,5,5,0,5,5,5,5,7,7,7,7,7,7,7,1},
+  {6,6,6,6,6,6,6,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6},
+  {8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {6,6,6,6,6,6,0,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6},
+  {4,4,4,4,4,4,0,4,4,4,6,0,6,2,2,2,2,2,2,2,3,3,3,3},
+  {4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,0,0,0,2},
+  {4,0,0,0,0,0,0,0,0,0,0,0,6,2,0,0,5,0,0,2,0,0,0,2},
+  {4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,2,0,2,2},
+  {4,0,6,0,6,0,0,0,0,4,6,0,0,0,0,0,5,0,0,0,0,0,0,2},
+  {4,0,0,5,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,2,0,2,2},
+  {4,0,6,0,6,0,0,0,0,4,6,0,6,2,0,0,5,0,0,2,0,0,0,2},
+  {4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,0,0,0,2},
+  {4,4,4,4,4,4,4,4,4,4,1,1,1,2,2,2,2,2,2,3,3,3,3,3}
+};
+
+// Global variables, so render function can access it
+word drawStart = 0;
+word drawEnd = 0;
+word texNum = 0;
+
+// Render vertical line in pixel plane with textures
+// INPUT:
+//   r1        first pixel addr   VRAM addr of first pixel in line (top pixel)
+//   r2 (a2r)  drawStart          Starting pixel of wall
+//   r3 (a2r)  drawEnd            Ending pixel of wall
+//   r4        texPos             Starting texture coordinate
+//   r5        step               How much to increase the texture coordinate per screen pixel
+//   r6        texX               X coordinate on the texture
+//   r7        x                  X position of line to render
+//   r8        current FB pos     Current framebuffer position in VRAM (top to bottom)
+//   r9        end loop FB pos    Last framebuffer position in VRAM of current loop
+//   r10       texY               Y coordinate on the texture
+//   r11       gp                 Used as temp reg in calculations
+//   r12       texture[texNum]    Texture array of texture to draw
+//   r13       color              Pixel color
+//   r14       ceil or floor col  Ceiling or floor color
+//   side TODO North South or East West wall side
+void RAYFX_drawTextureVertLine(fixed_point_t texPos, fixed_point_t step, word texX, word x)
+{
+  // reg 4 5 6 7 (args) and 2 3 (retval) are safe
+  asm(
+  "; backup registers\n"
+  "push r1\n"
+  "push r8\n"
+  "push r9\n"
+  "push r10\n"
+  "push r11\n"
+  "push r12\n"
+  "push r13\n"
+  "push r14\n"
+  "push r15\n"
+  );
+
+  // setup registers
+  asm(
+  "addr2reg drawStart r2  ; r2 = drawStart addr\n"
+  "read 0 r2 r2           ; r2 = drawStart value\n"
+
+  "addr2reg drawEnd r3    ; r2 = drawEnd addr\n"
+  "read 0 r3 r3           ; r2 = drawEnd value\n"
+
+  "load32 0xD00000 r1     ; r1 = framebuffer addr\n"
+  "add r1 r7 r1           ; r1 = first pixel in line (fb+x)\n"
+
+  "or r0 r1 r8            ; r8 = current pixel\n"
+
+  "multu r2 320 r9        ; r9 = drawStart VRAM offset\n"
+  "add r9 r1 r9           ; r9 = last FB pos of before wall\n"
+
+  "addr2reg texNum r12    ; r12 = texNum addr\n"
+  "read 0 r12 r12         ; r12 = texNum value\n"
+  "multu r12 4096 r12     ; r12 = texture offset (64*64 per texture)\n"
+
+  "addr2reg texture r11   ; r11 = texture array\n"
+  "add r12 r11 r12        ; r12 = texture[texNum]\n"
+
+  "load32 151 r14         ; r14 = ceiling color\n"
+
+  "; draw until start\n"
+  "RAYFX_drawVlineLoopCeiling:\n"
+  "  write 0 r8 r14     ; write ceiling pixel\n"
+  "  add r8 320 r8     ; go to next line pixel\n"
+
+  "  bge r8 r9 2       ; keep looping until reached wall\n"
+  "  jump RAYFX_drawVlineLoopCeiling\n"
+
+
+
+
+  "multu r3 320 r9        ; r9 = drawEnd VRAM offset\n"
+  "add r9 r1 r9           ; r9 = last FB pos of wall\n"
+
+  "; draw until floor\n"
+  "RAYFX_drawVlineLoopWall:\n"
+  "  shiftrs r4 16 r11  ; r11 = texY = FPtoInt(texPos)\n"
+  "  and r11 63 r11     ; r11 = r11 & (texHeight-1)\n"
+  "  add r4 r5 r4       ; texPos += step\n"
+
+  "  multu r11 64 r11   ; r11 = texHeight * texY \n"
+  "  add r11 r6 r11     ; r11 += texX\n"
+
+  "  add r11 r12 r13    ; r13 = addr of color in texture array\n"
+  "  read 0 r13 r13     ; r13 = pixel color\n"
+
+  "  write 0 r8 r13     ; write texture pixel\n"
+  "  add r8 320 r8      ; go to next line pixel\n"
+
+  "  bge r8 r9 2        ; keep looping until reached floor\n"
+  "  jump RAYFX_drawVlineLoopWall\n"
+
+
+
+
+  "load 239 r9            ; r9 = last y position\n"
+  "multu r9 320 r9        ; r9 = screen end VRAM offset\n"
+  "add r9 r1 r9           ; r9 = last FB pos of line\n"
+
+  "load32 182 r14         ; r14 = floor color\n"
+
+  "; draw until end of screen\n"
+  "RAYFX_drawVlineLoopFloor:\n"
+  "  write 0 r8 r14    ; write floor pixel\n"
+  "  add r8 320 r8     ; go to next line pixel\n"
+
+  "  bgt r8 r9 2       ; keep looping until reached end of screen\n"
+  "  jump RAYFX_drawVlineLoopFloor\n"
+
+  );
+
+  asm(
+  "; restore registers\n"
+  "pop r15\n"
+  "pop r14\n"
+  "pop r13\n"
+  "pop r12\n"
+  "pop r11\n"
+  "pop r10\n"
+  "pop r9\n"
+  "pop r8\n"
+  "pop r1\n"
+  );
+}
+
+
+// TO ASSEMBLY:
+/*
+word y;
+for(y = 0; y < screenHeight; y++)
+{
+  if (y < drawStart)
+  {
+    fb[y][x] = 0;
+  }
+  else if (y >= drawEnd)
+  {
+    fb[y][x] = COLOR_GREY;
+  }
+  else
+  {
+    // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
+    word texY = FP_FPtoInt(texPos) & (texHeight - 1);
+    texPos += step;
+    word color = texture[texNum][texHeight * texY + texX];
+    //make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
+    //if(side == 1) color = (color >> 1) & 109;
+    fb[y][x] = color;
+  }
+}
+*/
+
 int main() 
 {
   // clear screen from text
@@ -850,7 +948,7 @@ int main()
   */
 
   //x and y start position
-  fixed_point_t posX = FP_intToFP(22);
+  fixed_point_t posX = FP_intToFP(15);
   fixed_point_t posY = FP_StringToFP("11.5");
 
   //initial direction vector
@@ -863,7 +961,7 @@ int main()
 
   // rotation angle (loops at 360)
   word rotationAngle = 0;
-  word rotationSpeed = 3; // degrees per frame
+  word rotationSpeed = 5; // degrees per frame
 
   fixed_point_t moveSpeed = FP_StringToFP("0.15");
 
@@ -906,7 +1004,7 @@ int main()
       word stepY;
 
       word hit = 0; //was there a wall hit?
-      word side; //was a NS or a EW wall hit?
+      word side; //was a NorthSouth or a EastWest wall hit?
 
       //calculate step and initial sideDist
       if(rayDirX < 0)
@@ -963,9 +1061,9 @@ int main()
       word lineHeight = FP_FPtoInt(FP_Div(FP_intToFP(screenHeight), perpWallDist));
 
       //calculate lowest and highest pixel to fill in current stripe
-      word drawStart = - (lineHeight >> 1) + (screenHeight >> 1);
+      drawStart = - (lineHeight >> 1) + (screenHeight >> 1);
       if(drawStart < 0) drawStart = 0;
-      word drawEnd = (lineHeight >> 1) + (screenHeight >> 1);
+      drawEnd = (lineHeight >> 1) + (screenHeight >> 1);
       if(drawEnd >= screenHeight) drawEnd = screenHeight - 1;
 
       /*
@@ -992,7 +1090,7 @@ int main()
       */
 
       //texturing calculations
-      word texNum = worldMap[mapX][mapY] - 1; //1 subtracted from it so that texture 0 can be used!
+      texNum = worldMap[mapX][mapY] - 1; //1 subtracted from it so that texture 0 can be used!
 
       //calculate value of wallX
       fixed_point_t wallX; //where exactly the wall was hit
@@ -1011,20 +1109,13 @@ int main()
       fixed_point_t step = FP_Div(FP_intToFP(texHeight), FP_intToFP(lineHeight));
       // Starting texture coordinate
       fixed_point_t texPos = FP_Mult(FP_intToFP(drawStart - (screenHeight >> 1) + (lineHeight >> 1)), step);
-      word y;
-      for(y = drawStart; y < drawEnd; y++)
+
+      // TMP fix for first line not rendering correctly
+      if (x > 0)
       {
-        // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
-        word texY = FP_FPtoInt(texPos) & (texHeight - 1);
-        texPos += step;
-        word color = texture[texNum][texHeight * texY + texX];
-        //make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
-        if(side == 1) color = (color >> 1) & 109;
-        fb[y][x] = color;
+        RAYFX_drawTextureVertLine(texPos, step, texX, x); // TODO side
       }
     }
-
-    GFX_clearPXframebuffer();
 
     // check which button is held
     if (BDOS_USBkeyHeld(BTN_LEFT))

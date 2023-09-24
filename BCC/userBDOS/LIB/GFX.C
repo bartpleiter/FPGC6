@@ -485,6 +485,20 @@ void GFX_initVram()
 }
 
 
+// Clear parameters
+void GFX_setHalfRes(word halfRes)
+{
+  asm(
+
+
+  "; vram address\n"
+  "load32 0xC02749 r2    ; r2 = halfRes addr\n"
+  "write 0 r2 r4       ; write arg to halfRes addr\n"
+
+  );
+}
+
+
 // convert x and y to position for window table
 word GFX_WindowPosFromXY(word x, word y)
 {

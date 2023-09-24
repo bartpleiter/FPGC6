@@ -473,6 +473,20 @@ void delay(word ms)
   while (timer1Value == 0);
 }
 
+// Returns milliseconds since last reset
+word millis() 
+{
+  word retval = 0;
+
+  asm(
+    "load32 0xC0274A r2\n"  // millis addr
+    "read 0 r2 r2\n"        // read millis
+    "write -4 r14 r2\n"     // write to stack to return
+    );
+
+  return retval;
+}
+
 
 // Returns interrupt ID by using the readintid asm instruction
 word getIntID()

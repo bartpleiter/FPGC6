@@ -485,7 +485,7 @@ SDRAMcontroller sdramcontroller(
 
 //-----------------------FSX-------------------------
 // FSX I/O
-
+wire        halfRes;
 //wire [7:0]  composite;              // NTSC composite video signal
 
 FSX fsx(
@@ -505,6 +505,8 @@ FSX fsx(
 
 // Select output method
 //.selectOutput   (selectOutput),
+
+.halfRes(halfRes),
 
 // VRAM32
 .vram32_addr    (vram32_gpu_addr),
@@ -674,6 +676,8 @@ MemoryUnit mu(
 .PS2_clk    (PS2_clk),
 .PS2_data   (PS2_data),
 .PS2_int    (PS2_int), //Scan code ready signal
+
+.halfRes(halfRes),
 
 // Boot mode
 .boot_mode  (boot_mode_stable)

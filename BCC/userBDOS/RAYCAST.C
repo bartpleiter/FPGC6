@@ -19,8 +19,8 @@
 
 // Note: these are also hardcoded in the render assembly, so update there as well!
 #define FB_ADDR       0xD00000
-#define screenWidth   320
-#define screenHeight  240
+#define screenWidth   160
+#define screenHeight  120
 #define texWidth      64
 #define texHeight     64
 #define mapWidth  24
@@ -55,7 +55,7 @@
 #include "DATA/RAYDAT.C"
 
 // Framebuffer. fb[Y][X] (bottom right is [239][319])
-char (*fb)[screenWidth] = (char (*)[screenWidth])FB_ADDR;
+char (*fb)[320] = (char (*)[320])FB_ADDR;
 
 word worldMap[mapWidth][mapHeight] = {
     {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 7, 7, 7, 7, 7, 7, 7},
@@ -83,8 +83,7 @@ word worldMap[mapWidth][mapHeight] = {
     {4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2},
     {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3}};
 
-word frameCounter = 0;
-word frameCounterLoop = 0;
+word frameDone = 0;
 
 // Global render variables
 word drawStart = 0;
@@ -290,7 +289,7 @@ void RAYFX_renderScreen()
     // leaving to use: 4, 5, 8, 9, 11, 12, 13, 14, 15
 
     // r4: lineHeight
-    "load32 240 r15\n"          // r15 = screenHeight
+    "load32 120 r15\n"          // r15 = screenHeight
     "shiftl r15 16 r15\n"       // r15 = FP(screenHeight)
     "load32 0xC02742 r14\n"     // r14 = addr fpdiv_writea
     "write 0 r14 r15\n"         // write a (FP(screenHeight) to divider
@@ -301,24 +300,24 @@ void RAYFX_renderScreen()
     "shiftrs r4 1 r15\n"        // r15 = lineHeight >> 1
     "load32 -1 r14\n"           // r14 = -1
     "mults r15 r14 r15\n"       // r15 = -r15
-    "load32 120 r14\n"          // r14 = screenHeight >> 1
+    "load32 60 r14\n"          // r14 = screenHeight >> 1
     "add r14 r15 r15\n"         // r15 = drawStart value (r14+r15)
     "bges r15 r0 2\n"           // skip next line if drawStart >= 0
       "load 0 r15\n"            // set drawStart to 0 if < 0
     "addr2reg drawStart r14\n"  // r14 = drawStart addr
     "write 0 r14 r15\n"         // write drawStart value
 
-    // skip render if start > 238
-    "load32 238 r14\n"
+    // skip render if start > 118
+    "load32 118 r14\n"
     "blts r15 r14 2 \n"
       "jump RAYFX_skipRenderLine\n"
 
     "shiftrs r4 1 r15\n"        // r15 = lineHeight >> 1
-    "load32 120 r14\n"          // r14 = screenHeight >> 1
+    "load32 60 r14\n"          // r14 = screenHeight >> 1
     "add r14 r15 r15\n"         // r15 = drawEnd value (r14+r15)
-    "load32 240 r14\n"          // r14 = screenHeight
+    "load32 120 r14\n"          // r14 = screenHeight
     "blts r15 r14 2\n"          // skip next line if drawEnd < screenHeight
-      "load 239 r15\n"          // set drawEnd to screenHeight - 1
+      "load 120 r15\n"          // set drawEnd to screenHeight - 1
     "addr2reg drawEnd r14\n"    // r14 = drawEnd addr
     "write 0 r14 r15\n"         // write drawEnd value
 
@@ -368,21 +367,20 @@ void RAYFX_renderScreen()
     "shiftl r15 16 r15\n"       // r15 = FP(texHeight)
     "shiftl r4 16 r14\n"        // r14 = FP(lineHeight)
     "load32 0xC02742 r13\n"     // r13 = addr fpdiv_writea
-    "write 0 r13 r15\n"         // write a (FP(screenHeight) to divider
+    "write 0 r13 r15\n"         // write a (FP(texHeight) to divider
     "write 1 r13 r14\n"         // write b (FP(lineHeight)) to divider and perform division
     "read 1 r13 r5\n"           // read result to r5
 
     // r4: texPos
     "addr2reg drawStart r15\n"  // r15 = drawStart addr
     "read 0 r15 r15\n"          // r15 = drawStart value
-    "sub r15 120 r15\n"         // r15 -= (screenHeight >> 1)
+    "sub r15 60 r15\n"          // r15 -= (screenHeight >> 1)
     "shiftrs r4 1 r14\n"        // r14 = lineHeight >> 1
     "add r15 r14 r15\n"         // r15 += lineHeight >> 1
     "shiftl r15 16 r15\n"       // r15 = FP(r15)
     "multfp r15 r5 r4\n"        // r4 = r15 * step
 
-    "or r1 r0 r7\n"             // move x to r7
-
+    "shiftl r1 0 r7\n"          // move x to r7
 
     // Render vertical line in pixel plane with textures
     // Registers:
@@ -430,6 +428,8 @@ void RAYFX_renderScreen()
     "addr2reg side r15      ; r15 = side addr\n"
     "read 0 r15 r15         ; r15 = side value\n"
 
+    "ble r2 r0 5           ; skip ceiling if wall starts at first pixel\n"
+
     // draw until start
     "RAYFX_drawVlineLoopCeiling:\n"
     "  write 0 r8 r14     ; write ceiling pixel\n"
@@ -470,9 +470,10 @@ void RAYFX_renderScreen()
     "  jump RAYFX_drawVlineLoopWall\n"
 
 
+    "load32 120 r11\n"
+    "bge r3 r11 10           ; skip floor if wall ends at bottom of screen\n"
 
-
-    "load32 239 r9          ; r9 = last y position\n"
+    "load32 119 r9          ; r9 = last y position\n"
     "multu r9 320 r9        ; r9 = screen end VRAM offset\n"
     "add r9 r1 r9           ; r9 = last FB pos of line\n"
 
@@ -493,7 +494,7 @@ void RAYFX_renderScreen()
     
 
     "add r1 1 r1\n"             // r1 = x++
-    "load32 320 r15\n"          // r15 = stop x loop (screenWidth)
+    "load32 160 r15\n"          // r15 = stop x loop (screenWidth)
     "bge r1 r15 2\n"            // keep looping until reached final vline (x) of screen
     "jump RAYFX_screenXloop\n"
   );
@@ -519,6 +520,7 @@ int main() {
   GFX_clearWindowpaletteTable();
   GFX_clearBGtileTable();
   GFX_clearBGpaletteTable();
+  GFX_setHalfRes(1);
 
     // x and y start position
   RAY_posX = FP_intToFP(15);
@@ -534,59 +536,64 @@ int main() {
 
   // rotation angle (loops at 360)
   word rotationAngle = 0;
-  word rotationSpeed = 5;  // degrees per frame
+  word rotationSpeed = 0;  // degrees per frame
 
-  fixed_point_t moveSpeed = FP_StringToFP("0.15");
-  fixed_point_t movePadding = 0;//FP_StringToFP("0.3");
+  fixed_point_t moveSpeed = 0;
+  fixed_point_t movePadding = FP_StringToFP("0.15");
 
   word quitGame = 0;
 
+  word prevMillis = millis();
+
   while (!quitGame) {
-    
+
+    // wait until at least one frame has passed
+    while (!frameDone);
+    frameDone = 0;
+
     // render screen
     RAYFX_renderScreen();
 
     // calculate and draw FPS
-    if (frameCounterLoop == 10)
-    {
-      word fps = MATH_div(600, frameCounter);
-      frameCounter = 0;
-      char buffer[11];
-      itoa(fps, buffer);
-      // clear fps digits (assumes fps <= 999)
-      asm(
-      "push r1\n"
-      "load32 0xC01420 r1       ; r1 = vram addr\n"
-      "write 0 r1 r0            ; write char to vram\n"
-      "write 1 r1 r0            ; write char to vram\n"
-      "write 2 r1 r0            ; write char to vram\n"
-      "pop r1\n"
-      );
-      
-      GFX_printWindowColored(buffer, strlen(buffer), 0, 0);
-      frameCounterLoop = 0;
-    }
-    else
-    {
-      frameCounterLoop++;
-    }
+    word currentMillis = millis();
+    word renderMillis = currentMillis - prevMillis;
+    prevMillis = currentMillis;
+    word fps = FP_FPtoInt(FP_Div(FP_intToFP(1000), FP_intToFP(renderMillis)));
+
+    char buffer[11];
+    itoa(fps, buffer);
+    // clear fps digits (assumes fps <= 999)
+    asm(
+    "push r1\n"
+    "load32 0xC01420 r1       ; r1 = vram addr\n"
+    "write 0 r1 r0            ; write char to vram\n"
+    "write 1 r1 r0            ; write char to vram\n"
+    "write 2 r1 r0            ; write char to vram\n"
+    "pop r1\n"
+    );
+    
+    GFX_printWindowColored(buffer, strlen(buffer), 0, 0);
+
+    // adjust movement and rotation speed based on FPS
+    moveSpeed = FP_Mult(FP_Div(FP_intToFP(renderMillis), FP_intToFP(1000)), FP_intToFP(3));
+    rotationSpeed = renderMillis >> 1;
 
     // check which button is held
-    if (BDOS_USBkeyHeld(BTN_LEFT)) {
+    if (BDOS_USBkeyHeld('a')) {
       // both camera direction and camera plane must be rotated
       rotationAngle -= rotationSpeed;
       if (rotationAngle < 0) {
-        rotationAngle += 360;
+        rotationAngle += 1440;
       }
       RAY_dirX = LUTdirX[rotationAngle];
       RAY_dirY = LUTdirY[rotationAngle];
       RAY_planeX = LUTplaneX[rotationAngle];
       RAY_planeY = LUTplaneY[rotationAngle];
-    } else if (BDOS_USBkeyHeld(BTN_RIGHT)) {
+    } else if (BDOS_USBkeyHeld('d')) {
       // both camera direction and camera plane must be rotated
       rotationAngle += rotationSpeed;
-      if (rotationAngle >= 360) {
-        rotationAngle -= 360;
+      if (rotationAngle >= 1440) {
+        rotationAngle -= 1440;
       }
       RAY_dirX = LUTdirX[rotationAngle];
       RAY_dirY = LUTdirY[rotationAngle];
@@ -594,7 +601,7 @@ int main() {
       RAY_planeY = LUTplaneY[rotationAngle];
     }
 
-    if (BDOS_USBkeyHeld(BTN_UP)) {
+    if (BDOS_USBkeyHeld('w')) {
       word worldMapX = FP_FPtoInt(RAY_posX + FP_Mult(RAY_dirX, moveSpeed + movePadding));
       word worldMapY = FP_FPtoInt(RAY_posY);
 
@@ -607,7 +614,7 @@ int main() {
       if (worldMap[worldMapX][worldMapY] == 0) {
         RAY_posY += FP_Mult(RAY_dirY, moveSpeed);
       }
-    } else if (BDOS_USBkeyHeld(BTN_DOWN)) {
+    } else if (BDOS_USBkeyHeld('s')) {
       word worldMapX = FP_FPtoInt(RAY_posX - FP_Mult(RAY_dirX, moveSpeed + movePadding));
       word worldMapY = FP_FPtoInt(RAY_posY);
 
@@ -619,6 +626,32 @@ int main() {
       worldMapY = FP_FPtoInt(RAY_posY - FP_Mult(RAY_dirY, moveSpeed + movePadding));
       if (worldMap[worldMapX][worldMapY] == 0) {
         RAY_posY -= FP_Mult(RAY_dirY, moveSpeed);
+      }
+    } else if (BDOS_USBkeyHeld('e')) {
+      word worldMapX = FP_FPtoInt(RAY_posX + FP_Mult(RAY_planeX, moveSpeed + movePadding));
+      word worldMapY = FP_FPtoInt(RAY_posY);
+
+      if (worldMap[worldMapX][worldMapY] == 0) {
+        RAY_posX += FP_Mult(RAY_planeX, moveSpeed);
+      }
+
+      worldMapX = FP_FPtoInt(RAY_posX);
+      worldMapY = FP_FPtoInt(RAY_posY + FP_Mult(RAY_planeY, moveSpeed + movePadding));
+      if (worldMap[worldMapX][worldMapY] == 0) {
+        RAY_posY += FP_Mult(RAY_planeY, moveSpeed);
+      }
+    } else if (BDOS_USBkeyHeld('q')) {
+      word worldMapX = FP_FPtoInt(RAY_posX - FP_Mult(RAY_planeX, moveSpeed + movePadding));
+      word worldMapY = FP_FPtoInt(RAY_posY);
+
+      if (worldMap[worldMapX][worldMapY] == 0) {
+        RAY_posX -= FP_Mult(RAY_planeX, moveSpeed);
+      }
+
+      worldMapX = FP_FPtoInt(RAY_posX);
+      worldMapY = FP_FPtoInt(RAY_posY - FP_Mult(RAY_planeY, moveSpeed + movePadding));
+      if (worldMap[worldMapX][worldMapY] == 0) {
+        RAY_posY -= FP_Mult(RAY_planeY, moveSpeed);
       }
     }
 
@@ -633,7 +666,16 @@ int main() {
         GFX_clearWindowpaletteTable();
         GFX_clearBGtileTable();
         GFX_clearBGpaletteTable();
+        GFX_setHalfRes(0);
         quitGame = 1;
+      }
+      else if (c == '1')
+      {
+        GFX_setHalfRes(0);
+      }
+      else if (c == '2')
+      {
+        GFX_setHalfRes(1);
       }
     }
   }
@@ -656,7 +698,7 @@ void interrupt() {
       break;
 
     case INTID_GPU:
-      frameCounter++;
+      frameDone++;
       break;
 
     case INTID_TIMER3:

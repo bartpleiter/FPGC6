@@ -115,6 +115,8 @@ module MemoryUnit(
     input           PS2_clk, PS2_data,
     output          PS2_int,            //Scan code ready signal
 
+    output reg halfRes = 1'b0,
+
     //Boot mode
     input           boot_mode
 
@@ -167,7 +169,9 @@ localparam
     A_IDIVSTARTS = 42,
     A_IDIVSTARTU = 43,
     A_IDIVMODS = 44,
-    A_IDIVMODU = 45;
+    A_IDIVMODU = 45,
+    A_HALFRES = 46,
+    A_MILLIS = 47;
 
 //------------
 //SPI0 (flash) TODO: move this to a separate module
@@ -493,7 +497,16 @@ OStimer OST3(
 );
 
 
+//------------
+//Millis counter
+//------------
+wire [31:0] millis;
 
+MillisCounter millisCounter(
+.clk        (clk),
+.reset      (reset),
+.millis     (millis)
+);
 
 //------------
 //SNES controller
@@ -730,6 +743,8 @@ begin
     if (bus_addr == 27'hC02746) a_sel = A_IDIVSTARTU;
     if (bus_addr == 27'hC02747) a_sel = A_IDIVMODS;
     if (bus_addr == 27'hC02748) a_sel = A_IDIVMODU;
+    if (bus_addr == 27'hC02749) a_sel = A_HALFRES;
+    if (bus_addr == 27'hC0274A) a_sel = A_MILLIS;
     if (bus_addr >= 27'hD00000 && bus_addr < 27'hD12C00) a_sel = A_VRAMPX;
 end
 
@@ -782,6 +797,7 @@ begin
         A_IDIVSTARTU:   bus_q_wire = idiv_q;
         A_IDIVMODS:     bus_q_wire = idiv_r;
         A_IDIVMODU:     bus_q_wire = idiv_r;
+        A_MILLIS:       bus_q_wire = millis;
         default:        bus_q_wire = 32'd0;
     endcase
 end
@@ -994,6 +1010,15 @@ begin
                 A_IDIVSTARTS, A_IDIVSTARTU, A_IDIVMODS, A_IDIVMODU:
                 begin
                     if (idiv_ready)
+                        if (!bus_done_next) bus_done_next <= 1'b1;
+                end
+
+                A_HALFRES:
+                begin
+                    if (bus_we)
+                    begin
+                        halfRes <= bus_data[0];
+                    end
                         if (!bus_done_next) bus_done_next <= 1'b1;
                 end
 

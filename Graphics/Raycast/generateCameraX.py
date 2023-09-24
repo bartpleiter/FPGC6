@@ -1,6 +1,6 @@
 # Script to precalculate cameraX values
 
-screenWidth = 320
+screenWidth = 160
 
 def doubleToFP16(x):
     return round(x * pow(2,16))

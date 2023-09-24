@@ -47,6 +47,7 @@
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/IO/LEDvisualizer.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/IO/FPDivider.v"
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/IO/IDivider.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/IO/MillisCounter.v"
 
 // gpu
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/GPU/FSX.v"

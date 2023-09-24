@@ -48,8 +48,8 @@ def moveRight(rotSpeed, function):
         print(str(doubleToFP16(planeY)) + ", ", end='')
 
 # pi/180 means 360 even steps -> one per degree (so use 360 as looplength)
-rotSpeed = pi/180
-loopLength = 360
+rotSpeed = pi/720
+loopLength = 1440
 
 # Create lookup table for each function
 for function in functionsToCreateTableOf:

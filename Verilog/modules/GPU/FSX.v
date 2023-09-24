@@ -20,6 +20,8 @@ module FSX(
     //Select output method
     //input selectOutput,
 
+    input halfRes,
+
     //VRAM32
     output [13:0]       vram32_addr,
     input  [31:0]       vram32_q, 
@@ -183,6 +185,7 @@ PixelEngine pixelEngine(
     .blank(blank),
 
     .scale2x(selectOutput),
+    .halfRes(halfRes),
     
     // Output colors
     .r(PX_r),

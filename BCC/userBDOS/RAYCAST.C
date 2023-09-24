@@ -83,14 +83,15 @@ word worldMap[mapWidth][mapHeight] = {
     {4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2},
     {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3}};
 
+word frameCounter = 0;
+word frameCounterLoop = 0;
 
-// Global variables, so render function can access it
+// Global render variables
 word drawStart = 0;
 word drawEnd = 0;
 word texNum = 0;
 word side = 0; // was a NorthSouth or a EastWest wall hit?
 
-// Globalr vars
 // x and y start position
 fixed_point_t RAY_posX;
 fixed_point_t RAY_posY;
@@ -102,9 +103,6 @@ fixed_point_t RAY_dirY;
 // the 2d raycaster version of camera plane
 fixed_point_t RAY_planeX;
 fixed_point_t RAY_planeY;
-
-// Local vars to store
-
 
 // Render entire screen
 // Registers (global):
@@ -404,21 +402,7 @@ void RAYFX_renderScreen()
     //   r14       ceil or floor col  Ceiling or floor color
     //   r15       side               North South or East West wall side
 
-    "push r1\n"
-    "push r2\n"
-    "push r3\n"
-    "push r4\n"
-    "push r5\n"
-    "push r6\n"
-    "push r7\n"
-    "push r8\n"
-    "push r9\n"
-    "push r10\n"
-    "push r11\n"
-    "push r12\n"
-    "push r13\n"
-    "push r14\n"
-    "push r15\n"
+    "push r1\n"             // backup x loop var
 
     "addr2reg drawStart r2  ; r2 = drawStart addr\n"
     "read 0 r2 r2           ; r2 = drawStart value\n"
@@ -503,21 +487,7 @@ void RAYFX_renderScreen()
     "  jump RAYFX_drawVlineLoopFloor\n"
 
 
-    "pop r15\n"
-    "pop r14\n"
-    "pop r13\n"
-    "pop r12\n"
-    "pop r11\n"
-    "pop r10\n"
-    "pop r9\n"
-    "pop r8\n"
-    "pop r7\n"
-    "pop r6\n"
-    "pop r5\n"
-    "pop r4\n"
-    "pop r3\n"
-    "pop r2\n"
-    "pop r1\n"
+    "pop r1\n"              // restore x loop var
 
     "RAYFX_skipRenderLine:\n"
     
@@ -576,6 +546,31 @@ int main() {
     // render screen
     RAYFX_renderScreen();
 
+    // calculate and draw FPS
+    if (frameCounterLoop == 10)
+    {
+      word fps = MATH_div(600, frameCounter);
+      frameCounter = 0;
+      char buffer[11];
+      itoa(fps, buffer);
+      // clear fps digits (assumes fps <= 999)
+      asm(
+      "push r1\n"
+      "load32 0xC01420 r1       ; r1 = vram addr\n"
+      "write 0 r1 r0            ; write char to vram\n"
+      "write 1 r1 r0            ; write char to vram\n"
+      "write 2 r1 r0            ; write char to vram\n"
+      "pop r1\n"
+      );
+      
+      GFX_printWindowColored(buffer, strlen(buffer), 0, 0);
+      frameCounterLoop = 0;
+    }
+    else
+    {
+      frameCounterLoop++;
+    }
+
     // check which button is held
     if (BDOS_USBkeyHeld(BTN_LEFT)) {
       // both camera direction and camera plane must be rotated
@@ -632,7 +627,12 @@ int main() {
 
       if (c == 27)  // escape
       {
+        // clean up and exit
         GFX_clearPXframebuffer();
+        GFX_clearWindowtileTable();
+        GFX_clearWindowpaletteTable();
+        GFX_clearBGtileTable();
+        GFX_clearBGpaletteTable();
         quitGame = 1;
       }
     }
@@ -656,6 +656,7 @@ void interrupt() {
       break;
 
     case INTID_GPU:
+      frameCounter++;
       break;
 
     case INTID_TIMER3:

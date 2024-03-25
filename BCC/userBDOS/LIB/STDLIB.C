@@ -36,6 +36,19 @@ void memcpy(word* dest, word* src, word n)
   }
 }
 
+/*
+Sets n words from dest to val
+*/
+void memset(word* dest, word val, word n)
+{
+  word i;
+  for (i = 0; i < n; i++)
+  {
+    dest[i] = val;
+  }
+}
+
+
 char* memmove(char* dest, const char* src, word n)
 {
   char* from = src;

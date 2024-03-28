@@ -1,0 +1,10 @@
+bitstring
+black
+isort
+mkdocs
+mkdocs-awesome-pages-plugin
+mkdocs-material
+numpy
+pillow
+pyserial
+tqdm

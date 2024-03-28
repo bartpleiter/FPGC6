@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021-2022, b4rt-dev
+Copyright (c) 2021-2022, bartpleiter
 Copyright (c) 2012-2015, Alexey Frunze
 All rights reserved.
 

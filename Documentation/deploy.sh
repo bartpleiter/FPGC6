@@ -1,6 +1,6 @@
 #!/bin/sh
 
-mkdocs build --clean
+python3 -m mkdocs build --clean
 
 # Obviously I use public key authentication to login.
 # No secret server information is displayed here :P

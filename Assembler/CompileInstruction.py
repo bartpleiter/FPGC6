@@ -1,4 +1,4 @@
-from bitstring import Bits #pip install bitstring if you have not already
+from bitstring import Bits
 '''
 Library for compiling single instructions
 '''

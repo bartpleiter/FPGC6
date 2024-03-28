@@ -1,2 +1,2 @@
 #!/bin/sh
-mkdocs serve -a localhost:8088
+python3 -m mkdocs serve -a localhost:8088

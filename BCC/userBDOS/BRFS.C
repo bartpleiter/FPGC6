@@ -52,6 +52,7 @@ Required operations:
 - Write file
 - Delete entire file (deleting part of file is not a thing)
 - Change directory
+- List directory
 */
 
 #define word char
@@ -208,6 +209,60 @@ void brfs_dump(word* ram_addr, word fatsize, word datasize)
   uprintc('\n');
 }
 
+void brfs_list_directory(word* ram_addr)
+{
+  struct brfs_superblock* superblock = (struct brfs_superblock*) ram_addr;
+  word* dir_addr = ram_addr + SUPERBLOCK_SIZE + superblock->total_blocks + (brfs_current_dir * superblock->bytes_per_block);
+  word dir_entries_max = superblock->bytes_per_block / sizeof(struct brfs_dir_entry);
+
+  uprintln("-------------------");
+
+  word i;
+  for (i = 0; i < dir_entries_max; i++)
+  {
+    struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
+    if (dir_entry->filename[0] != 0)
+    {
+      uprint("Filename: ");
+      char decompressed_filename[16];
+      strdecompress(decompressed_filename, &(dir_entry->filename));
+      uprintln(decompressed_filename);
+      uprint("FAT idx: ");
+      uprintDec((dir_entry->fat_idx));
+      uprint("Flags: ");
+      uprintDec((dir_entry->flags));
+      uprint("Filesize: ");
+      uprintDec((dir_entry->filesize));
+      uprintc('\n');
+    }
+  }
+}
+
+void brfs_change_directory(word* ram_addr, char* dirname)
+{
+  struct brfs_superblock* superblock = (struct brfs_superblock*) ram_addr;
+  word* dir_addr = ram_addr + SUPERBLOCK_SIZE + superblock->total_blocks + (brfs_current_dir * superblock->bytes_per_block);
+  word dir_entries_max = superblock->bytes_per_block / sizeof(struct brfs_dir_entry);
+
+  word i;
+  for (i = 0; i < dir_entries_max; i++)
+  {
+    struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
+    if (dir_entry->filename[0] != 0)
+    {
+      char decompressed_filename[16];
+      strdecompress(decompressed_filename, &(dir_entry->filename));
+      if (strcmp(decompressed_filename, dirname) == 1)
+      {
+        brfs_current_dir = dir_entry->fat_idx;
+        return;
+      }
+    }
+  }
+
+  uprintln("Directory not found!");
+}
+
 void brfs_format(word* ram_addr, word blocks, word bytes_per_block, char* label, word full_format)
 {
   // Create a superblock
@@ -358,6 +413,18 @@ int main()
   brfs_create_file(brfs_ram_storage, "file1");
 
   brfs_create_directory(brfs_ram_storage, "dir1");
+
+  brfs_list_directory(brfs_ram_storage);
+
+  brfs_change_directory(brfs_ram_storage, "dir1");
+
+  brfs_create_file(brfs_ram_storage, "file2");
+
+  brfs_list_directory(brfs_ram_storage);
+
+  brfs_change_directory(brfs_ram_storage, "..");
+
+  brfs_list_directory(brfs_ram_storage);
 
   brfs_dump(brfs_ram_storage, blocks, blocks*bytes_per_block);
 

@@ -37,3 +37,4 @@ BCC/*.out
 BCC/bcc
 Programmer/code.list
 Programmer/code.bin
+.vscode/

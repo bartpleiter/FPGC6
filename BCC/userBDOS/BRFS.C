@@ -3,9 +3,10 @@
 /*
 General Idea:
 - HDD for the average home user was <100MB until after 1990
-- SPI NOR Flash provides around the same amount of storage, with relatively little wear
-    - However, writes are extremely slow
-- FPGC has 64MiB RAM, which is a lot even for 64 bit addressable words
+- SPI NOR Flash provides around the same amount of storage, with very little wear
+    - Very fast reads in QSPI mode
+    - However, writes are extremely slow and need to be performed in pages of 256 bytes (64 words)
+- FPGC has 64MiB RAM, which is a lot even for 32 bit addressable words
     - 32MiB is already more than enough for the FPGC in its current form
 - Use the other 32MiB as a fully in RAM filesystem
     - That initializes from SPI flash and writes back to Flash at a chosen time
@@ -31,11 +32,26 @@ Implementation Details:
   - (3)  reserved
 
 8 word Dir entries:
-  - (4) filename.ext [4 chars per word]
+  - (4) filename.ext [4 chars per word -> 16 chars total]
   - (1) modify date [to be implemented when RTC]
-  - (1) flags [max 32 flags, TBD]
+  - (1) flags [max 32 flags, from right to left: directory, hidden]
   - (1) 1st FAT idx
   - (1) file size [in words, not bytes]
+*/
+
+/*
+Required operations:
+- Format
+- Create directory
+- Create file
+- Open file (allow multiple files open at once)
+- Close file (update dir entry and check/update all FAT entries)
+- Set cursor
+- Get cursor
+- Read file
+- Write file
+- Delete entire file (deleting part of file is not a thing)
+- Change directory
 */
 
 #define word char
@@ -44,11 +60,13 @@ Implementation Details:
 #include "LIB/SYS.C"
 #include "LIB/STDLIB.C"
 
-#define BRFS_RAM_STORAGE_ADDR 0x500000
+#define BRFS_RAM_STORAGE_ADDR 0x600000
 
 #define SUPERBLOCK_SIZE 16
 
 word *brfs_ram_storage = (word*) BRFS_RAM_STORAGE_ADDR; // RAM storage of file system
+
+word brfs_current_dir = 0; // Current directory index, points to block in data section
 
 // 16 words long
 struct brfs_superblock
@@ -60,16 +78,86 @@ struct brfs_superblock
   word reserved[3];
 };
 
-// 16 words long
+// 8 words long
 struct brfs_dir_entry
 {
   word filename[4];       // 4 chars per word
   word modify_date;       // TBD when RTC added to FPGC
-  word flags;
+  word flags;             // 32 flags, from right to left: directory, hidden 
   word fat_idx;           // idx of first FAT block
   word filesize;          // file size in words, not bytes
 };
 
+word brfs_find_next_free_block(word* fat_addr, word blocks)
+{
+  word i = 0;
+  word* fat_ptr = fat_addr;
+
+  while (i < blocks)
+  {
+    if (*fat_ptr == 0)
+    {
+      return i;
+    }
+
+    fat_ptr++;
+    i++;
+  }
+
+  return -1;
+}
+
+word brfs_find_next_free_dir_entry(word* dir_addr, word dir_entries_max)
+{
+  word i = 0;
+  word* dir_ptr = dir_addr;
+
+  while (i < dir_entries_max)
+  {
+    if (*dir_ptr == 0)
+    {
+      return i;
+    }
+
+    dir_ptr += sizeof(struct brfs_dir_entry);
+    i++;
+  }
+
+  return -1;
+}
+
+void brfs_create_single_dir_entry(struct brfs_dir_entry* dir_entry, char* filename, word fat_idx, word filesize, word flags)
+{
+  // Initialize to 0
+  memset(dir_entry, 0, sizeof(*dir_entry));
+
+  // Set filename
+  char compressed_filename[4] = {0,0,0,0};
+  strcompress(compressed_filename, filename);
+  memcpy(&(dir_entry->filename), compressed_filename, sizeof(compressed_filename));
+
+  // Set other fields
+  dir_entry->fat_idx = fat_idx;
+  dir_entry->flags = flags;
+  dir_entry->filesize = filesize;
+}
+
+void brfs_init_directory(word* dir_addr, word dir_entries_max, word dir_fat_idx, word parent_fat_idx)
+{
+  // Create . entry
+  struct brfs_dir_entry dir_entry;
+  brfs_create_single_dir_entry(&dir_entry, ".", dir_fat_idx, dir_entries_max*sizeof(struct brfs_dir_entry), 1);
+  // Copy to first data entry
+  memcpy(dir_addr, &dir_entry, sizeof(dir_entry));
+
+  // Create .. entry
+  brfs_create_single_dir_entry(&dir_entry, "..", parent_fat_idx, dir_entries_max*sizeof(struct brfs_dir_entry), 1);
+  // Copy to second data entry
+  memcpy(dir_addr+sizeof(dir_entry), &dir_entry, sizeof(dir_entry));
+
+  // Set FAT table
+  brfs_ram_storage[SUPERBLOCK_SIZE + dir_fat_idx] = -1;
+}
 
 // Creates hexdump like dump
 void brfs_dump_section(word* addr, word len, word linesize)
@@ -115,7 +203,7 @@ void brfs_dump(word* ram_addr, word fatsize, word datasize)
 
   // Datablock dump
   uprintln("\nData:");
-  brfs_dump_section(ram_addr+SUPERBLOCK_SIZE+fatsize, datasize, 16);
+  brfs_dump_section(ram_addr+SUPERBLOCK_SIZE+fatsize, datasize, 32);
 
   uprintc('\n');
 }
@@ -147,16 +235,106 @@ void brfs_format(word* ram_addr, word blocks, word bytes_per_block, char* label,
     memset(ram_addr + SUPERBLOCK_SIZE + blocks, 0, blocks * bytes_per_block);
   }
   
-  // Create root dir entry in first block
-  struct brfs_dir_entry root_dir;
+  // Initialize root dir
+  word dir_entries_max = bytes_per_block / sizeof(struct brfs_dir_entry);
+  brfs_init_directory(ram_addr + SUPERBLOCK_SIZE + blocks, dir_entries_max, 0, 0);
 
-  // Initialize to 0
-  memset(&root_dir, 0, sizeof(root_dir));
+  brfs_current_dir = 0;
+}
 
-  // Copy root dir entry to first block
-  memcpy(ram_addr + SUPERBLOCK_SIZE + blocks, &root_dir, sizeof(root_dir));
+/*
+* Creates directory in current directory
+*/
+void brfs_create_directory(word* ram_addr, char* dirname)
+{
+  struct brfs_superblock* superblock = (struct brfs_superblock*) ram_addr;
 
-  
+  // Find first free FAT block
+  word next_free_block = brfs_find_next_free_block(ram_addr + SUPERBLOCK_SIZE, superblock->total_blocks);
+  if (next_free_block == -1)
+  {
+    uprintln("No free blocks left!");
+    return;
+  }
+
+  // Find first free dir entry
+  word next_free_dir_entry = brfs_find_next_free_dir_entry(
+    ram_addr + SUPERBLOCK_SIZE + superblock->total_blocks + (brfs_current_dir * superblock->bytes_per_block), 
+    superblock->bytes_per_block / sizeof(struct brfs_dir_entry)
+  );
+  if (next_free_dir_entry == -1)
+  {
+    uprintln("No free dir entries left!");
+    return;
+  }
+
+  // Create dir entry
+  struct brfs_dir_entry new_entry;
+  brfs_create_single_dir_entry(&new_entry, dirname, next_free_block, 0, 1);
+
+  // Copy dir entry to first free dir entry
+  memcpy(
+    ram_addr + SUPERBLOCK_SIZE + superblock->total_blocks + (brfs_current_dir * superblock->bytes_per_block) + (next_free_dir_entry * sizeof(struct brfs_dir_entry)),
+    &new_entry,
+    sizeof(new_entry)
+  );
+
+  // Initialize directory
+  word dir_entries_max = superblock->bytes_per_block / sizeof(struct brfs_dir_entry);
+  brfs_init_directory(
+    ram_addr + SUPERBLOCK_SIZE + superblock->total_blocks + (next_free_block * superblock->bytes_per_block),
+    dir_entries_max,
+    next_free_block,
+    brfs_current_dir
+  );
+}
+
+/*
+* Creates an empty file in current directory
+*/
+void brfs_create_file(word* ram_addr, char* filename)
+{
+  struct brfs_superblock* superblock = (struct brfs_superblock*) ram_addr;
+
+  // Find first free FAT block
+  word next_free_block = brfs_find_next_free_block(ram_addr + SUPERBLOCK_SIZE, superblock->total_blocks);
+  if (next_free_block == -1)
+  {
+    uprintln("No free blocks left!");
+    return;
+  }
+
+  // Find first free dir entry
+  word next_free_dir_entry = brfs_find_next_free_dir_entry(
+    ram_addr + SUPERBLOCK_SIZE + superblock->total_blocks + (brfs_current_dir * superblock->bytes_per_block), 
+    superblock->bytes_per_block / sizeof(struct brfs_dir_entry)
+  );
+  if (next_free_dir_entry == -1)
+  {
+    uprintln("No free dir entries left!");
+    return;
+  }
+
+  // Create file entry
+  struct brfs_dir_entry new_entry;
+  brfs_create_single_dir_entry(&new_entry, filename, next_free_block, 0, 0);
+
+  // Copy dir entry to first free dir entry
+  memcpy(
+    ram_addr + SUPERBLOCK_SIZE + superblock->total_blocks + (brfs_current_dir * superblock->bytes_per_block) + (next_free_dir_entry * sizeof(struct brfs_dir_entry)),
+    &new_entry,
+    sizeof(new_entry)
+  );
+
+  // Initialize file by setting data to 0
+  memset(
+    ram_addr + SUPERBLOCK_SIZE + superblock->total_blocks + (next_free_block * superblock->bytes_per_block),
+    0,
+    superblock->bytes_per_block
+  );
+
+  // Update FAT
+  ram_addr[SUPERBLOCK_SIZE + next_free_block] = -1;
 }
 
 
@@ -172,10 +350,14 @@ int main()
   uprintln("------------------------");
 
   word blocks = 8;
-  word bytes_per_block = 16;
+  word bytes_per_block = 32;
   word full_format = 1;
 
   brfs_format(brfs_ram_storage, blocks, bytes_per_block, "Label", full_format);
+
+  brfs_create_file(brfs_ram_storage, "file1");
+
+  brfs_create_directory(brfs_ram_storage, "dir1");
 
   brfs_dump(brfs_ram_storage, blocks, blocks*bytes_per_block);
 

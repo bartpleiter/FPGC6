@@ -28,7 +28,7 @@ if len(sys.argv) > 1:
     if (sys.argv[1] == "testMode"):
         testReturnMode = True
 
-port = serial.Serial("/dev/ttyUSB1", baudrate=1000000, timeout=None)
+port = serial.Serial("/dev/ttyUSB0", baudrate=1000000, timeout=None)
 
 sleep(0.3) # give the FPGC time to reset, even though it also works without this delay
 

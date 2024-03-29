@@ -193,6 +193,67 @@ char* strchr (const char *s, char c)
   return 0;
 }
 
+/*
+Compress a string made of one char per word, into a string made of one char per byte.
+*/
+void strcompress(word* dest, char* src)
+{
+  word i_src = 0;
+  word i_dst = 0;
+  word byte_offset = 0;
+  word c = src[i_src];
+
+  while (c != 0)
+  {
+    dest[i_dst] |= (c << byte_offset);
+
+    if (byte_offset == 24)
+    {
+      byte_offset = 0;
+      i_dst++;
+      dest[i_dst] = 0;
+    }
+    else
+    {
+      byte_offset += 8;
+    }
+
+    i_src++;
+    c = src[i_src];
+  }
+}
+
+/*
+Decompress a string made of one char per byte, into a string made of one char per word.
+*/
+void strdecompress(char* dest, word* src)
+{
+  word i_src = 0;
+  word i_dst = 0;
+  word byte_offset = 0;
+
+  while (1)
+  {
+    word c = (src[i_src] >> byte_offset) & 0xFF;
+    if (c == 0)
+      break;
+
+    dest[i_dst++] = c;
+
+    if (byte_offset == 24)
+    {
+      byte_offset = 0;
+      i_src++;
+    }
+    else
+    {
+      byte_offset += 8;
+    }
+  }
+
+  // Terminate
+  dest[i_dst] = 0;
+}
 
 /*
 Recursive helper function for itoa

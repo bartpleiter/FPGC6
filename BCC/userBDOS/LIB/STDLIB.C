@@ -193,6 +193,51 @@ char* strchr (const char *s, char c)
   return 0;
 }
 
+char * strtok_old_str;
+/* 
+Parse str into tokens separated by characters in delim.
+If S is NULL, the last string strtok() was called with is used.
+Note that strtok() modifies the input string.
+For example:
+	char s[] = "-abc-=-def";
+	x = strtok(s, "-");		// x = "abc"
+	x = strtok(NULL, "-=");		// x = "def"
+	x = strtok(NULL, "=");		// x = NULL
+		// s = "abc\0=-def\0"
+*/
+char* strtok(char* str, const char* delim)
+{
+  if (str != (word*)-1)
+    strtok_old_str = str;
+
+  if (strtok_old_str == (word*)-1)
+    return (word*)-1;
+
+  // Return reached end of string
+  if (*strtok_old_str == 0)
+  {
+    return (word*)-1;
+  }
+  // Skip leading delimiters
+  while (strchr(delim, *strtok_old_str) != 0)
+    strtok_old_str++;
+
+  // Find end of token
+  char* start = strtok_old_str;
+  while (*strtok_old_str != 0 && strchr(delim, *strtok_old_str) == 0)
+    strtok_old_str++;
+
+  if (*strtok_old_str == 0)
+  {
+    strtok_old_str = (word*)-1;
+    return start;
+  }
+
+  *strtok_old_str = 0;
+  strtok_old_str++;
+  return start;
+}
+
 /*
 Compress a string made of one char per word, into a string made of one char per byte.
 */
@@ -486,7 +531,6 @@ void uprintDec(word i)
   char buffer[11];
   itoa(i, buffer);
   uprint(buffer);
-  uprintc('\n');
 }
 
 /*
@@ -497,7 +541,6 @@ void uprintHex(word i)
   char buffer[11];
   itoah(i, buffer);
   uprint(buffer);
-  uprintc('\n');
 }
 
 

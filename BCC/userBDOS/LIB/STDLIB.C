@@ -193,6 +193,21 @@ char* strchr (const char *s, char c)
   return 0;
 }
 
+/*
+Returns a pointer to the last occurance of a character, or 0 if the character is not found.
+*/
+char* strrchr (const char *s, int c)
+{
+  char *rtnval = 0;
+
+  do {
+    if (*s == c)
+      rtnval = (char*) s;
+  } while (*s++);
+  return (rtnval);
+}
+
+
 char * strtok_old_str;
 /* 
 Parse str into tokens separated by characters in delim.
@@ -298,6 +313,41 @@ void strdecompress(char* dest, word* src)
 
   // Terminate
   dest[i_dst] = 0;
+}
+
+/**
+ * Return the basename of a path
+ * path: full path
+*/
+char* basename(char *path)
+{
+  char *base = strrchr(path, '/');
+  return base ? base + 1 : path;
+}
+
+/**
+ * Return the dirname of a path
+ * output: buffer to store the dirname
+ * path: full path
+*/
+char* dirname(char* output, char *path)
+{
+  strcpy(output, path);
+  char *last_slash = strrchr(output, '/');
+  if (last_slash != 0)
+  {
+    *last_slash = 0;
+    // If the last slash is the first character, return "/"
+    if (last_slash == output)
+    {
+      strcpy(output, "/");
+    }
+  } else
+  {
+    // No slash found, return "."
+    strcpy(output, ".");
+  }
+  return output;
 }
 
 /*

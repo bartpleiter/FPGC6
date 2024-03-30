@@ -72,12 +72,17 @@ Required operations:
 #define BRFS_RAM_STORAGE_ADDR 0x600000
 
 #define MAX_PATH_LENGTH 127
+#define MAX_OPEN_FILES 4 // Can be set higher, but 4 is good for testing
 
 // Length of structs, should not be changed
 #define SUPERBLOCK_SIZE 16
 #define DIR_ENTRY_SIZE 8
 
 word *brfs_ram_storage = (word*) BRFS_RAM_STORAGE_ADDR; // RAM storage of file system
+
+// Variables for open files
+word brfs_cursors[MAX_OPEN_FILES];
+word brfs_file_pointers[MAX_OPEN_FILES];
 
 // 16 words long
 struct brfs_superblock
@@ -156,7 +161,18 @@ void brfs_dump(word fatsize, word datasize)
   uprintln("\nData:");
   brfs_dump_section(brfs_ram_storage+SUPERBLOCK_SIZE+fatsize, datasize, 32);
 
-  uprintc('\n');
+  uprintln("\nFile pointers and cursors:");
+  word i;
+  for (i = 0; i < MAX_OPEN_FILES; i++)
+  {
+    uprint("File pointer ");
+    uprintDec(i);
+    uprint(": ");
+    uprintDec(brfs_file_pointers[i]);
+    uprint(" Cursor: ");
+    uprintDec(brfs_cursors[i]);
+    uprintc('\n');
+  }
 }
 
 
@@ -206,7 +222,8 @@ word brfs_get_fat_idx_of_dir(char* dir_path)
       {
         char decompressed_filename[16];
         strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
-        if (strcmp(decompressed_filename, token) == 1)
+        // Also check for directory flag
+        if (strcmp(decompressed_filename, token) == 1 && dir_entry->flags == 1)
         {
           // Found token in current directory
           // Set current directory to token's FAT index
@@ -366,6 +383,10 @@ void brfs_format(word blocks, word bytes_per_block, char* label, word full_forma
   // Initialize root dir
   word dir_entries_max = bytes_per_block / sizeof(struct brfs_dir_entry);
   brfs_init_directory(brfs_ram_storage + SUPERBLOCK_SIZE + blocks, dir_entries_max, 0, 0);
+
+  // Clear open files and cursors
+  memset(brfs_file_pointers, 0, sizeof(brfs_file_pointers));
+  memset(brfs_cursors, 0, sizeof(brfs_cursors));
 }
 
 /**
@@ -538,6 +559,84 @@ void brfs_list_directory(char* dir_path)
 }
 
 
+/**
+ * Open a file for reading and writing
+ * Returns the file pointer (FAT idx of file), or -1 on error
+ * file_path: full path of the file
+*/
+word brfs_open_file(char* file_path)
+{
+
+  // Split filename from path using basename and dirname
+  char dirname_output[MAX_PATH_LENGTH];
+  char* file_path_basename = basename(file_path);
+  char* file_path_dirname = dirname(dirname_output, file_path);
+
+  // Find data block address of parent directory path
+  word dir_fat_idx = brfs_get_fat_idx_of_dir(file_path_dirname);
+  if (dir_fat_idx == -1)
+  {
+    uprint("Parent directory ");
+    uprint(file_path_dirname);
+    uprintln(" not found!");
+    return -1;
+  }
+
+  // Find file in directory
+  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
+  word* dir_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks + (dir_fat_idx * superblock->bytes_per_block);
+  word dir_entries_max = superblock->bytes_per_block / sizeof(struct brfs_dir_entry);
+
+  word i;
+  for (i = 0; i < dir_entries_max; i++)
+  {
+    struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
+    if (dir_entry->filename[0] != 0)
+    {
+      char decompressed_filename[16];
+      strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
+      if (strcmp(decompressed_filename, file_path_basename) == 1)
+      {
+        // Found file
+        // Check if file is already open
+        word j;
+        for (j = 0; j < MAX_OPEN_FILES; j++)
+        {
+          if (brfs_file_pointers[j] == dir_entry->fat_idx)
+          {
+            uprint("File ");
+            uprint(file_path_basename);
+            uprintln(" already open!");
+            return -1;
+          }
+        }
+
+        // Find first free file pointer
+        word next_free_file_pointer = -1;
+        for (j = 0; j < MAX_OPEN_FILES; j++)
+        {
+          if (brfs_file_pointers[j] == 0)
+          {
+            next_free_file_pointer = j;
+            break;
+          }
+        }
+
+        if (next_free_file_pointer == -1)
+        {
+          uprintln("All files already opened!");
+          return -1;
+        }
+
+        // Open file
+        brfs_file_pointers[next_free_file_pointer] = dir_entry->fat_idx;
+        brfs_cursors[next_free_file_pointer] = 0;
+        return brfs_file_pointers[next_free_file_pointer];
+      }
+    }
+  }
+}
+
 int main() 
 {
   // Clear UART screen:
@@ -555,19 +654,16 @@ int main()
 
   brfs_format(blocks, bytes_per_block, "Label", full_format);
 
-  brfs_dump(blocks, blocks*bytes_per_block);
-
-  brfs_list_directory("/");
-
   brfs_create_file("/", "file1.txt");
-
-  brfs_list_directory(".");
-
-  brfs_create_directory("..", "dir1");
+  brfs_create_directory(".", "dir1");
   brfs_create_file("dir1", "file2.txt");
 
-  brfs_list_directory(".");
+  brfs_list_directory("/");
   brfs_list_directory("dir1");
+
+  word fp = brfs_open_file("/dir1/file2.txt");
+
+  brfs_dump(blocks, blocks*bytes_per_block);
 
   return 'q';
 }

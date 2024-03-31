@@ -54,12 +54,12 @@ Required operations:
 - [x] Create file
 - [x] Open file (not a dir!) (allow multiple files open at once)
 - [x] Close file
-- [] Stat (returns dir entry)
-- [/] Set cursor
+- [x] Stat (returns dir entry)
+- [x] Set cursor
 - [x] Get cursor
-- [] Read file
-- [] Write file
-- [] Delete entire file (deleting part of file is not a thing)
+- [x] Read file
+- [x] Write file
+- [x] Delete entire file (deleting part of file is not a thing)
 - [x] List directory
 */
 
@@ -156,19 +156,20 @@ void brfs_dump(word fatsize, word datasize)
 
   // FAT dump
   uprintln("\nFAT:");
-  brfs_dump_section(brfs_ram_storage+SUPERBLOCK_SIZE, fatsize, 8);
+  brfs_dump_section(brfs_ram_storage+SUPERBLOCK_SIZE, fatsize, 16);
 
   // Datablock dump
   uprintln("\nData:");
   brfs_dump_section(brfs_ram_storage+SUPERBLOCK_SIZE+fatsize, datasize, 32);
 
-  uprintln("\nFile pointers and cursors:");
+  uprintln("\nOpen files:");
   word i;
   for (i = 0; i < MAX_OPEN_FILES; i++)
   {
-    uprint("File pointer ");
-    uprintDec(i);
-    uprint(": ");
+    uprint("FP");
+    uprintDec(i+1);
+    uprint(":");
+    uprint(" FAT idx: ");
     uprintDec(brfs_file_pointers[i]);
     uprint(" Cursor: ");
     uprintDec(brfs_cursors[i]);
@@ -400,10 +401,11 @@ void brfs_format(word blocks, word bytes_per_block, char* label, word full_forma
 
 /**
  * Create a new directory in the directory of parent_dir_path
+ * Returns 1 on success, 0 on error
  * parent_dir_path: full path of the parent directory
  * dirname: name of the new directory
 */
-void brfs_create_directory(char* parent_dir_path, char* dirname)
+word brfs_create_directory(char* parent_dir_path, char* dirname)
 {
   struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
 
@@ -414,7 +416,7 @@ void brfs_create_directory(char* parent_dir_path, char* dirname)
   if (next_free_block == -1)
   {
     uprintln("No free blocks left!");
-    return;
+    return 0;
   }
 
   // Find data block address of parent directory path
@@ -424,7 +426,27 @@ void brfs_create_directory(char* parent_dir_path, char* dirname)
     uprint("Parent directory ");
     uprint(parent_dir_path);
     uprintln(" not found!");
-    return;
+    return 0;
+  }
+
+  // Check if file or folder already exists
+  word* parent_dir_addr = brfs_data_block_addr + (parent_dir_fat_idx * superblock->bytes_per_block);
+  word dir_entries_max = superblock->bytes_per_block / sizeof(struct brfs_dir_entry);
+  word i;
+  for (i = 0; i < dir_entries_max; i++)
+  {
+    struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (parent_dir_addr + (i * sizeof(struct brfs_dir_entry)));
+    if (dir_entry->filename[0] != 0)
+    {
+      char decompressed_filename[16];
+      strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
+      if (strcmp(decompressed_filename, dirname) == 1)
+      {
+        uprint(dirname);
+        uprintln(" already exists!");
+        return 0;
+      }
+    }
   }
 
   // Find first free dir entry
@@ -435,7 +457,7 @@ void brfs_create_directory(char* parent_dir_path, char* dirname)
   if (next_free_dir_entry == -1)
   {
     uprintln("No free dir entries left!");
-    return;
+    return 0;
   }
 
   // Create dir entry
@@ -450,21 +472,23 @@ void brfs_create_directory(char* parent_dir_path, char* dirname)
   );
 
   // Initialize directory
-  word dir_entries_max = superblock->bytes_per_block / sizeof(struct brfs_dir_entry);
   brfs_init_directory(
     brfs_data_block_addr + (next_free_block * superblock->bytes_per_block),
     dir_entries_max,
     next_free_block,
     parent_dir_fat_idx
   );
+
+  return 1;
 }
 
 /**
  * Create a new file in the directory of parent_dir_path
+ * Returns 1 on success, 0 on error
  * parent_dir_path: full path of the parent directory
  * filename: name of the new file
 */
-void brfs_create_file(char* parent_dir_path, char* filename)
+word brfs_create_file(char* parent_dir_path, char* filename)
 {
   struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
 
@@ -475,7 +499,7 @@ void brfs_create_file(char* parent_dir_path, char* filename)
   if (next_free_block == -1)
   {
     uprintln("No free blocks left!");
-    return;
+    return 0;
   }
 
   // Find data block address of parent directory path
@@ -485,7 +509,27 @@ void brfs_create_file(char* parent_dir_path, char* filename)
     uprint("Parent directory ");
     uprint(parent_dir_path);
     uprintln(" not found!");
-    return;
+    return 0;
+  }
+
+  // Check if file or folder already exists
+  word* parent_dir_addr = brfs_data_block_addr + (parent_dir_fat_idx * superblock->bytes_per_block);
+  word dir_entries_max = superblock->bytes_per_block / sizeof(struct brfs_dir_entry);
+  word i;
+  for (i = 0; i < dir_entries_max; i++)
+  {
+    struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (parent_dir_addr + (i * sizeof(struct brfs_dir_entry)));
+    if (dir_entry->filename[0] != 0)
+    {
+      char decompressed_filename[16];
+      strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
+      if (strcmp(decompressed_filename, filename) == 1)
+      {
+        uprint(filename);
+        uprintln(" already exists!");
+        return 0;
+      }
+    }
   }
 
   // Find first free dir entry
@@ -496,7 +540,7 @@ void brfs_create_file(char* parent_dir_path, char* filename)
   if (next_free_dir_entry == -1)
   {
     uprintln("No free dir entries left!");
-    return;
+    return 0;
   }
 
   // Create file entry
@@ -519,6 +563,8 @@ void brfs_create_file(char* parent_dir_path, char* filename)
 
   // Update FAT
   brfs_ram_storage[SUPERBLOCK_SIZE + next_free_block] = -1;
+
+  return 1;
 }
 
 /**
@@ -675,6 +721,81 @@ word brfs_close_file(word file_pointer)
   return 0;
 }
 
+
+/**
+ * Delete a file by removing all FAT blocks and the directory entry
+ * Returns 1 on success, 0 on error
+ * file_path: full path of the file
+*/
+word brfs_delete_file(char* file_path)
+{
+  // Split filename from path using basename and dirname
+  char dirname_output[MAX_PATH_LENGTH];
+  char* file_path_basename = basename(file_path);
+  char* file_path_dirname = dirname(dirname_output, file_path);
+
+  // Find data block address of parent directory path
+  word dir_fat_idx = brfs_get_fat_idx_of_dir(file_path_dirname);
+  if (dir_fat_idx == -1)
+  {
+    uprint("Parent directory ");
+    uprint(file_path_dirname);
+    uprintln(" not found!");
+    return 0;
+  }
+
+  // Find file in directory
+  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
+  word* dir_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks + (dir_fat_idx * superblock->bytes_per_block);
+  word dir_entries_max = superblock->bytes_per_block / sizeof(struct brfs_dir_entry);
+
+  word i;
+  for (i = 0; i < dir_entries_max; i++)
+  {
+    struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
+    if (dir_entry->filename[0] != 0)
+    {
+      char decompressed_filename[16];
+      strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
+      // Also check for directory flag to be 0
+      if (strcmp(decompressed_filename, file_path_basename) == 1 && dir_entry->flags == 0)
+      {
+        // Found file
+        // Check if file is already open
+        word j;
+        for (j = 0; j < MAX_OPEN_FILES; j++)
+        {
+          if (brfs_file_pointers[j] == dir_entry->fat_idx)
+          {
+            uprint("File ");
+            uprint(file_path_basename);
+            uprintln(" is open!");
+            return 0;
+          }
+        }
+
+        // Delete fat blocks
+        word current_fat_idx = dir_entry->fat_idx;
+        word next_fat_idx;
+        while (current_fat_idx != -1)
+        {
+          next_fat_idx = brfs_ram_storage[SUPERBLOCK_SIZE + current_fat_idx];
+          brfs_ram_storage[SUPERBLOCK_SIZE + current_fat_idx] = 0;
+          current_fat_idx = next_fat_idx;
+        }
+
+        // Delete file
+        memset((char*)dir_entry, 0, sizeof(struct brfs_dir_entry));
+        return 1;
+      }
+    }
+  }
+  uprint("File ");
+  uprint(file_path_basename);
+  uprintln(" not found!");
+  return 0;
+}
+
 /**
  * Set the cursor of an opened file
  * Returns 1 on success, 0 on error
@@ -701,7 +822,6 @@ word brfs_set_cursor(word file_pointer, word cursor)
         cursor = brfs_dir_entry_pointers[i]->filesize;
       }
 
-      // TODO: add block logic
       brfs_cursors[i] = cursor;
       return 1;
     }
@@ -720,7 +840,7 @@ word brfs_get_cursor(word file_pointer)
   if (file_pointer == 0)
   {
     uprintln("File not open!");
-    return 0;
+    return -1;
   }
 
   // Find file pointer
@@ -738,8 +858,40 @@ word brfs_get_cursor(word file_pointer)
 }
 
 /**
+ * Get the FAT index of a file at the cursor
+ * Returns the FAT index, or 0 on error
+ * file_pointer: file pointer returned by brfs_open_file
+ * cursor: cursor position of opened file
+*/
+word brfs_get_fat_idx_at_cursor(word file_pointer, word cursor)
+{
+  if (file_pointer == 0)
+  {
+    uprintln("File not open!");
+    return 0;
+  }
+  // Get FAT index of file at cursor
+  word current_fat_idx = file_pointer;
+  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
+
+  // Loop through FAT until cursor is reached
+  while (cursor > superblock->bytes_per_block)
+  {
+    current_fat_idx = brfs_ram_storage[SUPERBLOCK_SIZE + current_fat_idx];
+    if (current_fat_idx == -1)
+    {
+      uprintln("Cursor is out of bounds!");
+      return 0;
+    }
+    cursor -= superblock->bytes_per_block;
+  }
+
+  return current_fat_idx;
+}
+
+/**
  * Read a file from the cursor position
- * Returns the number of words read, or -1 on error
+ * Returns 1 on success, or 0 on error
  * file_pointer: file pointer returned by brfs_open_file
  * buffer: buffer to read the file into
  * length: number of words to read
@@ -753,7 +905,7 @@ word brfs_read(word file_pointer, word* buffer, word length)
   }
 
   struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
-  word* data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks + (file_pointer * superblock->bytes_per_block);
+  word* data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks;
 
   // Find file pointer
   word i;
@@ -773,6 +925,12 @@ word brfs_read(word file_pointer, word* buffer, word length)
       }
 
       // Get FAT index of file at cursor
+      word current_fat_idx = brfs_get_fat_idx_at_cursor(file_pointer, brfs_cursors[i]);
+      if (current_fat_idx == 0)
+      {
+        uprintln("Error getting FAT index at cursor!");
+        return 0;
+      }
 
       // Loop:
       // - calculate words until end of block (or up to length)
@@ -780,10 +938,135 @@ word brfs_read(word file_pointer, word* buffer, word length)
       // - decrease length by words read
       // - get next block from FAT
       // - repeat until length is 0
+      while (length > 0)
+      {
+        word words_until_end_of_block = superblock->bytes_per_block - (MATH_modU(brfs_cursors[i], superblock->bytes_per_block));
+        word words_to_read = words_until_end_of_block > length ? length : words_until_end_of_block;
+
+        // Copy words to buffer
+        memcpy(buffer, data_block_addr + (current_fat_idx * superblock->bytes_per_block) + brfs_cursors[i], words_to_read);
+
+        // Update cursor and length
+        brfs_cursors[i] += words_to_read;
+        length -= words_to_read;
+        buffer += words_to_read;
+
+        // Get next block from FAT
+        current_fat_idx = brfs_ram_storage[SUPERBLOCK_SIZE + current_fat_idx];
+        if (current_fat_idx == -1 && length > 0)
+        {
+          uprintln("There is no next block in the file!");
+          return 0;
+        }
+      }
+
+      return 1;
     }
   }
+  uprintln("File not found!");
+  return 0;
 }
 
+/**
+ * Write a file from the cursor position
+ * Returns 1 on success, or 0 on error
+ * file_pointer: file pointer returned by brfs_open_file
+ * buffer: buffer to write to the file
+ * length: number of words to write
+*/
+word brfs_write(word file_pointer, word* buffer, word length)
+{
+  if (file_pointer == 0)
+  {
+    uprintln("File not open!");
+    return 0;
+  }
+
+  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
+  word* data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks;
+
+  // Find file pointer
+  word i;
+  for (i = 0; i < MAX_OPEN_FILES; i++)
+  {
+    if (brfs_file_pointers[i] == file_pointer)
+    {
+      if (length < 0)
+      {
+        uprintln("Length cannot be negative!");
+        return 0;
+      }
+
+      // Get FAT index of file at cursor
+      word current_fat_idx = brfs_get_fat_idx_at_cursor(file_pointer, brfs_cursors[i]);
+      if (current_fat_idx == 0)
+      {
+        uprintln("Error getting FAT index at cursor!");
+        return 0;
+      }
+
+      // Loop:
+      // - calculate words until end of block (or up to length)
+      // - write words until end of block (or up to length)
+      // - decrease length by words written
+      // - get next block from FAT, or find next free block if end of block
+      // - if next block is needed, update FAT
+      // - repeat until length is 0
+      while (length > 0)
+      {
+        word cursor_in_block = MATH_modU(brfs_cursors[i], superblock->bytes_per_block);
+        word words_until_end_of_block = superblock->bytes_per_block - cursor_in_block;
+        word words_to_write = words_until_end_of_block > length ? length : words_until_end_of_block;
+
+        // Copy words to buffer
+        memcpy(data_block_addr + (current_fat_idx * superblock->bytes_per_block) + cursor_in_block, buffer, words_to_write);
+
+        // Update cursor and length
+        brfs_cursors[i] += words_to_write;
+        length -= words_to_write;
+        buffer += words_to_write;
+
+        // Get next block from FAT, or find next free block if end of block
+        if (words_until_end_of_block == words_to_write && length > 0)
+        {
+          
+          word next_fat_idx = brfs_ram_storage[SUPERBLOCK_SIZE + current_fat_idx];
+          // Check if next block is already allocated
+          if (next_fat_idx != -1)
+          {
+            current_fat_idx = next_fat_idx;
+          }
+          else
+          {
+            // Find next free block
+            word next_free_block = brfs_find_next_free_block(brfs_ram_storage + SUPERBLOCK_SIZE, superblock->total_blocks);
+            if (next_free_block == -1)
+            {
+              uprintln("No free blocks left!");
+              return 0;
+            }
+            // Update FAT
+            brfs_ram_storage[SUPERBLOCK_SIZE + current_fat_idx] = next_free_block;
+            // Go to next block
+            current_fat_idx = next_free_block;
+            // Set next block to -1 to indicate end of file
+            brfs_ram_storage[SUPERBLOCK_SIZE + current_fat_idx] = -1;
+          }
+        }
+      }
+
+      // Update file size in dir entry if we wrote past the current size
+      if (brfs_cursors[i] > brfs_dir_entry_pointers[i]->filesize)
+      {
+        brfs_dir_entry_pointers[i]->filesize = brfs_cursors[i];
+      }
+
+      return 1;
+    }
+  }
+  uprintln("File not found!");
+  return 0;
+}
 
 /**
  * Stat a file or directory
@@ -844,21 +1127,94 @@ int main()
   uprintln("BRFS test implementation");
   uprintln("------------------------");
 
-  word blocks = 8;
+  word blocks = 16;
   word bytes_per_block = 32;
   word full_format = 1;
 
   brfs_format(blocks, bytes_per_block, "Label", full_format);
+  //brfs_list_directory("/");
+  //brfs_dump(blocks, blocks*bytes_per_block);
+  //uprintln("");
 
-  brfs_create_file("/", "file1.txt");
-  brfs_create_directory(".", "dir1");
-  brfs_create_file("dir1", "file2.txt");
+  // Create directories
+  if (!brfs_create_directory("/", "dir1"))
+  {
+    uprintln("Error creating dir1!");
+  }
+  if (!brfs_create_directory("/", "dir2"))
+  {
+    uprintln("Error creating dir2!");
+  }
 
+  // Create files
+  if (!brfs_create_file("/dir1", "file1.txt"))
+  {
+    uprintln("Error creating file1!");
+  }
+  if (!brfs_create_file("/dir1", "file2.txt"))
+  {
+    uprintln("Error creating file2!");
+  }
+
+  // Open file and write
+  word file_pointer = brfs_open_file("/dir1/file1.txt");
+  if (file_pointer == -1)
+  {
+    uprintln("Error opening file1!");
+  }
+  else
+  {
+    char* write_string = "This message should exceed the length of a single block, it even should exceed the length of two blocks! I am adding this part here to keep increasing the number of blocks used. This is the end of the message.";
+    if (!brfs_write(file_pointer, write_string, strlen(write_string)))
+    {
+      uprintln("Error writing to file1!");
+    }
+
+    // Update two blocks in the middle of the file
+    brfs_set_cursor(file_pointer, 57);
+    char* write_string2 = "THIS PART IS WRITTEN IN THE MIDDLE OF THE FILE!";
+    if (!brfs_write(file_pointer, write_string2, strlen(write_string2)))
+    {
+      uprintln("Error writing to file1!");
+    }
+
+    brfs_close_file(file_pointer);
+  }
+
+  // Open second file and write
+  word file_pointer2 = brfs_open_file("/dir1/file2.txt");
+  if (file_pointer2 == -1)
+  {
+    uprintln("Error opening file2!");
+  }
+  else
+  {
+    char* write_string = "Small message in file2!";
+    if (!brfs_write(file_pointer2, write_string, strlen(write_string)))
+    {
+      uprintln("Error writing to file2!");
+    }
+
+    // Update within the first block
+    brfs_set_cursor(file_pointer2, 6);
+    char* write_string2 = "UPDATES";
+    if (!brfs_write(file_pointer2, write_string2, strlen(write_string2)))
+    {
+      uprintln("Error writing to file2!");
+    }
+
+    // Skip closing the file to see data in dump
+    //brfs_close_file(file_pointer2);
+  }
+
+  // Delete file1
+  if (!brfs_delete_file("/dir1/file1.txt"))
+  {
+    uprintln("Error deleting file1!");
+  }
+  
   brfs_list_directory("/");
-  brfs_list_directory("dir1");
-
-  word fp = brfs_open_file("/dir1");
-
+  brfs_list_directory("/dir1");
   brfs_dump(blocks, blocks*bytes_per_block);
 
   return 'q';

@@ -13,9 +13,9 @@
 // Framebuffer. fb[Y][X] (bottom right is [239][319])
 char (*fb)[SCREEN_WIDTH] = (char (*)[SCREEN_WIDTH]) FB_ADDR;
 
-char MBROT_r[] = {7,7,7,7,7,7,7,7,6,5,4,3,2,1,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,0};
-char MBROT_g[] = {0,1,2,3,4,5,6,7,7,7,7,7,7,7,7,7,7,7,6,5,4,3,2,1,0,0,0,0,0,0,0,0,0};
-char MBROT_b[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,0};
+char MBROT_r[] = {224, 224, 224, 224, 224, 224, 224, 224, 192, 160, 128, 96, 64, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 64, 96, 128, 160, 192, 224, 0};
+char MBROT_g[] = {0, 32, 64, 96, 128, 160, 192, 224, 224, 224, 224, 224, 224, 224, 224, 224, 224, 224, 192, 160, 128, 96, 64, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+char MBROT_b[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 64, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 0};
 
 
 word MBROT_xmin = -8601;
@@ -128,16 +128,16 @@ void MBROT_render(word dx, word dy)
       "addr2reg MBROT_r r15\n"
       "add r15 r10 r15             ; r15 = MBROT_r[iter]\n"
       "read 0 r15 r15\n"
-      "shiftl r15 5 r14            ; r14 = r << 5\n"
+      "shiftl r15 16 r14           ; r14 = r << 16\n"
 
       "addr2reg MBROT_g r15\n"
-      "add r15 r10 r15             ; r15 = MBROT_r[iter]\n"
+      "add r15 r10 r15             ; r15 = MBROT_g[iter]\n"
       "read 0 r15 r15\n"
-      "shiftl r15 2 r15            ; r15 = g << 2\n"
+      "shiftl r15 8 r15            ; r15 = g << 8\n"
       "add r15 r14 r14             ; r14 += g (shifted)\n"
 
       "addr2reg MBROT_b r15\n"
-      "add r15 r10 r15             ; r15 = MBROT_r[iter]\n"
+      "add r15 r10 r15             ; r15 = MBROT_b[iter]\n"
       "read 0 r15 r15\n"
       "add r15 r14 r14             ; r14 += b\n"
 

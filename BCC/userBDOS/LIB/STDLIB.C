@@ -699,14 +699,14 @@ For debugging
 Prints a hex dump of size 'len' for each word starting from 'addr'
 Values are printed over UART
 */
-void hexdump(char* addr, word len)
+void hexdump(char* addr, word len, word words_per_line)
 {
   char buf[16];
   word i;
   for (i = 0; i < len; i++)
   {
-    // newline every 8 words
-    if (i != 0 && MATH_modU(i, 8) == 0)
+    // newline every words_per_line words
+    if (i != 0 && MATH_modU(i, words_per_line) == 0)
       uprintc('\n');
     itoah(addr[i], buf);
     uprint(buf);

@@ -74,13 +74,13 @@ Implementing in BDOS on PCB v3:
 
 /*
 Integrate with SPI Flash:
-- [] Function to read from SPI Flash (to be used on startup of BDOS)
-  - [] Check for valid BRFS superblock
-  - [] Load BRFS into RAM (read total blocks and words per block from superblock)
+- [x] Function to read from SPI Flash (to be used on startup of BDOS)
+  - [x] Check for valid BRFS superblock
+  - [x] Load BRFS into RAM (read total blocks and words per block from superblock)
 - [x] Function to write BRFS to SPI Flash (to be used by applications/OS via System Call)
-  - [x] Check which blocks have changed using a bitmap
-  - [x] Erase changed blocks (by sector) in SPI Flash
-  - [x] Write changed blocks to SPI Flash (by page)
+  - [x] Check which blocks/FAT entries have changed using a bitmap
+  - [x] Erase changed blocks/FAT entries (by sector) in SPI Flash
+  - [x] Write changed blocks/FAT entries to SPI Flash (by page)
 */
 
 #define word char
@@ -89,6 +89,8 @@ Integrate with SPI Flash:
 #include "LIB/SYS.C"
 #include "LIB/STDLIB.C"
 #include "LIB/SPIFLASH.C"
+
+#define BRFS_SUPPORTED_VERSION 1
 
 #define BRFS_RAM_STORAGE_ADDR 0x100000 // From 4th MiB
 
@@ -403,7 +405,7 @@ void brfs_format(word blocks, word words_per_block, char* label, word full_forma
   superblock.total_blocks = blocks;
   superblock.words_per_block = words_per_block;
   strcpy((char*)&superblock.label, label);
-  superblock.brfs_version = 1;
+  superblock.brfs_version = BRFS_SUPPORTED_VERSION;
 
   // Copy superblock to head of ram addr
   memcpy(brfs_ram_storage, (char*)&superblock, sizeof(superblock));
@@ -1200,7 +1202,6 @@ word brfs_check_block_changed(word block_idx)
   return memcmp(data_block_addr + (block_idx * superblock->words_per_block), spi_data_buffer, superblock->words_per_block);
 }
 
-
 /**
  * Write the FAT table to SPI flash by performing three steps:
  * 1. Check which FAT entries have changed
@@ -1276,7 +1277,6 @@ void brfs_write_fat_to_flash()
 
   uprintln("---Finished writing FAT to SPI Flash---");
 }
-
 
 /**
  * Write the data blocks to SPI flash by performing three steps:
@@ -1359,7 +1359,7 @@ void brfs_write_blocks_to_flash()
       for (j = 0; j < superblock->words_per_block; j+=64)
       {
         word spiflash_addr = BRFS_SPIFLASH_BLOCK_ADDR; // Workaround because of large static number
-        spiflash_addr += i * superblock->words_per_block + j;
+        spiflash_addr += i * (superblock->words_per_block * 4) + (j * 4);
 
         word* data_addr = data_block_addr + (i * superblock->words_per_block) + j;
         spiflash_write_page_in_words(data_addr, spiflash_addr, 64);
@@ -1378,20 +1378,80 @@ void brfs_write_blocks_to_flash()
   uprintln("---Finished writing blocks to SPI Flash---");
 }
 
-
-void read_test()
+/**
+ * Write the FAT and data blocks to SPI flash
+ * Superblock should already be written to flash during format
+*/
+void brfs_write_to_flash()
 {
-  word read_buffer[1024];
-  memset(read_buffer, 0, 1024);
-  spiflash_read_from_address(&read_buffer[0], 0, 1024, 1);
+  brfs_write_fat_to_flash();
+  brfs_write_blocks_to_flash();
+}
 
-  word i;
-  for(i = 0; i < 1024; i+=128)
+/**
+ * Checks if given superblock is valid
+ * Returns 1 if valid, 0 if invalid
+*/
+word brfs_superblock_is_valid(struct brfs_superblock* superblock)
+{
+  // Check if brfs version is correct
+  if (superblock->brfs_version != BRFS_SUPPORTED_VERSION)
   {
-    uprintHex(read_buffer[i]);
-    uprintc(' ');
+    uprint("BRFS version ");
+    uprintDec(superblock->brfs_version);
+    uprint(" is not supported by this implementation (");
+    uprintDec(BRFS_SUPPORTED_VERSION);
+    uprintln(")!");
+    return 0;
   }
-  uprintln("");
+  // Check if total blocks is > 0 and a multiple of 64
+  if (superblock->total_blocks == 0 || superblock->total_blocks & 63)
+  {
+    uprintln("Error: total blocks should be > 0 and a multiple of 64");
+    return 0;
+  }
+  // Check if block size is > 0
+  if (superblock->words_per_block == 0)
+  {
+    uprintln("Error: block size should be > 0");
+    return 0;
+  }
+  // Check if words per block is > 0 and <= 2048
+  if (superblock->words_per_block == 0 || superblock->words_per_block > 2048)
+  {
+    uprintln("Error: words per block should be > 0 and <= 2048");
+    return 0;
+  }
+
+  return 1;
+}
+
+/**
+ * Read the superblock, FAT and data blocks from SPI flash
+ * Returns 1 on success, or 0 on error
+*/
+word brfs_read_from_flash()
+{
+  // Read superblock from flash
+  spiflash_read_from_address(brfs_ram_storage, BRFS_SPIFLASH_SUPERBLOCK_ADDR, SUPERBLOCK_SIZE, 1);
+
+  // Perform validity checks on superblock
+  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
+  if (!brfs_superblock_is_valid(superblock))
+  {
+    uprintln("Error: superblock is not valid!");
+    return 0;
+  }
+  
+  word* data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks;
+
+  // Read FAT from flash
+  spiflash_read_from_address(brfs_ram_storage + SUPERBLOCK_SIZE, BRFS_SPIFLASH_FAT_ADDR, superblock->total_blocks, 1);
+
+  // Read data blocks from flash
+  spiflash_read_from_address(data_block_addr, BRFS_SPIFLASH_BLOCK_ADDR, superblock->total_blocks * superblock->words_per_block, 1);
+
+  return 1;
 }
 
 
@@ -1407,110 +1467,112 @@ int main()
   uprintln("------------------------");
 
   spiflash_init();
+
+  // Flag to switch between write and read test
+  word write_test = 1;
   
   // Small scale test values
   //word blocks = 16;
   //word words_per_block = 64; // 256 bytes per block
   //word full_format = 1;
 
-  // Large scale test values for 4MiB
-  word blocks = 16; //4096; // 1KiB per block * 4096 = 4MiB
-  word words_per_block = 256; // 1KiB per block
+  // Large scale test
+  word blocks = 64; // 1KiB per block * 64 = 64KiB
+  word words_per_block = 128; // 1KiB per block
   word full_format = 1;
 
-  uprintln("Formatting BRFS filesystem...");
-  brfs_format(blocks, words_per_block, "SystemBRFS", full_format);
-  uprintln("BRFS filesystem formatted!");
-
-  brfs_dump(blocks, blocks*words_per_block);
-  brfs_write_fat_to_flash();
-  brfs_write_blocks_to_flash();
-  
-
-  /* TEST CODE FOR SMALL SCALE TEST
-
-  // Create directories
-  if (!brfs_create_directory("/", "dir1"))
+  if (write_test)
   {
-    uprintln("Error creating dir1!");
-  }
-  if (!brfs_create_directory("/", "dir2"))
-  {
-    uprintln("Error creating dir2!");
-  }
+    uprintln("Formatting BRFS filesystem...");
+    brfs_format(blocks, words_per_block, "SystemBRFS", full_format);
+    uprintln("BRFS filesystem formatted!");
 
-  // Create files
-  if (!brfs_create_file("/dir1", "file1.txt"))
-  {
-    uprintln("Error creating file1!");
-  }
-  if (!brfs_create_file("/dir1", "file2.txt"))
-  {
-    uprintln("Error creating file2!");
-  }
+      // Create directories
+    if (!brfs_create_directory("/", "dir1"))
+    {
+      uprintln("Error creating dir1!");
+    }
+    if (!brfs_create_directory("/", "dir2"))
+    {
+      uprintln("Error creating dir2!");
+    }
 
-  // Open file and write
-  word file_pointer = brfs_open_file("/dir1/file1.txt");
-  if (file_pointer == -1)
-  {
-    uprintln("Error opening file1!");
+    // Create files
+    if (!brfs_create_file("/dir1", "file1.txt"))
+    {
+      uprintln("Error creating file1!");
+    }
+    if (!brfs_create_file("/dir1", "file2.txt"))
+    {
+      uprintln("Error creating file2!");
+    }
+
+    // Open file and write
+    word file_pointer = brfs_open_file("/dir1/file1.txt");
+    if (file_pointer == -1)
+    {
+      uprintln("Error opening file1!");
+    }
+    else
+    {
+      char* write_string = "This message should exceed the length of a single block, it even should exceed the length of two blocks! I am adding this part here to keep increasing the number of blocks used. This is the end of the message.";
+      if (!brfs_write(file_pointer, write_string, strlen(write_string)))
+      {
+        uprintln("Error writing to file1!");
+      }
+
+      // Update two blocks in the middle of the file
+      brfs_set_cursor(file_pointer, 57);
+      char* write_string2 = "THIS PART IS WRITTEN IN THE MIDDLE OF THE FILE!";
+      if (!brfs_write(file_pointer, write_string2, strlen(write_string2)))
+      {
+        uprintln("Error writing to file1!");
+      }
+
+      brfs_close_file(file_pointer);
+    }
+
+    // Open second file and write
+    word file_pointer2 = brfs_open_file("/dir1/file2.txt");
+    if (file_pointer2 == -1)
+    {
+      uprintln("Error opening file2!");
+    }
+    else
+    {
+      char* write_string = "Small message in file2!";
+      if (!brfs_write(file_pointer2, write_string, strlen(write_string)))
+      {
+        uprintln("Error writing to file2!");
+      }
+
+      // Update within the first block
+      brfs_set_cursor(file_pointer2, 6);
+      char* write_string2 = "UPDATES";
+      if (!brfs_write(file_pointer2, write_string2, strlen(write_string2)))
+      {
+        uprintln("Error writing to file2!");
+      }
+
+      // Skip closing the file to see data in dump
+      //brfs_close_file(file_pointer2);
+
+      brfs_list_directory("/");
+      brfs_list_directory("/dir1");
+      brfs_dump(blocks, blocks*words_per_block);
+
+      brfs_write_to_flash();
+    }
   }
   else
   {
-    char* write_string = "This message should exceed the length of a single block, it even should exceed the length of two blocks! I am adding this part here to keep increasing the number of blocks used. This is the end of the message.";
-    if (!brfs_write(file_pointer, write_string, strlen(write_string)))
-    {
-      uprintln("Error writing to file1!");
-    }
+    brfs_read_from_flash();
 
-    // Update two blocks in the middle of the file
-    brfs_set_cursor(file_pointer, 57);
-    char* write_string2 = "THIS PART IS WRITTEN IN THE MIDDLE OF THE FILE!";
-    if (!brfs_write(file_pointer, write_string2, strlen(write_string2)))
-    {
-      uprintln("Error writing to file1!");
-    }
+    brfs_dump(blocks, blocks*words_per_block);
 
-    brfs_close_file(file_pointer);
+    brfs_list_directory("/");
+    brfs_list_directory("/dir1");
   }
-
-  // Open second file and write
-  word file_pointer2 = brfs_open_file("/dir1/file2.txt");
-  if (file_pointer2 == -1)
-  {
-    uprintln("Error opening file2!");
-  }
-  else
-  {
-    char* write_string = "Small message in file2!";
-    if (!brfs_write(file_pointer2, write_string, strlen(write_string)))
-    {
-      uprintln("Error writing to file2!");
-    }
-
-    // Update within the first block
-    brfs_set_cursor(file_pointer2, 6);
-    char* write_string2 = "UPDATES";
-    if (!brfs_write(file_pointer2, write_string2, strlen(write_string2)))
-    {
-      uprintln("Error writing to file2!");
-    }
-
-    // Skip closing the file to see data in dump
-    //brfs_close_file(file_pointer2);
-  }
-
-  // Delete file1
-  if (!brfs_delete_file("/dir1/file1.txt"))
-  {
-    uprintln("Error deleting file1!");
-  }
-  
-  brfs_list_directory("/");
-  brfs_list_directory("/dir1");
-  brfs_dump(blocks, blocks*words_per_block);
-
-  */
 
   return 'q';
 }

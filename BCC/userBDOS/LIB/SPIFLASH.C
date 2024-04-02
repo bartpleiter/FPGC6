@@ -118,7 +118,7 @@ void spiflash_enable_write()
 }
 
 // Reads len bytes from addr and stores them in output
-// If bytes_to_word is 1, then each 4 bytes are shifted into one word in output
+// If bytes_to_word is 1, then each 4 bytes are shifted into one word in output with len in words
 void spiflash_read_from_address(word* output, word addr, word len, word bytes_to_word)
 {
   spiflash_begin_transfer();
@@ -191,9 +191,9 @@ void spiflash_write_page_in_words(word* input, word addr, word len)
   word i;
   for (i = 0; i < len; i++)
   {
-    spiflash_transfer(input[i]) >> 24;
-    spiflash_transfer(input[i]) >> 16;
-    spiflash_transfer(input[i]) >> 8;
+    spiflash_transfer(input[i] >> 24);
+    spiflash_transfer(input[i] >> 16);
+    spiflash_transfer(input[i] >> 8);
     spiflash_transfer(input[i]);
   }
 

@@ -154,28 +154,40 @@ word strcat(char* dest, char* src)
   return strcpy(dest+endOfDest, src);
 }
 
+/*
+Appends string from src to dest up to n characters
+Returns pointer to resulting dest string
+*/
+char *strncat(char *dest, char *src, word n)
+{
+  word len1 = strlen(dest);
+  word len2 = strlen(src);
+    
+  if (len2 < n) 
+  {
+	  strcpy(&dest[len1], src);
+  }
+  else
+  {
+    strncpy(&dest[len1], src, n);
+    dest[len1 + n] = '\0';
+  }
+  return dest;
+}
 
 /*
 Compares two strings a and b
-Returns 1 if similar, 0 otherwise
+Returns 0 if similar
+ otherwise returns the difference in the first non-matching character
 */
-word strcmp(char* a, char* b)
+word strcmp(char* s1, char* s2)
 {
-  if (strlen(a) != strlen(b))
-    return 0;
-
-
-  word i = 0;
-  while (a[i] != 0)
+  while(*s1 && (*s1 == *s2))
   {
-    if (a[i] != b[i])
-    {
-      return 0;
-    }
-    i++;
+    s1++;
+    s2++;
   }
-
-  return 1;
+  return *s1 - *s2;
 }
 
 

@@ -1,67 +1,4 @@
-// Test implementation of Bart's RAM File System (BRFS)
-
-/*
-General Idea:
-- HDD for the average home user was <100MB until after 1990
-- SPI NOR Flash provides around the same amount of storage, with very little wear
-    - Very fast reads in QSPI mode
-    - However, writes are extremely slow and need to be performed in pages of 256 bytes (64 words)
-- FPGC has 64MiB RAM, which is a lot even for 32 bit addressable words
-    - 32MiB is already more than enough for the FPGC in its current form
-- Use the other 32MiB as a fully in RAM filesystem
-    - That initializes from SPI flash and writes back to Flash at a chosen time
-*/
-
-/*
-Implementation Idea:
-- Use superblock for info/addresses, no hard-coded sizes!
-  - Allows for different storage media, easier testing on tiny size, and more future proof
-*/
-
-/*
-Implementation Details:
---------------------------------------------------
-| superblock | FAT | Data+Dir blocks (same size) |
---------------------------------------------------
-
-16 word superblock:
-  - (1)  total blocks
-  - (1)  bytes per block
-  - (10) label [1 char per word]
-  - (1)  brfs version
-  - (3)  reserved
-
-8 word Dir entries:
-  - (4) filename.ext [4 chars per word -> 16 chars total]
-  - (1) modify date [to be implemented when RTC]
-  - (1) flags [max 32 flags, from right to left: directory, hidden]
-  - (1) 1st FAT idx
-  - (1) file size [in words, not bytes]
-*/
-
-/*
-Implementation Notes:
-- Current directory is managed by the application/OS, not the FS. Directory (or file) can be checked to exist using stat()
-- Updating a file: might be better to delete and create a new one, but this is better be done by the application instead of the FS
-- Write should start writing at the cursor and jump to the next block (also create in FAT) if the end is reached
-- No delete/backspace, only delete entire file or overwrite data
-*/
-
-/*
-Required operations:
-- [x] Format
-- [x] Create directory
-- [x] Create file
-- [x] Open file (not a dir!) (allow multiple files open at once)
-- [x] Close file
-- [x] Stat (returns dir entry)
-- [x] Set cursor
-- [x] Get cursor
-- [x] Read file
-- [x] Write file
-- [x] Delete entire file (deleting part of file is not a thing)
-- [x] List directory
-*/
+// Bart's RAM File System (BRFS)
 
 /*
 Implementing in BDOS on PCB v3:
@@ -71,24 +8,6 @@ Implementing in BDOS on PCB v3:
 - With current BDOS memory map, BRFS should be placed in the first 8MiB available as BDOS Program Code
 - Lets use the last 4MiB of this space for BRFS (0x100000 - 0x200000)
 */
-
-/*
-Integrate with SPI Flash:
-- [x] Function to read from SPI Flash (to be used on startup of BDOS)
-  - [x] Check for valid BRFS superblock
-  - [x] Load BRFS into RAM (read total blocks and words per block from superblock)
-- [x] Function to write BRFS to SPI Flash (to be used by applications/OS via System Call)
-  - [x] Check which blocks/FAT entries have changed using a bitmap
-  - [x] Erase changed blocks/FAT entries (by sector) in SPI Flash
-  - [x] Write changed blocks/FAT entries to SPI Flash (by page)
-*/
-
-#define word char
-
-#include "LIB/MATH.C"
-#include "LIB/SYS.C"
-#include "LIB/STDLIB.C"
-#include "LIB/SPIFLASH.C"
 
 #define BRFS_SUPPORTED_VERSION 1
 
@@ -100,7 +19,7 @@ Integrate with SPI Flash:
 #define BRFS_SPIFLASH_FAT_ADDR 0xE0000 // Can be 32768 words (128KiB) for 32MiB of 256word blocks
 #define BRFS_SPIFLASH_BLOCK_ADDR 0x100000 // From first MiB
 
-#define MAX_PATH_LENGTH 127
+//#define MAX_PATH_LENGTH 127 // Set by BDOS
 #define MAX_OPEN_FILES 16 // Can be set higher, but 4 is good for testing
 
 // Length of structs, should not be changed
@@ -1001,7 +920,7 @@ word brfs_read(word file_pointer, word* buffer, word length)
         word words_to_read = words_until_end_of_block > length ? length : words_until_end_of_block;
 
         // Copy words to buffer
-        memcpy(buffer, data_block_addr + (current_fat_idx * superblock->words_per_block) + brfs_cursors[i], words_to_read);
+        memcpy(buffer, data_block_addr + (current_fat_idx * superblock->words_per_block) + MATH_modU(brfs_cursors[i], superblock->words_per_block), words_to_read);
 
         // Update cursor and length
         brfs_cursors[i] += words_to_read;
@@ -1015,6 +934,8 @@ word brfs_read(word file_pointer, word* buffer, word length)
           uprintln("There is no next block in the file!");
           return 0;
         }
+
+        
       }
 
       return 1;
@@ -1279,6 +1200,39 @@ void brfs_write_fat_to_flash()
 }
 
 /**
+ * Write a sector (4KiB) to SPI flash
+ * sector_idx: index of the sector
+*/
+void brfs_write_sector_to_flash(word sector_idx)
+{
+  word spi_addr = BRFS_SPIFLASH_BLOCK_ADDR; // Workaround because of large static number
+  spi_addr += sector_idx * 4096; // Sector idx * bytes per sector
+  
+  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
+  word* data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks;
+  word brfs_sector_addr = data_block_addr + sector_idx * (4096 >> 2); // Divided by 4 because of word size
+
+  // Write sector by writing 16 pages k of 64 words
+  // Does not check for boundaries of actual FAT table size,
+  //  so it can write garbage if block size is not a multiple of 1024
+  word k;
+  for (k = 0; k < 1024; k+=64)
+  {
+    spiflash_write_page_in_words(brfs_sector_addr + k, spi_addr + (k << 2), 64);
+
+    uprint("Wrote sector ");
+    uprintDec(sector_idx);
+    uprint(":");
+    uprintDec(sector_idx + 15);
+    uprint(" from RAM addr ");
+    uprintHex((word)(brfs_sector_addr + k));
+    uprint(" to SPI Flash addr ");
+    uprintHex(spi_addr + (k << 2));
+    uprintln("");
+  }
+}
+
+/**
  * Write the data blocks to SPI flash by performing three steps:
  * 1. Check which blocks have changed
  * 2. Erase the 4KiB sectors that contain these blocks
@@ -1334,6 +1288,8 @@ void brfs_write_blocks_to_flash()
         uprintHex(addr);
         uprintln("");
 
+        brfs_write_sector_to_flash(sector_to_erase);
+
         sector_to_erase = MATH_divU(i, blocks_per_sector);
       }
     }
@@ -1348,9 +1304,12 @@ void brfs_write_blocks_to_flash()
     uprint(" at address ");
     uprintHex(addr);
     uprintln("");
+
+    brfs_write_sector_to_flash(sector_to_erase);
   }
 
   // Write each block to flash in parts of 64 words
+  /*
   for (i = 0; i < superblock->total_blocks; i++)
   {
     if (brfs_changed_blocks[i >> 5] & (1 << (i & 31)))
@@ -1374,6 +1333,7 @@ void brfs_write_blocks_to_flash()
       }
     }
   }
+  */
 
   uprintln("---Finished writing blocks to SPI Flash---");
 }
@@ -1452,142 +1412,4 @@ word brfs_read_from_flash()
   spiflash_read_from_address(data_block_addr, BRFS_SPIFLASH_BLOCK_ADDR, superblock->total_blocks * superblock->words_per_block, 1);
 
   return 1;
-}
-
-
-int main() 
-{
-  // Clear UART screen:
-  uprintc(0x1B);
-  uprintc(0x5B);
-  uprintc(0x32);
-  uprintc(0x4A);
-  uprintln("------------------------");
-  uprintln("BRFS test implementation");
-  uprintln("------------------------");
-
-  spiflash_init();
-
-  // Flag to switch between write and read test
-  word write_test = 1;
-  
-  // Small scale test values
-  //word blocks = 16;
-  //word words_per_block = 64; // 256 bytes per block
-  //word full_format = 1;
-
-  // Large scale test
-  word blocks = 64; // 1KiB per block * 64 = 64KiB
-  word words_per_block = 128; // 1KiB per block
-  word full_format = 1;
-
-  if (write_test)
-  {
-    uprintln("Formatting BRFS filesystem...");
-    brfs_format(blocks, words_per_block, "SystemBRFS", full_format);
-    uprintln("BRFS filesystem formatted!");
-
-      // Create directories
-    if (!brfs_create_directory("/", "dir1"))
-    {
-      uprintln("Error creating dir1!");
-    }
-    if (!brfs_create_directory("/", "dir2"))
-    {
-      uprintln("Error creating dir2!");
-    }
-
-    // Create files
-    if (!brfs_create_file("/dir1", "file1.txt"))
-    {
-      uprintln("Error creating file1!");
-    }
-    if (!brfs_create_file("/dir1", "file2.txt"))
-    {
-      uprintln("Error creating file2!");
-    }
-
-    // Open file and write
-    word file_pointer = brfs_open_file("/dir1/file1.txt");
-    if (file_pointer == -1)
-    {
-      uprintln("Error opening file1!");
-    }
-    else
-    {
-      char* write_string = "This message should exceed the length of a single block, it even should exceed the length of two blocks! I am adding this part here to keep increasing the number of blocks used. This is the end of the message.";
-      if (!brfs_write(file_pointer, write_string, strlen(write_string)))
-      {
-        uprintln("Error writing to file1!");
-      }
-
-      // Update two blocks in the middle of the file
-      brfs_set_cursor(file_pointer, 57);
-      char* write_string2 = "THIS PART IS WRITTEN IN THE MIDDLE OF THE FILE!";
-      if (!brfs_write(file_pointer, write_string2, strlen(write_string2)))
-      {
-        uprintln("Error writing to file1!");
-      }
-
-      brfs_close_file(file_pointer);
-    }
-
-    // Open second file and write
-    word file_pointer2 = brfs_open_file("/dir1/file2.txt");
-    if (file_pointer2 == -1)
-    {
-      uprintln("Error opening file2!");
-    }
-    else
-    {
-      char* write_string = "Small message in file2!";
-      if (!brfs_write(file_pointer2, write_string, strlen(write_string)))
-      {
-        uprintln("Error writing to file2!");
-      }
-
-      // Update within the first block
-      brfs_set_cursor(file_pointer2, 6);
-      char* write_string2 = "UPDATES";
-      if (!brfs_write(file_pointer2, write_string2, strlen(write_string2)))
-      {
-        uprintln("Error writing to file2!");
-      }
-
-      // Skip closing the file to see data in dump
-      //brfs_close_file(file_pointer2);
-
-      brfs_list_directory("/");
-      brfs_list_directory("/dir1");
-      brfs_dump(blocks, blocks*words_per_block);
-
-      brfs_write_to_flash();
-    }
-  }
-  else
-  {
-    brfs_read_from_flash();
-
-    brfs_dump(blocks, blocks*words_per_block);
-
-    brfs_list_directory("/");
-    brfs_list_directory("/dir1");
-  }
-
-  return 'q';
-}
-
-void interrupt()
-{
-  // handle all interrupts
-  word i = getIntID();
-  switch(i)
-  {
-    case INTID_TIMER1:
-      timer1Value = 1; // notify ending of timer1
-      break;
-
-    default:
-      break;
-  }
 }

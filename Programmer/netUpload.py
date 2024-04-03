@@ -21,6 +21,8 @@ if len(sys.argv) >= 3:
 
 with open(filename, "rb") as f:
     binfile = f.read()
+    # Add three bytes of 0 at the end
+    binfile += b'\x00\x00\x00'
 
 downloadToFile = True
 

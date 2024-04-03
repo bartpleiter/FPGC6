@@ -616,6 +616,13 @@ void GFX_PrintConsole(char* str)
     }
 }
 
+void GFX_PrintDecConsole(word i)
+{
+    char buffer[20];
+    itoa(i, buffer);
+    GFX_PrintConsole(buffer);
+}
+
 // Just for funny memory dumping
 void GFX_DumpcConsole(char c)
 {

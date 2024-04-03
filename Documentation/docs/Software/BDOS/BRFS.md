@@ -33,13 +33,15 @@ Given that SPI NOR Flash has very fast reads and very slow writes, and that the 
 ```
 
 ``` text
-8 word Dir entries:
+8 word dir entries:
   - (4) filename.ext [4 chars per word -> 16 chars total]
   - (1) modify date [to be implemented when RTC]
   - (1) flags [max 32 flags, lsb = is_directory]
   - (1) 1st FAT idx of file
   - (1) file size [in words, not bytes]
 ```
+
+Similar to a linked list, each data block has its own FAT entry (of one word) in the FAT table which points to the next data block of the file, or -1 if it is the last block of the file (or if it is a dir). Each dir entry contains the first FAT index of the file.
 
 ## Implementation Notes:
 

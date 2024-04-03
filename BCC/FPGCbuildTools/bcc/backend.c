@@ -87,9 +87,6 @@ void GenInitFinalize(void)
       
       "Return_BDOS:\n"
       
-      "    load32 0x100300 r1\n"
-      "    write 0 r1 r0\n"
-      
       "    pop r1\n"
       "    jumpr 3 r1\n"
       "    halt\n"

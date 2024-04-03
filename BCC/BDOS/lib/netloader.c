@@ -115,10 +115,9 @@ word NETLOADER_getContentStart(char* rbuf, word rsize)
 
 void NETLOADER_runProgramFromMemory()
 {
-    BDOS_Backup();
 
     // indicate that a user program is running
-    BDOS_userprogramRunning = 1;
+    bdos_userprogram_running = 1;
 
     // jump to the program
     asm(
@@ -163,14 +162,14 @@ void NETLOADER_runProgramFromMemory()
         );
 
     // indicate that no user program is running anymore
-    BDOS_userprogramRunning = 0;
+    bdos_userprogram_running = 0;
 
     // clear the shell
-    SHELL_clearCommand();
+    shell_clear_command();
 
     // setup the shell again
-    BDOS_Restore();
-    SHELL_print_prompt();
+    bdos_restore();
+    shell_print_prompt();
 }
 
 word NETLOADER_percentageDone(word remaining, word full)
@@ -191,6 +190,13 @@ void NETLOADER_handleSession(word s)
 
     char dbuf[10]; // percentage done for progress indication
     dbuf[0] = 0; // terminate
+
+    word fp = -1;
+
+    word shift = 24; // shift for compressing data, kept the same for the whole session
+
+    word leftOverData[4];
+    word leftOverBytes = 0;
 
     while (wizGetSockReg8(s, WIZNET_SnSR) == WIZNET_SOCK_ESTABLISHED)
     {
@@ -227,51 +233,40 @@ void NETLOADER_handleSession(word s)
                     NETLOADER_getFileName(rbuf, rsize, fileNameStr);
 
                     word failedToCreateFile = 1;
-                    // sanity check current path
-                    if (FS_sendFullPath(SHELL_path) == FS_ANSW_USB_INT_SUCCESS)
-                    {
-                        word retval = FS_open();
-                        // check that we can open the path
-                        if (retval == FS_ANSW_USB_INT_SUCCESS || retval == FS_ANSW_ERR_OPEN_DIR)
-                        {
-                            // check length of filename
-                            if (strlen(fileNameStr) <= 12)
-                            {
-                                // uppercase filename
-                                strToUpper(fileNameStr);
-                                // send filename
-                                FS_sendSinglePath(fileNameStr);
 
-                                // create the file
-                                if (FS_createFile() == FS_ANSW_USB_INT_SUCCESS)
-                                {
-                                    // open the path again
-                                    FS_sendFullPath(SHELL_path);
-                                    FS_open();
-                                    // send filename again
-                                    FS_sendSinglePath(fileNameStr);
-                                    // open the newly created file
-                                    if (FS_open() == FS_ANSW_USB_INT_SUCCESS)
-                                    {
-                                        // set cursor to start
-                                        if (FS_setCursor(0) == FS_ANSW_USB_INT_SUCCESS)
-                                        {
-                                            failedToCreateFile = 0;
-                                        }
-                                    }
-                                }
+                    // check length of filename
+                    if (strlen(fileNameStr) < 16)
+                    {
+                        char new_file_path[MAX_PATH_LENGTH];
+                        strcpy(new_file_path, shell_path);
+                        strcat(new_file_path, "/");
+                        strcat(new_file_path, fileNameStr);
+
+                        // try to delete file in case it exists
+                        brfs_delete_file(new_file_path);
+                        if (brfs_create_file(shell_path, fileNameStr))
+                        {
+                            
+                            strcpy(new_file_path, shell_path);
+                            strcat(new_file_path, "/");
+                            strcat(new_file_path, fileNameStr);
+                            fp = brfs_open_file(new_file_path);
+                            if (fp != -1)
+                            {
+                                brfs_set_cursor(fp, 0);
+                                failedToCreateFile = 0;
                             }
                         }
                     }
+
                     if (failedToCreateFile)
                     {
-                        FS_close();
                         wizWriteDataFromMemory(s, "ERR!", 4);
                         wizCmd(s, WIZNET_CR_DISCON);
                         GFX_PrintConsole("E: Could not create file\n");
                         // clear the shell
-                        SHELL_clearCommand();
-                        SHELL_print_prompt();
+                        shell_clear_command();
+                        shell_print_prompt();
                         return;
                     }
                 }
@@ -283,8 +278,8 @@ void NETLOADER_handleSession(word s)
                     wizCmd(s, WIZNET_CR_DISCON);
                     GFX_PrintConsole("E: Unknown netloader cmd\n");
                     // clear the shell
-                    SHELL_clearCommand();
-                    SHELL_print_prompt();
+                    shell_clear_command();
+                    shell_print_prompt();
                     return;
                 }
 
@@ -296,7 +291,50 @@ void NETLOADER_handleSession(word s)
 
                 if (downloadToFile)
                 {
-                    FS_writeFile(rbuf+dataStart, rsize - dataStart);
+                    // compress each 4 bytes into a word
+                    word compressed_data[WIZNET_MAX_RBUF];
+                    memset(compressed_data, 0, WIZNET_MAX_RBUF);
+                    word i;
+                    for (i = 0; i < rsize - dataStart; i++)
+                    {
+                        compressed_data[i >> 2] |= rbuf[dataStart + i] << shift;
+                        if (shift == 0)
+                        {
+                            shift = 24;
+                        }
+                        else
+                        {
+                            shift -= 8;
+                        }
+                    }
+                    brfs_write(fp, compressed_data, (rsize - dataStart)>>2);
+                    if (shift != 24)
+                    {
+
+                        // save the left over data
+                        leftOverBytes = (rsize - dataStart)&3;
+                        switch (leftOverBytes)
+                        {
+                            case 1:
+                                leftOverData[0] = rbuf[dataStart + (rsize - dataStart) - 1];
+                                break;
+                            case 2:
+                                leftOverData[0] = rbuf[dataStart + (rsize - dataStart) - 2];
+                                leftOverData[1] = rbuf[dataStart + (rsize - dataStart) - 1];
+                                break;
+                            case 3:
+                                leftOverData[0] = rbuf[dataStart + (rsize - dataStart) - 3];
+                                leftOverData[1] = rbuf[dataStart + (rsize - dataStart) - 2];
+                                leftOverData[2] = rbuf[dataStart + (rsize - dataStart) - 1];
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        leftOverBytes = 0;
+                    }
                 }
                 else
                 {
@@ -314,10 +352,10 @@ void NETLOADER_handleSession(word s)
 
                     if (downloadToFile)
                     {
-                        FS_close();
+                        brfs_close_file(fp);
                         // clear the shell
-                        SHELL_clearCommand();
-                        SHELL_print_prompt();
+                        shell_clear_command();
+                        shell_print_prompt();
                     }
                     else
                     {
@@ -352,7 +390,86 @@ void NETLOADER_handleSession(word s)
 
                 if (downloadToFile)
                 {
-                    FS_writeFile(rbuf, rsize);
+                    // compress each 4 bytes into a word
+                    word compressed_data[WIZNET_MAX_RBUF];
+                    memset(compressed_data, 0, WIZNET_MAX_RBUF);
+
+                    // add the left over data
+                    switch (leftOverBytes)
+                    {
+                        case 1:
+                            compressed_data[0] = leftOverData[0] << 24;
+                            shift = 16;
+                            break;
+                        case 2:
+                            compressed_data[0] = leftOverData[0] << 24;
+                            compressed_data[0] |= leftOverData[1] << 16;
+                            shift = 8;
+                            break;
+                        case 3:
+                            compressed_data[0] = leftOverData[0] << 24;
+                            compressed_data[0] |= leftOverData[1] << 16;
+                            compressed_data[0] |= leftOverData[2] << 8;
+                            shift = 0;
+                            break;
+                    }
+
+                    word i;
+                    word j = leftOverBytes;
+                    for (i = 0; i < rsize; i++)
+                    {
+                        compressed_data[j >> 2] |= rbuf[i] << shift;
+                        if (shift == 0)
+                        {
+                            shift = 24;
+                        }
+                        else
+                        {
+                            shift -= 8;
+                        }
+                        j++;
+                    }
+                    if (shift != 24)
+                    {
+
+                        // save the left over data
+                        if (shift == 16)
+                        {
+                            leftOverBytes = 1;
+                        }
+                        else if (shift == 8)
+                        {
+                            leftOverBytes = 2;
+                        }
+                        else if (shift == 0)
+                        {
+                            leftOverBytes = 3;
+                        }
+                        //leftOverBytes = (rsize)&3;
+                        switch (leftOverBytes)
+                        {
+                            case 1:
+                                leftOverData[0] = rbuf[rsize - 1];
+                                break;
+                            case 2:
+                                leftOverData[0] = rbuf[rsize - 2];
+                                leftOverData[1] = rbuf[rsize - 1];
+                                break;
+                            case 3:
+                                leftOverData[0] = rbuf[rsize - 3];
+                                leftOverData[1] = rbuf[rsize - 2];
+                                leftOverData[2] = rbuf[rsize - 1];
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        leftOverBytes = 0;
+                    }
+                    brfs_write(fp, compressed_data, rsize >> 2);
+                    //brfs_write(fp, rbuf, rsize);
                 }
                 else
                 {
@@ -376,10 +493,10 @@ void NETLOADER_handleSession(word s)
 
                     if (downloadToFile)
                     {
-                        FS_close();
+                        brfs_close_file(fp);
                         // clear the shell
-                        SHELL_clearCommand();
-                        SHELL_print_prompt();
+                        shell_clear_command();
+                        shell_print_prompt();
                     }
                     else
                     {

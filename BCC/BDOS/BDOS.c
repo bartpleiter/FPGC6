@@ -1,79 +1,64 @@
 /* Bart's Drive Operating System(BDOS)
-* A relatively simple OS that allows for some basic features including:
-* - Running a single user program with full hardware control
-* - Some system calls
-* - A basic shell
-* - Network loaders for sending data and controlling the FPGC
-* - HID fifo including USB keyboard driver
-*/
-
+ * A relatively simple OS that allows for some basic features including:
+ * - Running a single user program with full hardware control
+ * - Some system calls
+ * - A basic shell
+ * - Network loaders for sending data and controlling the FPGC
+ * - HID fifo including USB keyboard driver
+ * - BRFS Filesystem
+ */
 
 /* List of reserved stuff:
 - Timer2 is used for USB keyboard polling, even when a user program is running
 - Socket 7 is used for netHID
 */
 
-
 /*
-* Defines (also might be used by included libraries below)
-*/
+ * Defines (also might be used by included libraries below)
+ */
 
 // As of writing, BCC assigns 4 memory addresses to ints, so we should use chars instead
 // However, this is confusing, so we typedef it to word, since that is what it basically is
 #define word char
 
-#define SYSCALL_RETVAL_ADDR 0x200000    // address for system call communication with user program
-#define FS_LDIR_FNAME_ADDR  0x210000    // address for filename list in ldir command
-#define FS_LDIR_FSIZE_ADDR  0x218000    // address for filesize list in ldir command
-#define TEMP_ADDR           0x220000    // address for (potentially) large temporary outputs/buffers
-#define RUN_ADDR            0x400000    // address of loaded user program
+#define SYSCALL_RETVAL_ADDR 0x200000  // Address for system call communication with user program
+#define TEMP_ADDR 0x220000            // Address for (potentially) large temporary outputs/buffers
+#define RUN_ADDR 0x400000             // Address of loaded user program
 
-#define FS_PATH_MAX_LENGHT  256         // max length of a path
+#define NETWORK_LOCAL_IP 213          // local IP address (last byte)
+
+#define MAX_PATH_LENGTH 127           // Max length of a file path
+#define BDOS_DEFAULT_BLOCKS 1024      // Default number of blocks for the BRFS filesystem
+#define BDOS_DEFAULT_BLOCK_SIZE 128   // Default number of words per block for the BRFS filesystem
 
 // Interrupt IDs for interrupt handler
-#define INTID_TIMER1  0x1
-#define INTID_TIMER2  0x2
-#define INTID_UART0   0x3
-#define INTID_GPU     0x4
-#define INTID_TIMER3  0x5
-#define INTID_PS2     0x6
-#define INTID_UART1   0x7
-#define INTID_UART2   0x8
+#define INTID_TIMER1 0x1
+#define INTID_TIMER2 0x2
+#define INTID_UART0 0x3
+#define INTID_GPU 0x4
+#define INTID_TIMER3 0x5
+#define INTID_PS2 0x6
+#define INTID_UART1 0x7
+#define INTID_UART2 0x8
 
 // System call IDs
-#define SYSCALL_FIFO_AVAILABLE  1
-#define SYSCALL_FIFO_READ       2
+#define SYSCALL_FIFO_AVAILABLE 1
+#define SYSCALL_FIFO_READ 2
 #define SYSCALL_PRINT_C_CONSOLE 3
-#define SYSCALL_GET_ARGS        4 // get arguments for executed program
-#define SYSCALL_GET_PATH        5 // get OS path
-#define SYSCALL_GET_USB_KB_BUF  6 // get the 8 bytes of the USB keyboard buffer
-
+#define SYSCALL_GET_ARGS 4       // Get arguments for executed program
+#define SYSCALL_GET_PATH 5       // Get OS path
+#define SYSCALL_GET_USB_KB_BUF 6 // Get the 8 bytes of the USB keyboard buffer
 
 /*
-* Global vars (also might be used by included libraries below)
-*/
+ * Global vars (also might be used by included libraries below)
+ */
 
 // Flag that indicates whether a user program is running
-word BDOS_userprogramRunning = 0;
-
-// Path variable and its backup variable
-char SHELL_path[FS_PATH_MAX_LENGHT];
-char SHELL_pathBackup[FS_PATH_MAX_LENGHT];
-
+word bdos_userprogram_running = 0;
 
 /*
-* Function prototypes, so they can be called in all libraries below
-*/
-
-// These functions are used by some of the other libraries
-void BDOS_Backup();
-void BDOS_Restore();
-void SHELL_clearCommand();
-
-
-/*
-* Included libraries
-*/
+ * Included libraries
+ */
 
 // Data includes
 #include "data/ASCII_BW.c"
@@ -86,256 +71,251 @@ void SHELL_clearCommand();
 #include "lib/gfx.c"
 #include "lib/hidfifo.c"
 #include "lib/ps2.c"
+#include "lib/brfs.c"
+#include "lib/shell.c"
 #include "lib/usbkeyboard.c"
-#include "lib/fs.c"
 #include "lib/wiz5500.c"
 #include "lib/netloader.c"
 #include "lib/nethid.c"
-#include "lib/shell.c"
+#include "lib/spiflash.c"
 
 
 /*
-* Functions
-*/
+ * Functions
+ */
 
-// Initializes CH376 and mounts drive
-// returns 1 on success
-word BDOS_Init_FS()
+/**
+ * Initialize the BRFS filesystem
+ * Returns 1 if successful, 0 if not
+ */
+word bdos_init_brfs()
 {
-    if (FS_init() != FS_ANSW_RET_SUCCESS)
-    {
-        GFX_PrintConsole("Error initializing CH376 for FS");
-        return 0;
-    }
+  // Initialize the SPI flash
+  spiflash_init();
 
-    delay(10);
+  // Try to read the filesystem from the SPI flash
+  GFX_PrintConsole("Reading BRFS from SPI flash...\n");
+  if (brfs_read_from_flash())
+  {
+    GFX_PrintConsole("BRFS read from flash\n");
+  }
+  else
+  {
+    GFX_PrintConsole("Could not read BRFS from flash!\n");
+    return 0;
+  }
 
-    if (FS_connectDrive() != FS_ANSW_USB_INT_SUCCESS)
-    {
-        GFX_PrintConsole("Could not mount drive");
-        return 0;
-    }
-    return 1;
+  return 1;
 }
 
 // Clears all VRAM
 //  and copies the default ASCII pattern table and palette table
 // also resets the cursor
-void BDOS_Reinit_VRAM()
+void bdos_init_vram()
 {
-    GFX_initVram();
-    GFX_copyPaletteTable((word)DATA_PALETTE_DEFAULT);
-    GFX_copyPatternTable((word)DATA_ASCII_DEFAULT);
-    GFX_cursor = 0;
+  GFX_initVram();
+  GFX_copyPaletteTable((word)DATA_PALETTE_DEFAULT);
+  GFX_copyPatternTable((word)DATA_ASCII_DEFAULT);
+  GFX_cursor = 0;
 }
 
 // Initialize the W5500
-void BDOS_initNetwork()
+void bdos_init_network()
 {
-    word ip_addr[4] = {192, 168, 0, 213};
+  word ip_addr[4] = {192, 168, 0, NETWORK_LOCAL_IP};
 
-    word gateway_addr[4] = {192, 168, 0, 1};
+  word gateway_addr[4] = {192, 168, 0, 1};
 
-    word mac_addr[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0x24, 0x64};
+  word mac_addr[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0x24, 0x64};
 
-    word sub_mask[4] = {255, 255, 255, 0};
+  word sub_mask[4] = {255, 255, 255, 0};
 
-    wiz_Init(ip_addr, gateway_addr, mac_addr, sub_mask);
+  wiz_Init(ip_addr, gateway_addr, mac_addr, sub_mask);
 }
 
-// Backup important things before running a user program
-void BDOS_Backup()
-{
-    // TODO look into what to backup
-}
 
 // Restores certain things when returning from a user program
-void BDOS_Restore()
+void bdos_restore()
 {
-    // restore graphics (trying to keep text in window plane)
-    GFX_copyPaletteTable((word)DATA_PALETTE_DEFAULT);
-    GFX_copyPatternTable((word)DATA_ASCII_DEFAULT);
-    GFX_clearBGtileTable();
-    GFX_clearBGpaletteTable();
-    GFX_clearWindowpaletteTable();
-    GFX_clearSprites();
+  // restore graphics (trying to keep text in window plane)
+  GFX_copyPaletteTable((word)DATA_PALETTE_DEFAULT);
+  GFX_copyPatternTable((word)DATA_ASCII_DEFAULT);
+  GFX_clearBGtileTable();
+  GFX_clearBGpaletteTable();
+  GFX_clearWindowpaletteTable();
+  GFX_clearSprites();
 
-    // restore netloader
-    NETLOADER_init(NETLOADER_SOCKET);
+  // restore netloader
+  NETLOADER_init(NETLOADER_SOCKET);
 }
 
 // Main BDOS code
-int main() 
+int main()
 {
-    // all kinds of initialisations
-    uprintln("BDOS_INIT"); // extra message over UART for debugging
+  uprintln("BDOS_INIT");
 
-    BDOS_userprogramRunning = 0; // indicate that no user program is running
+  bdos_userprogram_running = 0; // Indicate that no user program is running
 
-    BDOS_Reinit_VRAM(); // start with loading ASCII table and set palette
-    
-    GFX_PrintConsole("Starting BDOS\n"); // print welcome message
+  bdos_init_vram();
+  GFX_PrintConsole("VRAM initialized\n"); // Print to console now VRAM is initialized
+  GFX_PrintConsole("Starting BDOS\n");
 
-    GFX_PrintConsole("Init network...");
-    BDOS_initNetwork();
-    GFX_PrintConsole("DONE\n");
+  GFX_PrintConsole("Initalizing network\n");
+  bdos_init_network();
 
-    GFX_PrintConsole("Init netloader...");
-    NETLOADER_init(NETLOADER_SOCKET);
-    GFX_PrintConsole("DONE\n");
+  GFX_PrintConsole("Initalizing netloader\n");
+  NETLOADER_init(NETLOADER_SOCKET);
 
-    GFX_PrintConsole("Init netHID...");
-    NETHID_init(NETHID_SOCKET);
-    GFX_PrintConsole("DONE\n");
+  GFX_PrintConsole("Initalizing netHID\n");
+  NETHID_init(NETHID_SOCKET);
 
-    GFX_PrintConsole("Init USB keyboard...");
-    USBkeyboard_init();
-    GFX_PrintConsole("DONE\n");
+  GFX_PrintConsole("Initalizing USB keyboard\n");
+  USBkeyboard_init();
 
-    GFX_PrintConsole("Init filesystem...");
-    if (!BDOS_Init_FS())
-        return 0;
-    GFX_PrintConsole("DONE\n");
+  GFX_PrintConsole("Initalizing filesystem\n");
+  if (!bdos_init_brfs())
+  {
+    GFX_PrintConsole("Error initializing FS\n");
+    return 0;
+  }
 
-    // init shell
-    SHELL_init();
+  GFX_PrintConsole("Initalizing shell\n");
+  shell_init();
 
-    // main loop
-    while (1)
-    {
-        SHELL_loop();                       // update the shell state
-        NETLOADER_loop(NETLOADER_SOCKET);   // update the netloader state
-    }
+  // Main loop
+  while (1)
+  {
+    shell_loop();                     // Update shell state
+    NETLOADER_loop(NETLOADER_SOCKET); // Update netloader state
+  }
 
-    return 1;
+  return 1;
 }
-
 
 // System call handler
 // Returns at the same address it reads the command from
 void syscall()
 {
-    word* p = (word*) SYSCALL_RETVAL_ADDR;
-    word ID = p[0];
+  word *p = (word *)SYSCALL_RETVAL_ADDR;
+  word ID = p[0];
 
-    switch(ID)
-    {
-        case SYSCALL_FIFO_AVAILABLE:
-            p[0] = HID_FifoAvailable();
-            break;
-        case SYSCALL_FIFO_READ:
-            p[0] = HID_FifoRead();
-            break;
-        case SYSCALL_PRINT_C_CONSOLE:
-            GFX_PrintcConsole(p[1]);
-            p[0] = 0;
-            break;
-        case SYSCALL_GET_ARGS:
-            p[0] = SHELL_command;
-            break;
-        case SYSCALL_GET_PATH:
-            p[0] = SHELL_pathBackup;
-            break;
-        case SYSCALL_GET_USB_KB_BUF:
-            p[0] = USBkeyboard_buffer_parsed;
-            break;
-        default:
-            p[0] = 0;
-            break;
-    }
+  switch (ID)
+  {
+  case SYSCALL_FIFO_AVAILABLE:
+    p[0] = HID_FifoAvailable();
+    break;
+  case SYSCALL_FIFO_READ:
+    p[0] = HID_FifoRead();
+    break;
+  case SYSCALL_PRINT_C_CONSOLE:
+    GFX_PrintcConsole(p[1]);
+    p[0] = 0;
+    break;
+  case SYSCALL_GET_ARGS:
+    p[0] = 0; // TODO: implement
+    break;
+  case SYSCALL_GET_PATH:
+    p[0] = 0; // TODO: implement
+    break;
+  case SYSCALL_GET_USB_KB_BUF:
+    p[0] = USBkeyboard_buffer_parsed;
+    break;
+  default:
+    p[0] = 0;
+    break;
+  }
 }
 
 // Interrupt handler
 void interrupt()
 {
-    // handle all interrupts
-    int i = getIntID();
-    switch(i)
+  // Handle BDOS interrupts
+  int i = getIntID();
+  switch (i)
+  {
+  case INTID_TIMER1:
+    timer1Value = 1; // Notify ending of timer1
+    break;
+
+  case INTID_TIMER2:
+    USBkeyboard_HandleInterrupt(); // Handle USB keyboard interrupt
+    break;
+
+  case INTID_UART0:
+    break;
+
+  case INTID_GPU:
+    if (NETHID_isInitialized == 1)
     {
-        case INTID_TIMER1:
-            timer1Value = 1; // notify ending of timer1
-            break;
-
-        case INTID_TIMER2:
-            USBkeyboard_HandleInterrupt(); // handle USB keyboard interrupt
-            break;
-
-        case INTID_UART0:
-            break;
-
-        case INTID_GPU:
-            if (NETHID_isInitialized == 1)
-            {
-                // check using CS if we are not interrupting any critical access to the W5500
-                word* spi3ChipSelect = (word*) 0xC02732;
-                if (*spi3ChipSelect == 1)
-                {
-                    NETHID_loop(NETHID_SOCKET); // look for an input sent to netHID
-                }
-            }
-            break;
-
-        case INTID_TIMER3:
-            break;
-
-        case INTID_PS2:
-            PS2_HandleInterrupt(); // handle PS2 interrupt
-            break;
-
-        case INTID_UART1:
-            break;
-
-        case INTID_UART2:
-            break;
+      // Check using CS if we are not interrupting any critical access to the W5500
+      word *spi3ChipSelect = (word *)0xC02732; // TODO: use a define for this address
+      if (*spi3ChipSelect == 1)
+      {
+        NETHID_loop(NETHID_SOCKET); // Look for an input sent to netHID
+      }
     }
+    break;
 
-    // check if a user program is running
-    if (BDOS_userprogramRunning)
-    {
-        // call interrupt() of user program
-        asm(
-            "; backup registers\n"
-            "push r1\n"
-            "push r2\n"
-            "push r3\n"
-            "push r4\n"
-            "push r5\n"
-            "push r6\n"
-            "push r7\n"
-            "push r8\n"
-            "push r9\n"
-            "push r10\n"
-            "push r11\n"
-            "push r12\n"
-            "push r13\n"
-            "push r14\n"
-            "push r15\n"
+  case INTID_TIMER3:
+    break;
 
-            "savpc r1\n"
-            "push r1\n"
-            "jump 0x400001\n"
+  case INTID_PS2:
+    PS2_HandleInterrupt(); // Handle PS2 interrupt
+    break;
 
-            "; restore registers\n"
-            "pop r15\n"
-            "pop r14\n"
-            "pop r13\n"
-            "pop r12\n"
-            "pop r11\n"
-            "pop r10\n"
-            "pop r9\n"
-            "pop r8\n"
-            "pop r7\n"
-            "pop r6\n"
-            "pop r5\n"
-            "pop r4\n"
-            "pop r3\n"
-            "pop r2\n"
-            "pop r1\n"
-            );
-        return;
-    }
-    else // code to only run when not running a user program
-    {
-        
-    }
+  case INTID_UART1:
+    break;
+
+  case INTID_UART2:
+    break;
+  }
+
+  // Handle user program interrupts
+  if (bdos_userprogram_running)
+  {
+    // Call interrupt() of user program
+    asm(
+        "; backup registers\n"
+        "push r1\n"
+        "push r2\n"
+        "push r3\n"
+        "push r4\n"
+        "push r5\n"
+        "push r6\n"
+        "push r7\n"
+        "push r8\n"
+        "push r9\n"
+        "push r10\n"
+        "push r11\n"
+        "push r12\n"
+        "push r13\n"
+        "push r14\n"
+        "push r15\n"
+
+        "savpc r1\n"
+        "push r1\n"
+        "jump 0x400001\n"
+
+        "; restore registers\n"
+        "pop r15\n"
+        "pop r14\n"
+        "pop r13\n"
+        "pop r12\n"
+        "pop r11\n"
+        "pop r10\n"
+        "pop r9\n"
+        "pop r8\n"
+        "pop r7\n"
+        "pop r6\n"
+        "pop r5\n"
+        "pop r4\n"
+        "pop r3\n"
+        "pop r2\n"
+        "pop r1\n");
+    return;
+  }
+  else
+  {
+    // Code to only run when not running a user program
+  }
 }

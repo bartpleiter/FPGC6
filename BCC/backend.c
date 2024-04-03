@@ -98,8 +98,6 @@ void GenInitFinalize(void)
       "; Its adrress should be on top of the hardware stack\n"
       "Return_BDOS:\n"
       "    ; notify program has ended\n"
-      "    load32 0x100300 r1\n"
-      "    write 0 r1 r0\n"
       "\n"
       "    pop r1\n"
       "    jumpr 3 r1\n"

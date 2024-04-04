@@ -1,9 +1,9 @@
 #define word char
 
-#include "LIB/MATH.C"
-#include "LIB/STDLIB.C"
-#include "LIB/SYS.C"
-#include "LIB/GFX.C"
+#include "lib/math.c"
+#include "lib/stdlib.c"
+#include "lib/sys.c"
+#include "lib/gfx.c"
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
@@ -228,9 +228,9 @@ int main()
 
   while (1)
   {
-    if (HID_FifoAvailable())
+    if (hid_checkfifo())
       {
-        word c = HID_FifoRead();
+        word c = hid_fiforead();
 
         if (c == '=') // +
         {
@@ -290,33 +290,12 @@ int main()
 
 void interrupt()
 {
-  // handle all interrupts
-  word i = getIntID();
+  // Handle all interrupts
+  word i = get_int_id();
   switch(i)
   {
     case INTID_TIMER1:
-      timer1Value = 1; // notify ending of timer1
-      break;
-
-    case INTID_TIMER2:
-      break;
-
-    case INTID_UART0:
-      break;
-
-    case INTID_GPU:
-      break;
-
-    case INTID_TIMER3:
-      break;
-
-    case INTID_PS2:
-      break;
-
-    case INTID_UART1:
-      break;
-
-    case INTID_UART2:
+      timer1Value = 1;  // Notify ending of timer1
       break;
   }
 }

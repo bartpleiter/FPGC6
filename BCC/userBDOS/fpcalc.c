@@ -2,10 +2,10 @@
 
 #define word char
 
-#include "LIB/MATH.C"
-#include "LIB/FP.C"
-#include "LIB/STDLIB.C"
-#include "LIB/SYS.C"
+#include "lib/math.c"
+#include "lib/fp.c"
+#include "lib/stdlib.c"
+#include "lib/sys.c"
 
 #define CALC_BUFFER_MAX_LEN 32
 
@@ -29,64 +29,64 @@ word calcLoop()
 {
   if (CALC_state == CALC_STATE_INPUTSTART)
   {
-    BDOS_PrintConsole("Input A:      ");
+    bdos_print("Input A:      ");
     CALC_state = CALC_STATE_INPUTA;
   }
 
 
-  if (HID_FifoAvailable())
+  if (hid_checkfifo())
   {
-    word c = HID_FifoRead();
+    word c = hid_fiforead();
 
     if (CALC_state == CALC_STATE_INPUTOP)
     {
       if (c == '+')
       {
-        BDOS_PrintlnConsole("+");
+        bdos_println("+");
         char buffer[24];
         FP_FPtoString(CALC_a + CALC_b, buffer, 5);
-        BDOS_PrintConsole("Result =      ");
-        BDOS_PrintlnConsole(buffer);
+        bdos_print("Result =      ");
+        bdos_println(buffer);
         CALC_state = CALC_STATE_INPUTA;
-        BDOS_PrintConsole("\n\nInput A:      ");
+        bdos_print("\n\nInput A:      ");
       }
 
       else if (c == '-')
       {
-        BDOS_PrintlnConsole("-");
+        bdos_println("-");
         char buffer[24];
         FP_FPtoString(CALC_a - CALC_b, buffer, 5);
-        BDOS_PrintConsole("Result =      ");
-        BDOS_PrintlnConsole(buffer);
+        bdos_print("Result =      ");
+        bdos_println(buffer);
         CALC_state = CALC_STATE_INPUTA;
-        BDOS_PrintConsole("\n\nInput A:      ");
+        bdos_print("\n\nInput A:      ");
       }
 
       else if (c == '*')
       {
-        BDOS_PrintlnConsole("*");
+        bdos_println("*");
         char buffer[24];
         FP_FPtoString(FP_Mult(CALC_a, CALC_b), buffer, 5);
-        BDOS_PrintConsole("Result =      ");
-        BDOS_PrintlnConsole(buffer);
+        bdos_print("Result =      ");
+        bdos_println(buffer);
         CALC_state = CALC_STATE_INPUTA;
-        BDOS_PrintConsole("\n\nInput A:      ");
+        bdos_print("\n\nInput A:      ");
       }
 
       else if (c == '/')
       {
-        BDOS_PrintlnConsole("/");
+        bdos_println("/");
         char buffer[24];
         FP_FPtoString(FP_Div(CALC_a, CALC_b), buffer, 5);
-        BDOS_PrintConsole("Result =      ");
-        BDOS_PrintlnConsole(buffer);
+        bdos_print("Result =      ");
+        bdos_println(buffer);
         CALC_state = CALC_STATE_INPUTA;
-        BDOS_PrintConsole("\n\nInput A:      ");
+        bdos_print("\n\nInput A:      ");
       }
 
       else if (c == 0x1b) // escape
       {
-        BDOS_PrintcConsole('\n');
+        bdos_printc('\n');
         return 1;
       }
     }
@@ -99,7 +99,7 @@ word calcLoop()
         CALC_buffer[CALC_buffer_idx] = c;
         CALC_buffer_idx++;
         CALC_buffer[CALC_buffer_idx] = 0; // terminate
-        BDOS_PrintcConsole(c);
+        bdos_printc(c);
       }
     }
     else if (c == 0x8) // backspace
@@ -111,7 +111,7 @@ word calcLoop()
         {
           CALC_buffer_idx--;
           CALC_buffer[CALC_buffer_idx] = 0;
-          BDOS_PrintcConsole(c);
+          bdos_printc(c);
         }
       }
     }
@@ -122,12 +122,12 @@ word calcLoop()
         case CALC_STATE_INPUTA:
           if (CALC_buffer_idx > 0)
           {
-            BDOS_PrintcConsole('\n');
+            bdos_printc('\n');
 
             CALC_a = FP_StringToFP(CALC_buffer);
             CALC_buffer_idx = 0;
 
-            BDOS_PrintConsole("Input B:      ");
+            bdos_print("Input B:      ");
             CALC_state = CALC_STATE_INPUTB;
           }
           break;
@@ -135,12 +135,12 @@ word calcLoop()
         case CALC_STATE_INPUTB:
           if (CALC_buffer_idx > 0)
           {
-            BDOS_PrintcConsole('\n');
+            bdos_printc('\n');
 
             CALC_b = FP_StringToFP(CALC_buffer);
             CALC_buffer_idx = 0;
 
-            BDOS_PrintConsole("Operation:    ");
+            bdos_print("Operation:    ");
             CALC_state = CALC_STATE_INPUTOP;
           }
           break;
@@ -148,7 +148,7 @@ word calcLoop()
     }
     else if (c == 0x1b) // escape
     {
-      BDOS_PrintcConsole('\n');
+      bdos_printc('\n');
       return 1;
     }
   }
@@ -158,7 +158,7 @@ word calcLoop()
 
 int main() 
 {
-  BDOS_PrintlnConsole("Fixed-point calculator test\n");
+  bdos_println("Fixed-point calculator test\n");
 
   word stop = 0;
   while (!stop)
@@ -171,33 +171,12 @@ int main()
 
 void interrupt()
 {
-  // handle all interrupts
-  word i = getIntID();
+  // Handle all interrupts
+  word i = get_int_id();
   switch(i)
   {
     case INTID_TIMER1:
-      timer1Value = 1; // notify ending of timer1
-      break;
-
-    case INTID_TIMER2:
-      break;
-
-    case INTID_UART0:
-      break;
-
-    case INTID_GPU:
-      break;
-
-    case INTID_TIMER3:
-      break;
-
-    case INTID_PS2:
-      break;
-
-    case INTID_UART1:
-      break;
-
-    case INTID_UART2:
+      timer1Value = 1;  // Notify ending of timer1
       break;
   }
 }

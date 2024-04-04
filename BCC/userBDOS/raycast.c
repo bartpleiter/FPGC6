@@ -11,11 +11,11 @@
 
 #define word char
 
-#include "LIB/MATH.C"
-#include "LIB/STDLIB.C"
-#include "LIB/SYS.C"
-#include "LIB/GFX.C"
-#include "LIB/FP.C"
+#include "lib/math.c"
+#include "lib/stdlib.c"
+#include "lib/sys.c"
+#include "lib/gfx.c"
+#include "lib/fp.c"
 
 // Note: these are also hardcoded in the render assembly, so update there as well!
 #define FB_ADDR       0xD00000
@@ -52,7 +52,7 @@
 - LUTplaney
 - texture
 */
-#include "DATA/RAYDAT.C"
+#include "data/raydat.c"
 
 // Framebuffer. fb[Y][X] (bottom right is [239][319])
 char (*fb)[320] = (char (*)[320])FB_ADDR;
@@ -579,7 +579,7 @@ int main() {
     rotationSpeed = renderMillis >> 1;
 
     // check which button is held
-    if (BDOS_USBkeyHeld('a')) {
+    if (bdos_usbkey_held('a')) {
       // both camera direction and camera plane must be rotated
       rotationAngle -= rotationSpeed;
       if (rotationAngle < 0) {
@@ -589,7 +589,7 @@ int main() {
       RAY_dirY = LUTdirY[rotationAngle];
       RAY_planeX = LUTplaneX[rotationAngle];
       RAY_planeY = LUTplaneY[rotationAngle];
-    } else if (BDOS_USBkeyHeld('d')) {
+    } else if (bdos_usbkey_held('d')) {
       // both camera direction and camera plane must be rotated
       rotationAngle += rotationSpeed;
       if (rotationAngle >= 1440) {
@@ -601,7 +601,7 @@ int main() {
       RAY_planeY = LUTplaneY[rotationAngle];
     }
 
-    if (BDOS_USBkeyHeld('w')) {
+    if (bdos_usbkey_held('w')) {
       word worldMapX = FP_FPtoInt(RAY_posX + FP_Mult(RAY_dirX, moveSpeed + movePadding));
       word worldMapY = FP_FPtoInt(RAY_posY);
 
@@ -614,7 +614,7 @@ int main() {
       if (worldMap[worldMapX][worldMapY] == 0) {
         RAY_posY += FP_Mult(RAY_dirY, moveSpeed);
       }
-    } else if (BDOS_USBkeyHeld('s')) {
+    } else if (bdos_usbkey_held('s')) {
       word worldMapX = FP_FPtoInt(RAY_posX - FP_Mult(RAY_dirX, moveSpeed + movePadding));
       word worldMapY = FP_FPtoInt(RAY_posY);
 
@@ -627,7 +627,7 @@ int main() {
       if (worldMap[worldMapX][worldMapY] == 0) {
         RAY_posY -= FP_Mult(RAY_dirY, moveSpeed);
       }
-    } else if (BDOS_USBkeyHeld('e')) {
+    } else if (bdos_usbkey_held('e')) {
       word worldMapX = FP_FPtoInt(RAY_posX + FP_Mult(RAY_planeX, moveSpeed + movePadding));
       word worldMapY = FP_FPtoInt(RAY_posY);
 
@@ -640,7 +640,7 @@ int main() {
       if (worldMap[worldMapX][worldMapY] == 0) {
         RAY_posY += FP_Mult(RAY_planeY, moveSpeed);
       }
-    } else if (BDOS_USBkeyHeld('q')) {
+    } else if (bdos_usbkey_held('q')) {
       word worldMapX = FP_FPtoInt(RAY_posX - FP_Mult(RAY_planeX, moveSpeed + movePadding));
       word worldMapY = FP_FPtoInt(RAY_posY);
 
@@ -655,8 +655,8 @@ int main() {
       }
     }
 
-    if (HID_FifoAvailable()) {
-      word c = HID_FifoRead();
+    if (hid_checkfifo()) {
+      word c = hid_fiforead();
 
       if (c == 27)  // escape
       {
@@ -684,33 +684,14 @@ int main() {
 }
 
 void interrupt() {
-  // handle all interrupts
-  word i = getIntID();
+  // Handle all interrupts
+  word i = get_int_id();
   switch (i) {
     case INTID_TIMER1:
-      timer1Value = 1;  // notify ending of timer1
+      timer1Value = 1;  // Notify ending of timer1
       break;
-
-    case INTID_TIMER2:
-      break;
-
-    case INTID_UART0:
-      break;
-
     case INTID_GPU:
       frameDone++;
-      break;
-
-    case INTID_TIMER3:
-      break;
-
-    case INTID_PS2:
-      break;
-
-    case INTID_UART1:
-      break;
-
-    case INTID_UART2:
       break;
   }
 }

@@ -5,10 +5,10 @@
 
 #define word char
 
-#include "LIB/MATH.C"
-#include "LIB/STDLIB.C"
-#include "LIB/SYS.C"
-#include "LIB/GFX.C"
+#include "lib/math.c"
+#include "lib/stdlib.c"
+#include "lib/sys.c"
+#include "lib/gfx.c"
 
 #define START_DELAY 120
 #define STEP_DELAY 20
@@ -231,28 +231,28 @@ word checkFoodCollision()
 void updatePlayer(word keepTail)
 {
   // check which button is held
-  if (BDOS_USBkeyHeld(BTN_LEFT))
+  if (bdos_usbkey_held(BTN_LEFT))
   {
     if (dirOnScreen != RIGHT)
     {
       dir = LEFT;
     }
   }
-  else if (BDOS_USBkeyHeld(BTN_RIGHT))
+  else if (bdos_usbkey_held(BTN_RIGHT))
   {
     if (dirOnScreen != LEFT)
     {
       dir = RIGHT;
     }
   }
-  else if (BDOS_USBkeyHeld(BTN_UP))
+  else if (bdos_usbkey_held(BTN_UP))
   {
     if (dirOnScreen != DOWN)
     {
       dir = UP;
     }
   }
-  else if (BDOS_USBkeyHeld(BTN_DOWN))
+  else if (bdos_usbkey_held(BTN_DOWN))
   {
     if (dirOnScreen != UP)
     {
@@ -371,15 +371,15 @@ int main()
   // main loop
   while (1)
   {
-    if (HID_FifoAvailable())
+    if (hid_checkfifo())
     {
-      word c = HID_FifoRead();
+      word c = hid_fiforead();
       switch(c)
       {
         case 27: //escape
           // cleanup and exit
           clearScreen();
-          BDOS_PrintcConsole('\n');
+          bdos_printc('\n');
           return 'q';
           break;
         
@@ -437,34 +437,15 @@ int main()
 
 void interrupt()
 {
-  // handle all interrupts
-  word i = getIntID();
+  // Handle all interrupts
+  word i = get_int_id();
   switch(i)
   {
     case INTID_TIMER1:
-      timer1Value = 1; // notify ending of timer1
+      timer1Value = 1;  // Notify ending of timer1
       break;
-
-    case INTID_TIMER2:
-      break;
-
-    case INTID_UART0:
-      break;
-
-    case INTID_GPU:
-      break;
-
     case INTID_TIMER3:
-      timer3Value = 1; // notify ending of timer3
-      break;
-
-    case INTID_PS2:
-      break;
-
-    case INTID_UART1:
-      break;
-
-    case INTID_UART2:
+      timer3Value = 1;  // Notify ending of timer3
       break;
   }
 }

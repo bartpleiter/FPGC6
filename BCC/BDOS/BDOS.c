@@ -42,12 +42,26 @@
 #define INTID_UART2 0x8
 
 // System call IDs
-#define SYSCALL_FIFO_AVAILABLE 1
-#define SYSCALL_FIFO_READ 2
-#define SYSCALL_PRINT_C_CONSOLE 3
-#define SYSCALL_GET_ARGS 4       // Get arguments for executed program
-#define SYSCALL_GET_PATH 5       // Get OS path
-#define SYSCALL_GET_USB_KB_BUF 6 // Get the 8 bytes of the USB keyboard buffer
+#define SYS_HID_CHECKFIFO 1
+#define SYS_HID_READFIFO 2
+#define SYS_BDOS_PRINTC 3
+#define SYS_BDOS_PRINT 4
+#define SYS_FS_OPEN 5
+#define SYS_FS_CLOSE 6
+#define SYS_FS_READ 7
+#define SYS_FS_WRITE 8
+#define SYS_FS_SETCURSOR 9
+#define SYS_FS_GETCURSOR 10
+#define SYS_FS_DELETE 11
+#define SYS_FS_MKDIR 12
+#define SYS_FS_MKFILE 13
+#define SYS_FS_STAT 14
+#define SYS_FS_READDIR 15
+#define SYS_FS_GETCWD 16
+// Syscalls 17-19 are reserved for future use
+#define SYS_SHELL_ARGC 20
+#define SYS_SHELL_ARGV 21
+#define SYS_USB_KB_BUF 99
 
 /*
  * Global vars (also might be used by included libraries below)
@@ -192,36 +206,91 @@ int main()
   return 1;
 }
 
+/**
+ * System calls
+*/
+
+
+
 // System call handler
 // Returns at the same address it reads the command from
 void syscall()
 {
-  word *p = (word *)SYSCALL_RETVAL_ADDR;
-  word ID = p[0];
+  word *syscall_data = (word *)SYSCALL_RETVAL_ADDR;
+  word id = syscall_data[0];
 
-  switch (ID)
+  // Special case for mkdir and mkfile
+  if (id == SYS_FS_MKDIR)
   {
-  case SYSCALL_FIFO_AVAILABLE:
-    p[0] = HID_FifoAvailable();
+    char dirname_output[MAX_PATH_LENGTH];
+    char* file_path_basename = basename((char *)syscall_data[1]);
+    char* file_path_dirname = dirname(dirname_output, (char *)syscall_data[1]);
+    syscall_data[0] = brfs_create_directory(file_path_dirname, file_path_basename);
+  }
+  else if (id == SYS_FS_MKFILE)
+  {
+    char dirname_output[MAX_PATH_LENGTH];
+    char* file_path_basename = basename((char *)syscall_data[1]);
+    char* file_path_dirname = dirname(dirname_output, (char *)syscall_data[1]);
+    syscall_data[0] = brfs_create_file(file_path_dirname, file_path_basename);
+  }
+
+  switch (id)
+  {
+  case SYS_HID_CHECKFIFO:
+    syscall_data[0] = HID_FifoAvailable();
     break;
-  case SYSCALL_FIFO_READ:
-    p[0] = HID_FifoRead();
+  case SYS_HID_READFIFO:
+    syscall_data[0] = HID_FifoRead();
     break;
-  case SYSCALL_PRINT_C_CONSOLE:
-    GFX_PrintcConsole(p[1]);
-    p[0] = 0;
+  case SYS_BDOS_PRINTC:
+    GFX_PrintcConsole(syscall_data[1]);
+    syscall_data[0] = 0;
     break;
-  case SYSCALL_GET_ARGS:
-    p[0] = 0; // TODO: implement
+  case SYS_BDOS_PRINT:
+    GFX_PrintConsole(syscall_data[1]);
+    syscall_data[0] = 0;
     break;
-  case SYSCALL_GET_PATH:
-    p[0] = 0; // TODO: implement
+  case SYS_FS_OPEN:
+    syscall_data[0] = brfs_open_file((char *)syscall_data[1]);
     break;
-  case SYSCALL_GET_USB_KB_BUF:
-    p[0] = USBkeyboard_buffer_parsed;
+  case SYS_FS_CLOSE:
+    syscall_data[0] = brfs_close_file(syscall_data[1]);
     break;
-  default:
-    p[0] = 0;
+  case SYS_FS_READ:
+    syscall_data[0] = brfs_read(syscall_data[1], (char *)syscall_data[2], syscall_data[3]);
+    break;
+  case SYS_FS_WRITE:
+    syscall_data[0] = brfs_write(syscall_data[1], (char *)syscall_data[2], syscall_data[3]);
+    break;
+  case SYS_FS_SETCURSOR:
+    syscall_data[0] = brfs_set_cursor(syscall_data[1], syscall_data[2]);
+    break;
+  case SYS_FS_GETCURSOR:
+    syscall_data[0] = brfs_get_cursor(syscall_data[1]);
+    break;
+  case SYS_FS_DELETE:
+    syscall_data[0] = brfs_delete_file((char *)syscall_data[1]);
+    break;
+  case SYS_FS_STAT:
+    syscall_data[0] = brfs_stat((char *)syscall_data[1]);
+    break;
+  case SYS_FS_READDIR:
+    brfs_list_directory((char *)syscall_data[1]);
+    syscall_data[0] = 0; // TODO: implement
+    break;
+  case SYS_FS_GETCWD:
+    strcpy(syscall_data[0], shell_path);
+    break;
+  case SYS_SHELL_ARGC:
+    syscall_data[0] = shell_num_tokens;
+    break;
+  case SYS_SHELL_ARGV:
+    // Not so fancy as we return by reference instead of making a copy
+    syscall_data[0] = shell_tokens;
+    break;
+  case SYS_USB_KB_BUF:
+    syscall_data[0] = USBkeyboard_buffer_parsed;
     break;
   }
 }

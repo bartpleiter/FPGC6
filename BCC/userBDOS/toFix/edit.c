@@ -36,11 +36,11 @@
 
 #define word char
 
-#include "LIB/MATH.C"
-#include "LIB/SYS.C"
-#include "LIB/GFX.C"
-#include "LIB/STDLIB.C"
-#include "LIB/FS.C"
+#include "lib/math.c"
+#include "lib/sys.c"
+#include "lib/gfx.c"
+#include "lib/stdlib.c"
+#include "lib/fs.c"
 
 #define FBUF_ADDR           0x440000 // location of input file buffer
 #define FILE_MEMORY_ADDR    0x480000 // location of file content
@@ -1130,33 +1130,12 @@ int main()
 
 void interrupt()
 {
-  // handle all interrupts
+  // Handle all interrupts
   word i = getIntID();
   switch(i)
   {
     case INTID_TIMER1:
-      timer1Value = 1; // notify ending of timer1
-      break;
-
-    case INTID_TIMER2:
-      break;
-
-    case INTID_UART0:
-      break;
-
-    case INTID_GPU:
-      break;
-
-    case INTID_TIMER3:
-      break;
-
-    case INTID_PS2:
-      break;
-
-    case INTID_UART1:
-      break;
-
-    case INTID_UART2:
+      timer1Value = 1;  // Notify ending of timer1
       break;
   }
 }

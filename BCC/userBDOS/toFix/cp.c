@@ -1,4 +1,4 @@
-// File move tool. Direct copy of CP but removes infile afterwards
+// File copy tool
 // Currently not that efficient and reads entire file in memory
 //  instead of doing it in chunks
 
@@ -18,10 +18,10 @@
 
 #define word char
 
-#include "LIB/MATH.C"
-#include "LIB/SYS.C"
-#include "LIB/STDLIB.C"
-#include "LIB/FS.C"
+#include "lib/math.c"
+#include "lib/sys.c"
+#include "lib/stdlib.c"
+#include "lib/fs.c"
 
 char infilename[96];  // input filename
 char outfilename[96];  // output filename
@@ -264,7 +264,7 @@ int main()
   // create output file, test if it can be created/opened
   if (!fopenWrite(outfilename))
   {
-    BDOS_PrintConsole("Could not open output file\n");
+    BDOS_PrintConsole("Could not open outfile\n");
     return 0;
   }
   fclose();
@@ -309,61 +309,23 @@ int main()
   // write binary to output file
   if (!fopenWrite(outfilename))
   {
-    BDOS_PrintConsole("Could not open output file\n");
-    return 1;
+    BDOS_PrintConsole("Could not open outfile\n");
+    return 0;
   }
   fputData(memBuf, fileSize);
   fclose();
 
-  // delete input file
-  strToUpper(infilename);
-
-  // if the resulting path is correct (can be file or directory)
-  if (FS_sendFullPath(infilename) == FS_ANSW_USB_INT_SUCCESS)
-  {
-    // if we can successfully open the file (not directory)
-    if (FS_open() == FS_ANSW_USB_INT_SUCCESS)
-    {
-      if (FS_delete() == FS_ANSW_USB_INT_SUCCESS)
-      {
-        return 'q';
-      }
-    }
-  }
-
-  BDOS_PrintConsole("Could not delete input file\n");
-  return 3;
+  return 'q';
 }
 
 void interrupt()
 {
-  // handle all interrupts
+  // Handle all interrupts
   word i = getIntID();
   switch(i)
   {
     case INTID_TIMER1:
-      timer1Value = 1; // notify ending of timer1
-      break;
-
-    case INTID_TIMER2:
-      break;
-
-    case INTID_UART0:
-      break;
-
-    case INTID_GPU:
-      break;
-
-    case INTID_TIMER3:
-      break;
-
-    case INTID_PS2:
-      break;
-
-    case INTID_UART1:
-      break;
-
-    case INTID_UART2:
+      timer1Value = 1;  // Notify ending of timer1
       break;
   }
 }

@@ -2,9 +2,9 @@
 
 #define word char
 
-#include "LIB/MATH.C"
-#include "LIB/STDLIB.C"
-#include "LIB/SYS.C"
+#include "lib/math.c"
+#include "lib/stdlib.c"
+#include "lib/sys.c"
 
 #define N    256  // Decimals of pi to compute.
 #define LEN  854  // (10*N) / 3 + 1
@@ -64,7 +64,7 @@ void spigotPiBench()
       {
         --j;
         y = predigit+MATH_div(x,10);
-        BDOS_PrintDecConsole(y);
+        bdos_printdec(y);
       }
 
       for(; nines; --nines)
@@ -74,11 +74,11 @@ void spigotPiBench()
           --j;
           if (x >= 10)
           {
-            BDOS_PrintcConsole('0');
+            bdos_printc('0');
           }
           else
           {
-            BDOS_PrintcConsole('9');
+            bdos_printc('9');
           }
         }
       }
@@ -87,9 +87,9 @@ void spigotPiBench()
     }
   }
 
-  BDOS_PrintConsole("\nPiBench256 took    ");
-  BDOS_PrintDecConsole(frameCount);
-  BDOS_PrintConsole(" frames\n");
+  bdos_print("\nPiBench256 took    ");
+  bdos_printdec(frameCount);
+  bdos_print(" frames\n");
 }
 
 
@@ -140,20 +140,20 @@ int countMillionBench()
 int main() 
 {
 
-  BDOS_PrintlnConsole("---------------FPGCbench---------------\n");
+  bdos_println("---------------FPGCbench---------------\n");
 
 
-  BDOS_PrintConsole("LoopBench:         ");
+  bdos_print("LoopBench:         ");
   frameCount = 0;
   while (frameCount == 0); // wait until next frame to start
-  BDOS_PrintDecConsole(loopBench());
-  BDOS_PrintcConsole('\n');
+  bdos_printdec(loopBench());
+  bdos_printc('\n');
 
-  BDOS_PrintConsole("\nCountMillionBench: ");
-  BDOS_PrintDecConsole(countMillionBench());
-  BDOS_PrintConsole(" frames\n");
+  bdos_print("\nCountMillionBench: ");
+  bdos_printdec(countMillionBench());
+  bdos_print(" frames\n");
 
-  BDOS_PrintConsole("\nPiBench256:\n");
+  bdos_print("\nPiBench256:\n");
   spigotPiBench();
 
   return 'q';
@@ -161,34 +161,15 @@ int main()
 
 void interrupt()
 {
-  // handle all interrupts
-  word i = getIntID();
+  // Handle all interrupts
+  word i = get_int_id();
   switch(i)
   {
     case INTID_TIMER1:
-      timer1Value = 1; // notify ending of timer1
+      timer1Value = 1;  // Notify ending of timer1
       break;
-
-    case INTID_TIMER2:
-      break;
-
-    case INTID_UART0:
-      break;
-
     case INTID_GPU:
       frameCount++;
-      break;
-
-    case INTID_TIMER3:
-      break;
-
-    case INTID_PS2:
-      break;
-
-    case INTID_UART1:
-      break;
-
-    case INTID_UART2:
       break;
   }
 }

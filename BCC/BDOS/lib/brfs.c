@@ -594,6 +594,45 @@ void brfs_list_directory(char* dir_path)
 }
 
 /**
+ * Reads all directory entries of a directory into a buffer
+ * dir_path: full path of the directory
+ * buffer: buffer to store the directory entries
+ * Returns the number of entries read, or -1 on error
+*/
+word brfs_read_directory(char* dir_path, struct brfs_dir_entry* buffer)
+{
+  // Find data block address of parent directory path
+  word dir_fat_idx = brfs_get_fat_idx_of_dir(dir_path);
+  if (dir_fat_idx == -1)
+  {
+    uprint("Parent directory ");
+    uprint(dir_path);
+    uprintln(" not found!");
+    return -1;
+  }
+
+  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
+  word* dir_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks + (dir_fat_idx * superblock->words_per_block);
+  word dir_entries_max = superblock->words_per_block / sizeof(struct brfs_dir_entry);
+
+  word entries_read = 0;
+
+  word i;
+  for (i = 0; i < dir_entries_max; i++)
+  {
+    struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
+    if (dir_entry->filename[0] != 0)
+    {
+      memcpy(buffer, dir_entry, sizeof(struct brfs_dir_entry));
+      buffer++;
+      entries_read++;
+    }
+  }
+
+  return entries_read;
+}
+
+/**
  * Open a file for reading and writing
  * Returns the file pointer (FAT idx of file), or -1 on error
  * file_path: full path of the file
@@ -703,10 +742,11 @@ word brfs_close_file(word file_pointer)
 
 /**
  * Delete a file by removing all FAT blocks and the directory entry
+ * Deletes a directory only if it is empty
  * Returns 1 on success, 0 on error
  * file_path: full path of the file
 */
-word brfs_delete_file(char* file_path)
+word brfs_delete(char* file_path)
 {
   // Split filename from path using basename and dirname
   char dirname_output[MAX_PATH_LENGTH];
@@ -736,10 +776,21 @@ word brfs_delete_file(char* file_path)
     {
       char decompressed_filename[17];
       strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
-      // Also check for directory flag to be 0
-      if (strcmp(decompressed_filename, file_path_basename) == 0 && (dir_entry->flags & 0x01) == 0)
+      if (strcmp(decompressed_filename, file_path_basename) == 0)
       {
-        // Found file
+        if ((dir_entry->flags & 0x01) == 1)
+        {
+          // Check if directory is empty
+          struct brfs_dir_entry buffer[128]; // 128 to be safe
+          word num_entries = brfs_read_directory(file_path, buffer);
+          if (num_entries > 2)
+          {
+            uprint("Directory ");
+            uprint(file_path_basename);
+            uprintln(" is not empty!");
+            return 0;
+          }
+        }
         // Check if file is already open
         word j;
         for (j = 0; j < MAX_OPEN_FILES; j++)
@@ -764,7 +815,7 @@ word brfs_delete_file(char* file_path)
           current_fat_idx = next_fat_idx;
         }
 
-        // Delete file
+        // Delete entry
         memset((char*)dir_entry, 0, sizeof(struct brfs_dir_entry));
 
         // Update changed block

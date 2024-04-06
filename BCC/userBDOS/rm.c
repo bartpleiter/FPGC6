@@ -5,6 +5,60 @@
 #include "lib/sys.c"
 #include "lib/brfs.c"
 
+void remove_dir(char* path)
+{
+  struct brfs_dir_entry entries[MAX_DIR_ENTRIES];
+  word num_entries = fs_readdir(path, entries);
+
+  word i;
+  for (i = 0; i < num_entries; i++)
+  {
+    struct brfs_dir_entry entry = entries[i];
+    char decompressed_filename[17];
+    strdecompress(decompressed_filename, entry.filename);
+    
+    if (strcmp(decompressed_filename, ".") == 0 || strcmp(decompressed_filename, "..") == 0)
+    {
+      continue;
+    }
+
+    char absolute_path[MAX_PATH_LENGTH];
+    strcpy(absolute_path, path);
+    strcat(absolute_path, "/");
+    strcat(absolute_path, decompressed_filename);
+
+    if ((entry.flags & 0x01) == 0)
+    {
+      // File
+      if (fs_delete(absolute_path))
+      {
+        // Do not sync flash after each file deletion
+      }
+      else
+      {
+        bdos_println("Could not delete file");
+      }
+    }
+    else
+    {
+      // Directory
+      remove_dir(absolute_path);
+    }
+  }
+
+  // Delete directory after contents are deleted
+  if (fs_delete(path))
+  {
+    // Do not sync flash after each directory deletion
+  }
+  else
+  {
+    bdos_println("Could not delete directory");
+  }
+  
+  
+}
+
 int main() 
 {
   // Read number of arguments
@@ -25,7 +79,10 @@ int main()
   {
     char* cwd = fs_getcwd();
     strcpy(absolute_path, cwd);
-    strcat(absolute_path, "/");
+    if (absolute_path[strlen(absolute_path) - 1] != '/')
+    {
+      strcat(absolute_path, "/");
+    }
     strcat(absolute_path, fname);
   }
   else
@@ -38,6 +95,13 @@ int main()
   if ((word)entry == -1)
   {
     bdos_println("File not found");
+    return 1;
+  }
+
+  // Check if root directory
+  if (entry->fat_idx == 0)
+  {
+    bdos_println("Cannot delete root directory");
     return 1;
   }
 
@@ -56,8 +120,8 @@ int main()
   else
   {
     // Directory
-    uprintln("del dir");
-    // TODO: Implement recursive deletion of directory
+    remove_dir(absolute_path);
+    fs_syncflash();
   }
 
   return 'q';

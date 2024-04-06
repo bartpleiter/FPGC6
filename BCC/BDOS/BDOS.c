@@ -269,14 +269,13 @@ void syscall()
     syscall_data[0] = brfs_get_cursor(syscall_data[1]);
     break;
   case SYS_FS_DELETE:
-    syscall_data[0] = brfs_delete_file((char *)syscall_data[1]);
+    syscall_data[0] = brfs_delete((char *)syscall_data[1]);
     break;
   case SYS_FS_STAT:
     syscall_data[0] = brfs_stat((char *)syscall_data[1]);
     break;
   case SYS_FS_READDIR:
-    brfs_list_directory((char *)syscall_data[1]);
-    syscall_data[0] = 0; // TODO: implement
+    syscall_data[0] = brfs_read_directory((char *)syscall_data[1], (char *)syscall_data[2]);
     break;
   case SYS_FS_GETCWD:
     strcpy(syscall_data, shell_path);

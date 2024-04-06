@@ -11,36 +11,36 @@ int main()
   word argc = shell_argc();
   if (argc < 2)
   {
-    bdos_println("Usage: mkdir <directory>");
+    bdos_println("Usage: mkfile <fname>");
     return 1;
   }
   
-  // Read directory name
+  // Read fname
   char** args = shell_argv();
-  char* dirname = args[1];
+  char* fname = args[1];
 
   char absolute_path[MAX_PATH_LENGTH];
   // Check if absolute path
-  if (dirname[0] != '/')
+  if (fname[0] != '/')
   {
     char* cwd = fs_getcwd();
     strcpy(absolute_path, cwd);
     strcat(absolute_path, "/");
-    strcat(absolute_path, dirname);
+    strcat(absolute_path, fname);
   }
   else
   {
-    strcpy(absolute_path, dirname);
+    strcpy(absolute_path, fname);
   }
 
-  // Create directory
-  if (fs_mkdir(absolute_path))
+  // Create file
+  if (fs_mkfile(absolute_path))
   {
     fs_syncflash();
   }
   else
   {
-    bdos_println("Could not create directory");
+    bdos_println("Could not create file");
   }
 
   return 'q';

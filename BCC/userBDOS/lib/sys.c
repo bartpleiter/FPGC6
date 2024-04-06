@@ -13,8 +13,6 @@
 #define INTID_UART1   0x7
 #define INTID_UART2   0x8
 
-#define MAX_PATH_LENGTH 127
-
 #define SYSCALL_RETVAL_ADDR 0x200000
 
 // System call IDs
@@ -316,11 +314,13 @@ word fs_stat(char* filename)
 
 /**
  * Lists the contents of a directory in the filesystem
+ * Returns the number of entries in the directory
 */
-word fs_readdir(char* dirname)
+word fs_readdir(char* dirname, char* buffer)
 {
   char* p = (char*) SYSCALL_RETVAL_ADDR;
   p[1] = (char) dirname;
+  p[2] = (char) buffer;  
   syscall(SYS_FS_READDIR);
   return p[0];
 }

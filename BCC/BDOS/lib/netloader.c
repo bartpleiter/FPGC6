@@ -243,7 +243,7 @@ void NETLOADER_handleSession(word s)
                         strcat(new_file_path, fileNameStr);
 
                         // try to delete file in case it exists
-                        brfs_delete_file(new_file_path);
+                        brfs_delete(new_file_path);
                         if (brfs_create_file(shell_path, fileNameStr))
                         {
                             

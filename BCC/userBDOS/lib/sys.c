@@ -34,7 +34,8 @@
 #define SYS_FS_STAT 14
 #define SYS_FS_READDIR 15
 #define SYS_FS_GETCWD 16
-// Syscalls 17-19 are reserved for future use
+#define SYS_FS_SYNCFLASH 17
+// Syscalls 18-19 are reserved for future use
 #define SYS_SHELL_ARGC 20
 #define SYS_SHELL_ARGV 21
 #define SYS_USB_KB_BUF 99
@@ -116,7 +117,8 @@ void exit()
 */
 word hid_checkfifo()
 {
-  char* p = syscall(SYS_HID_CHECKFIFO);
+  char* p = (char*) SYSCALL_RETVAL_ADDR;
+  syscall(SYS_HID_CHECKFIFO);
   return p[0];
 }
 
@@ -125,7 +127,8 @@ word hid_checkfifo()
 */
 word hid_fiforead()
 {
-  char* p = syscall(SYS_HID_READFIFO);
+  char* p = (char*) SYSCALL_RETVAL_ADDR;
+  syscall(SYS_HID_READFIFO);
   return p[0];
 }
 
@@ -324,12 +327,23 @@ word fs_readdir(char* dirname)
 
 /**
  * Gets the current working directory in the filesystem
+ * Note: The pointer returned is only valid until the next syscall
 */
 char* fs_getcwd()
 {
   char* p = (char*) SYSCALL_RETVAL_ADDR;
   syscall(SYS_FS_GETCWD);
-  return (char*) p[0];
+  return p;
+}
+
+/**
+ * Synchronizes the filesystem with the flash memory
+*/
+word fs_syncflash()
+{
+  char* p = (char*) SYSCALL_RETVAL_ADDR;
+  syscall(SYS_FS_SYNCFLASH);
+  return p[0];
 }
 
 /**
@@ -344,12 +358,13 @@ word shell_argc()
 
 /**
  * Returns the command line arguments
+ * Note: The pointer returned is only valid until the next syscall
 */
 char* shell_argv()
 {
   char* p = (char*) SYSCALL_RETVAL_ADDR;
   syscall(SYS_SHELL_ARGV);
-  return p[0];
+  return p;
 }
 
 /**
@@ -357,7 +372,8 @@ char* shell_argv()
 */
 word bdos_usbkey_held(word c)
 {
-  word* p = syscall(SYS_USB_KB_BUF);
+  char* p = (char*) SYSCALL_RETVAL_ADDR;
+  syscall(SYS_USB_KB_BUF);
   word* usbKeyBuffer = (char*) p[0];
   
   word i;

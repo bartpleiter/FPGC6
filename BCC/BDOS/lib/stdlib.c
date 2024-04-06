@@ -279,7 +279,8 @@ void strdecompress(char* dest, word* src)
     if (c == 0)
       break;
 
-    dest[i_dst++] = c;
+    dest[i_dst] = c;
+    i_dst++;
 
     if (byte_offset == 24)
     {
@@ -291,7 +292,6 @@ void strdecompress(char* dest, word* src)
       byte_offset += 8;
     }
   }
-
   // Terminate
   dest[i_dst] = 0;
 }

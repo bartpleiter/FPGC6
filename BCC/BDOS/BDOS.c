@@ -58,6 +58,7 @@
 #define SYS_FS_STAT 14
 #define SYS_FS_READDIR 15
 #define SYS_FS_GETCWD 16
+#define SYS_FS_SYNCFLASH 17
 // Syscalls 17-19 are reserved for future use
 #define SYS_SHELL_ARGC 20
 #define SYS_SHELL_ARGV 21
@@ -210,8 +211,6 @@ int main()
  * System calls
 */
 
-
-
 // System call handler
 // Returns at the same address it reads the command from
 void syscall()
@@ -280,14 +279,16 @@ void syscall()
     syscall_data[0] = 0; // TODO: implement
     break;
   case SYS_FS_GETCWD:
-    strcpy(syscall_data[0], shell_path);
+    strcpy(syscall_data, shell_path);
+    break;
+  case SYS_FS_SYNCFLASH:
+    brfs_write_to_flash();
     break;
   case SYS_SHELL_ARGC:
     syscall_data[0] = shell_num_tokens;
     break;
   case SYS_SHELL_ARGV:
-    // Not so fancy as we return by reference instead of making a copy
-    syscall_data[0] = shell_tokens;
+    memcpy(syscall_data, shell_tokens, sizeof(shell_tokens));
     break;
   case SYS_USB_KB_BUF:
     syscall_data[0] = USBkeyboard_buffer_parsed;

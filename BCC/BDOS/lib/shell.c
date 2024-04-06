@@ -1,6 +1,6 @@
 // Max length of a single command
 #define SHELL_CMD_MAX_LENGTH 128
-#define SHELL_PATH "/bin/"
+#define SHELL_BIN_PATH "/bin/"
 
 word shell_cmd[SHELL_CMD_MAX_LENGTH];
 word shell_cmd_idx = 0;
@@ -69,15 +69,26 @@ void shell_parse_command()
 */
 void shell_print_help()
 {
-  GFX_PrintConsole("Available commands:\n");
-  GFX_PrintConsole("cd\n");
-  GFX_PrintConsole("clear\n");
-  GFX_PrintConsole("help\n");
+  GFX_PrintConsole(
+    "************\n"
+    "*BDOS Shell*\n"
+    "************\n"
+    "Available commands:\n"
+    "- cd <path>\n"
+    "- clear\n"
+    "- format <blk size> <blk cnt>\n"
+    "- sync\n"
+    "- help\n"
+    "\n"
+    "Programs are run from:\n"
+    "- /bin\n"
+    "- <current dir>\n"
+  );
 }
 
 /**
  * Attempt to run program from FS
- * If run_from_path is 1, the program is run from the SHELL_PATH
+ * If run_from_path is 1, the program is run from the SHELL_BIN_PATH
  * Returns 1 if program was found, 0 otherwise
 */
 word shell_run_program(word run_from_path)
@@ -93,7 +104,7 @@ word shell_run_program(word run_from_path)
   {
     if (run_from_path)
     {
-      strcpy(absolute_path, SHELL_PATH);
+      strcpy(absolute_path, SHELL_BIN_PATH);
       strcat(absolute_path, shell_tokens[0]);
     }
     else
@@ -228,7 +239,7 @@ void shell_list_directory(char* dir_path)
     struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
     if (dir_entry->filename[0] != 0)
     {
-      char decompressed_filename[16];
+      char decompressed_filename[17];
       strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
       GFX_PrintConsole(decompressed_filename);
       GFX_PrintConsole(" FAT: ");
@@ -241,7 +252,6 @@ void shell_list_directory(char* dir_path)
     }
   }
 }
-
 
 /**
  * Process dots in path so that ".." goes up one directory and "." is skipped
@@ -353,8 +363,6 @@ void shell_change_directory()
     }
   }
 
-  uprintln(absolute_path);
-
   // Get dir entry of the path
   struct brfs_dir_entry* dir = brfs_stat(absolute_path);
 
@@ -370,6 +378,24 @@ void shell_change_directory()
   {
     GFX_PrintConsole("Directory not found\n");
   }
+}
+
+/**
+ * Format the filesystem
+*/
+void shell_format_filesystem()
+{
+  if (shell_num_tokens < 3)
+  {
+    GFX_PrintConsole("Usage: format <blk size> <blk cnt>\n");
+    return;
+  }
+
+  word block_size = strToInt(shell_tokens[1]);
+  word block_count = strToInt(shell_tokens[2]);
+  word full_format = 1;
+  brfs_format(block_count, block_size, "FPGC", full_format);
+  brfs_write_to_flash();
 }
 
 /**
@@ -411,21 +437,21 @@ void shell_handle_command()
   {
     brfs_read_from_flash();
   }
+  else if (strcmp(shell_tokens[0], "dump") == 0)
+  {
+    // Dump FAT
+    brfs_dump_section(brfs_ram_storage+SUPERBLOCK_SIZE, strToInt(shell_tokens[1]), 16);
+  }
   else if (strcmp(shell_tokens[0], "format") == 0)
   {
-    word blocks = BDOS_DEFAULT_BLOCKS;
-    word words_per_block = BDOS_DEFAULT_BLOCK_SIZE;
-    word full_format = 1;
-    brfs_format(blocks, words_per_block, "FPGC5", full_format);
-    brfs_write_to_flash();
+    shell_format_filesystem();
   }
-  // Attempt to run program both from local dir and from SHELL_PATH
+  // Attempt to run program both from local dir and from SHELL_BIN_PATH
   else if (!shell_run_program(0))
   {
     if (!shell_run_program(1))
     {
       GFX_PrintConsole("Command not found\n");
-    
     }
   } 
 }
@@ -436,10 +462,8 @@ void shell_handle_command()
 void shell_init()
 {
   shell_clear_command();
-
   // Set path to root
   strcpy(shell_path, "/");
-
   shell_print_prompt();
 }
 

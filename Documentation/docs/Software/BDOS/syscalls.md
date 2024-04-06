@@ -33,6 +33,7 @@ Afterwards, BDOS will return from the syscall() function, pop the program counte
 | 14  | fs_stat        | char* path | -         | -          | Get file or directory information                | &#9745;     |
 | 15  | fs_readdir     | char* path | -         | -          | Read a directory (TODO: think what to return)    | &#9744;     |
 | 16  | fs_getcwd      | -          | -         | -          | Get the current working directory                | &#9745;     |
-|17-19| *reserved*     | -          | -         | -          | Reserved for future use                          |             |
+| 17  | fs_syncflash   | -          | -         | -          | Sync filesystem changes to SPI Flash             | &#9745;     |
+|18-19| *reserved*     | -          | -         | -          | Reserved for future use                          |             |
 | 20  | shell_argc     | -          | -         | -          | Get the number of command-line arguments         | &#9745;     |
 | 21  | shell_argv     | -          | -         | -          | Get the command-line arguments                   | &#9745;     |

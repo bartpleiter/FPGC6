@@ -15,28 +15,27 @@ int main()
   }
   
   // Read directory name
-  char** dirname = shell_argv(1);
+  char** args = shell_argv();
+  char* dirname = args[1];
 
   char absolute_path[MAX_PATH_LENGTH];
   // Check if absolute path
-  if (dirname[1][0] != '/')
+  if (dirname[0] != '/')
   {
     char* cwd = fs_getcwd();
-    uprintln("CWD:");
-    uprintln(cwd);
     strcpy(absolute_path, cwd);
     strcat(absolute_path, "/");
-    strcat(absolute_path, dirname[1]);
+    strcat(absolute_path, dirname);
   }
   else
   {
-    strcpy(absolute_path, dirname[1]);
+    strcpy(absolute_path, dirname);
   }
 
   // Create directory
   if (fs_mkdir(absolute_path))
   {
-    bdos_println("Directory created");
+    fs_syncflash();
   }
   else
   {

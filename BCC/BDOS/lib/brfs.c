@@ -175,7 +175,7 @@ word brfs_get_fat_idx_of_dir(char* dir_path)
       struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
       if (dir_entry->filename[0] != 0)
       {
-        char decompressed_filename[16];
+        char decompressed_filename[17];
         strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
         // Also check for directory flag
         if (strcmp(decompressed_filename, token) == 0 && dir_entry->flags == 1)
@@ -286,6 +286,13 @@ void brfs_create_single_dir_entry(struct brfs_dir_entry* dir_entry, char* filena
 */
 void brfs_init_directory(word* dir_addr, word dir_entries_max, word dir_fat_idx, word parent_fat_idx)
 {
+  // Get block size from superblock
+  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
+  word block_size = superblock->words_per_block;
+
+  // Set data block of dir_fat_idx to 0
+  memset(dir_addr, 0, block_size);
+
   // Create . entry
   struct brfs_dir_entry dir_entry;
   brfs_create_single_dir_entry(&dir_entry, ".", dir_fat_idx, dir_entries_max*sizeof(struct brfs_dir_entry), 1);
@@ -404,7 +411,7 @@ word brfs_create_directory(char* parent_dir_path, char* dirname)
     struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (parent_dir_addr + (i * sizeof(struct brfs_dir_entry)));
     if (dir_entry->filename[0] != 0)
     {
-      char decompressed_filename[16];
+      char decompressed_filename[17];
       strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
       if (strcmp(decompressed_filename, dirname) == 0)
       {
@@ -428,7 +435,7 @@ word brfs_create_directory(char* parent_dir_path, char* dirname)
 
   // Create dir entry
   struct brfs_dir_entry new_entry;
-  brfs_create_single_dir_entry(&new_entry, dirname, next_free_block, 0, 1);
+  brfs_create_single_dir_entry(&new_entry, dirname, next_free_block, dir_entries_max*sizeof(struct brfs_dir_entry), 1);
 
   // Copy dir entry to first free dir entry
   memcpy(
@@ -447,6 +454,7 @@ word brfs_create_directory(char* parent_dir_path, char* dirname)
 
   // Update changed block
   brfs_changed_blocks[next_free_block >> 5] |= (1 << (next_free_block & 31));
+  brfs_changed_blocks[parent_dir_fat_idx >> 5] |= (1 << (parent_dir_fat_idx & 31));
 
   return 1;
 }
@@ -490,7 +498,7 @@ word brfs_create_file(char* parent_dir_path, char* filename)
     struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (parent_dir_addr + (i * sizeof(struct brfs_dir_entry)));
     if (dir_entry->filename[0] != 0)
     {
-      char decompressed_filename[16];
+      char decompressed_filename[17];
       strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
       if (strcmp(decompressed_filename, filename) == 0)
       {
@@ -570,7 +578,7 @@ void brfs_list_directory(char* dir_path)
     if (dir_entry->filename[0] != 0)
     {
       uprint("Filename: ");
-      char decompressed_filename[16];
+      char decompressed_filename[17];
       strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
       uprint(decompressed_filename);
       uprint(" FAT idx: ");
@@ -619,7 +627,7 @@ word brfs_open_file(char* file_path)
     struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
     if (dir_entry->filename[0] != 0)
     {
-      char decompressed_filename[16];
+      char decompressed_filename[17];
       strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
       // Also check for directory flag to be 0
       if (strcmp(decompressed_filename, file_path_basename) == 0 && dir_entry->flags == 0)
@@ -693,7 +701,6 @@ word brfs_close_file(word file_pointer)
   return 0;
 }
 
-
 /**
  * Delete a file by removing all FAT blocks and the directory entry
  * Returns 1 on success, 0 on error
@@ -727,10 +734,10 @@ word brfs_delete_file(char* file_path)
     struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
     if (dir_entry->filename[0] != 0)
     {
-      char decompressed_filename[16];
+      char decompressed_filename[17];
       strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
       // Also check for directory flag to be 0
-      if (strcmp(decompressed_filename, file_path_basename) == 0 && dir_entry->flags == 0)
+      if (strcmp(decompressed_filename, file_path_basename) == 0 && (dir_entry->flags & 0x01) == 0)
       {
         // Found file
         // Check if file is already open
@@ -1083,7 +1090,7 @@ struct brfs_dir_entry* brfs_stat(char* file_path)
     struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
     if (dir_entry->filename[0] != 0)
     {
-      char decompressed_filename[16];
+      char decompressed_filename[17];
       strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
       // Also check for directory flag to be 0
       if (strcmp(decompressed_filename, file_path_basename) == 0)
@@ -1308,33 +1315,6 @@ void brfs_write_blocks_to_flash()
     brfs_write_sector_to_flash(sector_to_erase);
   }
 
-  // Write each block to flash in parts of 64 words
-  /*
-  for (i = 0; i < superblock->total_blocks; i++)
-  {
-    if (brfs_changed_blocks[i >> 5] & (1 << (i & 31)))
-    {
-      word j;
-      for (j = 0; j < superblock->words_per_block; j+=64)
-      {
-        word spiflash_addr = BRFS_SPIFLASH_BLOCK_ADDR; // Workaround because of large static number
-        spiflash_addr += i * (superblock->words_per_block * 4) + (j * 4);
-
-        word* data_addr = data_block_addr + (i * superblock->words_per_block) + j;
-        spiflash_write_page_in_words(data_addr, spiflash_addr, 64);
-
-        uprint("Wrote block ");
-        uprintDec(i);
-        uprint(" from RAM addr ");
-        uprintHex((word)data_addr);
-        uprint(" to SPI Flash addr ");
-        uprintHex(spiflash_addr);
-        uprintln("");
-      }
-    }
-  }
-  */
-
   uprintln("---Finished writing blocks to SPI Flash---");
 }
 
@@ -1346,6 +1326,8 @@ void brfs_write_to_flash()
 {
   brfs_write_fat_to_flash();
   brfs_write_blocks_to_flash();
+  // Reset changed blocks
+  memset(brfs_changed_blocks, 0, sizeof(brfs_changed_blocks));
 }
 
 /**

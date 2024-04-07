@@ -216,44 +216,6 @@ word shell_run_program(word run_from_path)
 }
 
 /**
- * List the contents of a directory (TMP function until separate ls program is implemented)
- * dir_path: full path of the directory
-*/
-void shell_list_directory(char* dir_path)
-{
-  // Find data block address of parent directory path
-  word dir_fat_idx = brfs_get_fat_idx_of_dir(dir_path);
-  if (dir_fat_idx == -1)
-  {
-    GFX_PrintConsole("Directory not found\n");
-    return;
-  }
-
-  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
-  word* dir_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks + (dir_fat_idx * superblock->words_per_block);
-  word dir_entries_max = superblock->words_per_block / sizeof(struct brfs_dir_entry);
-
-  word i;
-  for (i = 0; i < dir_entries_max; i++)
-  {
-    struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
-    if (dir_entry->filename[0] != 0)
-    {
-      char decompressed_filename[17];
-      strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
-      GFX_PrintConsole(decompressed_filename);
-      GFX_PrintConsole(" FAT: ");
-      GFX_PrintDecConsole((dir_entry->fat_idx));
-      GFX_PrintConsole(" Flg: ");
-      GFX_PrintDecConsole((dir_entry->flags));
-      GFX_PrintConsole(" Size: ");
-      GFX_PrintDecConsole((dir_entry->filesize));
-      GFX_PrintConsole("\n");
-    }
-  }
-}
-
-/**
  * Process dots in path so that ".." goes up one directory and "." is skipped
 */
 void shell_process_dots(char* path)
@@ -413,17 +375,6 @@ void shell_handle_command()
     GFX_clearWindowtileTable();
     GFX_clearWindowpaletteTable();
     GFX_cursor = 0;
-  }
-  else if (strcmp(shell_tokens[0], "ls") == 0)
-  {
-    if (shell_num_tokens > 1)
-    {
-      shell_list_directory(shell_tokens[1]);
-    }
-    else
-    {
-      shell_list_directory(shell_path);
-    }
   }
   else if (strcmp(shell_tokens[0], "help") == 0)
   {

@@ -380,6 +380,13 @@ void brfs_format(word blocks, word words_per_block, char* label, word full_forma
 */
 word brfs_create_directory(char* parent_dir_path, char* dirname)
 {
+  // Check length of dirname
+  if (strlen(dirname) >= 16)
+  {
+    uprintln("Directory name too long!");
+    return 0;
+  }
+  
   struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
 
   word* brfs_data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks;
@@ -467,6 +474,13 @@ word brfs_create_directory(char* parent_dir_path, char* dirname)
 */
 word brfs_create_file(char* parent_dir_path, char* filename)
 {
+  // Check length of filename
+  if (strlen(filename) >= 16)
+  {
+    uprintln("Filename too long!");
+    return 0;
+  }
+
   struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
 
   word* brfs_data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks;
@@ -545,52 +559,6 @@ word brfs_create_file(char* parent_dir_path, char* filename)
   brfs_changed_blocks[next_free_block >> 5] |= (1 << (next_free_block & 31));
 
   return 1;
-}
-
-/**
- * List the contents of a directory over UART
- * dir_path: full path of the directory
-*/
-void brfs_list_directory(char* dir_path)
-{
-  uprint("Listing directory ");
-  uprintln(dir_path);
-  uprintln("-------------------");
-
-  // Find data block address of parent directory path
-  word dir_fat_idx = brfs_get_fat_idx_of_dir(dir_path);
-  if (dir_fat_idx == -1)
-  {
-    uprint("Parent directory ");
-    uprint(dir_path);
-    uprintln(" not found!");
-    return;
-  }
-
-  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
-  word* dir_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks + (dir_fat_idx * superblock->words_per_block);
-  word dir_entries_max = superblock->words_per_block / sizeof(struct brfs_dir_entry);
-
-  word i;
-  for (i = 0; i < dir_entries_max; i++)
-  {
-    struct brfs_dir_entry* dir_entry = (struct brfs_dir_entry*) (dir_addr + (i * sizeof(struct brfs_dir_entry)));
-    if (dir_entry->filename[0] != 0)
-    {
-      uprint("Filename: ");
-      char decompressed_filename[17];
-      strdecompress(decompressed_filename, (char*)&(dir_entry->filename));
-      uprint(decompressed_filename);
-      uprint(" FAT idx: ");
-      uprintDec((dir_entry->fat_idx));
-      uprint(" Flags: ");
-      uprintDec((dir_entry->flags));
-      uprint(" Filesize: ");
-      uprintDec((dir_entry->filesize));
-      uprintc('\n');
-    }
-  }
-  uprintln("");
 }
 
 /**

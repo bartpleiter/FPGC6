@@ -123,7 +123,7 @@ void W5500_asmDefines()
 }
 
 // Sets SPI3_CS low
-void WizSpiBeginTransfer()
+void wiz_spi_begin_transfer()
 {
     asm(
         "; backup regs\n"
@@ -142,7 +142,7 @@ void WizSpiBeginTransfer()
 }
 
 // Sets SPI3_CS high
-void WizSpiEndTransfer()
+void wiz_spi_end_transfer()
 {
     asm(
         "; backup regs\n"
@@ -163,7 +163,7 @@ void WizSpiEndTransfer()
 // write dataByte and return read value
 // write 0x00 for a read
 // Writes byte over SPI3 to W5500
-word WizSpiTransfer(word dataByte)
+word wiz_spi_transfer(word dataByte)
 {
     word retval = 0;
     asm(
@@ -178,135 +178,135 @@ word WizSpiTransfer(word dataByte)
 
 
 // Write data to W5500
-void wizWrite(word addr, word cb, char* buf, word len)
+void wiz_write(word addr, word cb, char* buf, word len)
 {
-  WizSpiBeginTransfer();
+  wiz_spi_begin_transfer();
 
   // Send address
   word addrMSB = (unsigned) addr >> 8;
-  WizSpiTransfer(addrMSB); //msByte
-  WizSpiTransfer(addr); //lsByte
+  wiz_spi_transfer(addrMSB); //msByte
+  wiz_spi_transfer(addr); //lsByte
 
   // Send control byte
-  WizSpiTransfer(cb);
+  wiz_spi_transfer(cb);
 
   // Send data
   word i;
   for (i = 0; i < len; i++)
   {
-    WizSpiTransfer(buf[i]);
+    wiz_spi_transfer(buf[i]);
   }
 
-  WizSpiEndTransfer();
+  wiz_spi_end_transfer();
 }
 
 
 // Write single byte to W5500
-word wizWriteSingle(word addr, word cb, word data)
+word wiz_write_single(word addr, word cb, word data)
 {
-  WizSpiBeginTransfer();
+  wiz_spi_begin_transfer();
 
   // Send address
   word addrMSB = (unsigned) addr >> 8;
-  WizSpiTransfer(addrMSB); //msByte
-  WizSpiTransfer(addr); //lsByte
+  wiz_spi_transfer(addrMSB); //msByte
+  wiz_spi_transfer(addr); //lsByte
 
   // Send control byte
-  WizSpiTransfer(cb);
+  wiz_spi_transfer(cb);
 
   // Send data
-  WizSpiTransfer(data);
+  wiz_spi_transfer(data);
 
-  WizSpiEndTransfer();
+  wiz_spi_end_transfer();
 
   return data;
 }
 
 
 // Write two bytes to W5500
-void wizWriteDouble(word addr, word cb, word data)
+void wiz_write_double(word addr, word cb, word data)
 {
-  WizSpiBeginTransfer();
+  wiz_spi_begin_transfer();
 
   // Send address
   word addrMSB = (unsigned) addr >> 8;
-  WizSpiTransfer(addrMSB); //msByte
-  WizSpiTransfer(addr); //lsByte
+  wiz_spi_transfer(addrMSB); //msByte
+  wiz_spi_transfer(addr); //lsByte
 
   // Send control byte
-  WizSpiTransfer(cb);
+  wiz_spi_transfer(cb);
 
   // Send data
   word dataMSB = (unsigned) data >> 8;
-  WizSpiTransfer(dataMSB);
-  WizSpiTransfer(data);
+  wiz_spi_transfer(dataMSB);
+  wiz_spi_transfer(data);
 
-  WizSpiEndTransfer();
+  wiz_spi_end_transfer();
 }
 
 
-void wizRead(word addr, word cb, char* buf, word len)
+void wiz_read(word addr, word cb, char* buf, word len)
 { 
-  WizSpiBeginTransfer();
+  wiz_spi_begin_transfer();
 
   // Send address
   word addrMSB = (unsigned) addr >> 8;
-  WizSpiTransfer(addrMSB); //msByte
-  WizSpiTransfer(addr); //lsByte
+  wiz_spi_transfer(addrMSB); //msByte
+  wiz_spi_transfer(addr); //lsByte
 
   // Send control byte
-  WizSpiTransfer(cb);
+  wiz_spi_transfer(cb);
 
   // Read data
   word i;
   for (i = 0; i < len; i++)
   {
-    buf[i] = WizSpiTransfer(0);
+    buf[i] = wiz_spi_transfer(0);
   }
 
-  WizSpiEndTransfer();
+  wiz_spi_end_transfer();
 }
 
 
-word wizReadSingle(word addr, word cb)
+word wiz_read_single(word addr, word cb)
 { 
-  WizSpiBeginTransfer();
+  wiz_spi_begin_transfer();
 
   // Send address
   word addrMSB = (unsigned) addr >> 8;
-  WizSpiTransfer(addrMSB); //msByte
-  WizSpiTransfer(addr); //lsByte
+  wiz_spi_transfer(addrMSB); //msByte
+  wiz_spi_transfer(addr); //lsByte
 
   // Send control byte
-  WizSpiTransfer(cb);
+  wiz_spi_transfer(cb);
 
   // Read data
-  word retval = WizSpiTransfer(0);
+  word retval = wiz_spi_transfer(0);
 
-  WizSpiEndTransfer();
+  wiz_spi_end_transfer();
 
   // Return read value
   return retval;
 }
 
 
-word wizReadDouble(word addr, word cb)
+word wiz_read_double(word addr, word cb)
 { 
-  WizSpiBeginTransfer();
+  wiz_spi_begin_transfer();
 
   // Send address
   word addrMSB = (unsigned) addr >> 8;
-  WizSpiTransfer(addrMSB); //msByte
-  WizSpiTransfer(addr); //lsByte
+  wiz_spi_transfer(addrMSB); //msByte
+  wiz_spi_transfer(addr); //lsByte
 
   // Send control byte
-  WizSpiTransfer(cb);
+  wiz_spi_transfer(cb);
 
   // Read data
-  word retval = WizSpiTransfer(0) << 8;
-  retval = retval + WizSpiTransfer(0);
+  word retval = wiz_spi_transfer(0) << 8;
+  retval = retval + wiz_spi_transfer(0);
 
-  WizSpiEndTransfer();
+  wiz_spi_end_transfer();
 
   // Return read value
   return retval;
@@ -318,91 +318,91 @@ word wizReadDouble(word addr, word cb)
 //-------------------
 
 // Send a command cmd to socket s
-void wizCmd(word s, word cmd)
+void wiz_send_cmd(word s, word cmd)
 {
-  //wizWriteSingle(WIZNET_SnCR, WIZNET_WRITE_SnR, cmd);
-  WizSpiBeginTransfer();
-  WizSpiTransfer(0); //msByte
-  WizSpiTransfer(WIZNET_SnCR); //lsByte
-  WizSpiTransfer(WIZNET_WRITE_SnR + (s << 5));
-  WizSpiTransfer(cmd);
-  WizSpiEndTransfer();
+  //wiz_write_single(WIZNET_SnCR, WIZNET_WRITE_SnR, cmd);
+  wiz_spi_begin_transfer();
+  wiz_spi_transfer(0); //msByte
+  wiz_spi_transfer(WIZNET_SnCR); //lsByte
+  wiz_spi_transfer(WIZNET_WRITE_SnR + (s << 5));
+  wiz_spi_transfer(cmd);
+  wiz_spi_end_transfer();
 
   // wait untill done
-  while ( wizReadSingle(WIZNET_SnCR, WIZNET_READ_SnR) );
+  while ( wiz_read_single(WIZNET_SnCR, WIZNET_READ_SnR) );
 }
 
 // Write 8 bits to a sockets control register
-void wizSetSockReg8(word s, word addr, word val)
+void wiz_set_sock_reg_8(word s, word addr, word val)
 {
-  //wizWriteSingle(addr, WIZNET_WRITE_SnR, val);
-  WizSpiBeginTransfer();
-  WizSpiTransfer(0); //msByte
-  WizSpiTransfer(addr); //lsByte
-  WizSpiTransfer(WIZNET_WRITE_SnR + (s << 5));
-  WizSpiTransfer(val);
-  WizSpiEndTransfer();
+  //wiz_write_single(addr, WIZNET_WRITE_SnR, val);
+  wiz_spi_begin_transfer();
+  wiz_spi_transfer(0); //msByte
+  wiz_spi_transfer(addr); //lsByte
+  wiz_spi_transfer(WIZNET_WRITE_SnR + (s << 5));
+  wiz_spi_transfer(val);
+  wiz_spi_end_transfer();
 }
 
 // Read 8 bits from a sockets control register
-word wizGetSockReg8(word s, word addr){
-  //return wizReadSingle(addr, WIZNET_READ_SnR);
-  WizSpiBeginTransfer();
+word wiz_get_sock_reg_8(word s, word addr){
+  //return wiz_read_single(addr, WIZNET_READ_SnR);
+  wiz_spi_begin_transfer();
 
   // Send address
   word addrMSB = (unsigned) addr >> 8;
-  WizSpiTransfer(addrMSB); //msByte
-  WizSpiTransfer(addr); //lsByte
+  wiz_spi_transfer(addrMSB); //msByte
+  wiz_spi_transfer(addr); //lsByte
 
   word cb = WIZNET_READ_SnR + (s << 5);
   
   // Send control byte
-  WizSpiTransfer(cb);
+  wiz_spi_transfer(cb);
 
   // Read data
-  word retval = WizSpiTransfer(0);
+  word retval = wiz_spi_transfer(0);
 
-  WizSpiEndTransfer();
+  wiz_spi_end_transfer();
 
   // Return read value
   return retval;
 }
 
 // Write 16 bits to a sockets control register
-void wizSetSockReg16(word s, word addr, word val)
+void wiz_set_sock_reg_16(word s, word addr, word val)
 {
-  //wizWriteDouble(addr, WIZNET_WRITE_SnR + (s << 5), val);
-  WizSpiBeginTransfer();
-  WizSpiTransfer(0); //msByte
-  WizSpiTransfer(addr); //lsByte
-  WizSpiTransfer(WIZNET_WRITE_SnR + (s << 5));
+  //wiz_write_double(addr, WIZNET_WRITE_SnR + (s << 5), val);
+  wiz_spi_begin_transfer();
+  wiz_spi_transfer(0); //msByte
+  wiz_spi_transfer(addr); //lsByte
+  wiz_spi_transfer(WIZNET_WRITE_SnR + (s << 5));
   word valMSB = (unsigned) val >> 8;
-  WizSpiTransfer(valMSB);
-  WizSpiTransfer(val);
-  WizSpiEndTransfer();
+  wiz_spi_transfer(valMSB);
+  wiz_spi_transfer(val);
+  wiz_spi_end_transfer();
 }
 
 // Read 16 bits from a sockets control register
-word wizGetSockReg16(word s, word addr)
+word wiz_get_sock_reg_16(word s, word addr)
 {
-  //return wizReadDouble(addr, WIZNET_READ_SnR + (s << 5));
-  WizSpiBeginTransfer();
+  //return wiz_read_double(addr, WIZNET_READ_SnR + (s << 5));
+  wiz_spi_begin_transfer();
 
   // Send address
   word addrMSB = (unsigned) addr >> 8;
-  WizSpiTransfer(addrMSB); //msByte
-  WizSpiTransfer(addr); //lsByte
+  wiz_spi_transfer(addrMSB); //msByte
+  wiz_spi_transfer(addr); //lsByte
 
   word cb = WIZNET_READ_SnR + (s << 5);
 
   // Send control byte
-  WizSpiTransfer(cb);
+  wiz_spi_transfer(cb);
 
   // Read data
-  word retval = WizSpiTransfer(0) << 8;
-  retval = retval + WizSpiTransfer(0);
+  word retval = wiz_spi_transfer(0) << 8;
+  retval = retval + wiz_spi_transfer(0);
 
-  WizSpiEndTransfer();
+  wiz_spi_end_transfer();
 
   // Return read value
   return retval;
@@ -414,28 +414,28 @@ word wizGetSockReg16(word s, word addr)
 //-------------------
 
 // Initialize W5500 chip
-void wiz_Init(char* ip_addr, char* gateway_addr, char* mac_addr, char* sub_mask)
+void wiz_init(char* ip_addr, char* gateway_addr, char* mac_addr, char* sub_mask)
 {
   W5500_asmDefines(); // workaround to prevent deletion by optimizer
-  WizSpiEndTransfer();
+  wiz_spi_end_transfer();
   delay(10);
 
-  wizWrite(WIZNET_SIPR,  WIZNET_WRITE_COMMON,  ip_addr,       4);
-  wizWrite(WIZNET_GAR,   WIZNET_WRITE_COMMON,  gateway_addr,  4);
-  wizWrite(WIZNET_SHAR,  WIZNET_WRITE_COMMON,  mac_addr,      6);
-  wizWrite(WIZNET_SUBR,  WIZNET_WRITE_COMMON,  sub_mask,      4);
+  wiz_write(WIZNET_SIPR,  WIZNET_WRITE_COMMON,  ip_addr,       4);
+  wiz_write(WIZNET_GAR,   WIZNET_WRITE_COMMON,  gateway_addr,  4);
+  wiz_write(WIZNET_SHAR,  WIZNET_WRITE_COMMON,  mac_addr,      6);
+  wiz_write(WIZNET_SUBR,  WIZNET_WRITE_COMMON,  sub_mask,      4);
 }
 
 
 // Initialize socket s for TCP
-void wizInitSocketTCP(word s, word port)
+void wiz_init_socket_tcp_host(word s, word port)
 {
-  wizCmd(s, WIZNET_CR_CLOSE);
-  wizSetSockReg8      (s, WIZNET_SnIR, 0xFF);    //reset interrupt register
-  wizSetSockReg8      (s, WIZNET_SnMR, WIZNET_MR_TCP);  //set mode register to tcp
-  wizSetSockReg16     (s, WIZNET_SnPORT, port);  //set tcp port
-  wizCmd(s, WIZNET_CR_OPEN);
-  wizCmd(s, WIZNET_CR_LISTEN);
+  wiz_send_cmd(s, WIZNET_CR_CLOSE);
+  wiz_set_sock_reg_8      (s, WIZNET_SnIR, 0xFF);    //reset interrupt register
+  wiz_set_sock_reg_8      (s, WIZNET_SnMR, WIZNET_MR_TCP);  //set mode register to tcp
+  wiz_set_sock_reg_16     (s, WIZNET_SnPORT, port);  //set tcp port
+  wiz_send_cmd(s, WIZNET_CR_OPEN);
+  wiz_send_cmd(s, WIZNET_CR_LISTEN);
   //delay(10); //wait a bit to make sure the socket is in the correct state (technically not necessary)
 }
 
@@ -447,7 +447,7 @@ void wizInitSocketTCP(word s, word port)
 
 
 // from memory, so no need for unsigned comparisons (because we have less than 2GB RAM)
-word wizWriteDataFromMemory(word s, char* buf, word buflen)
+word wiz_write_data(word s, char* buf, word buflen)
 {
   // Make sure there is something to send
   if (buflen <= 0)
@@ -461,7 +461,7 @@ word wizWriteDataFromMemory(word s, char* buf, word buflen)
   while (bytesSent != buflen)
   {
 
-    if (wizGetSockReg8(s, WIZNET_SnSR) == WIZNET_SOCK_CLOSED)
+    if (wiz_get_sock_reg_8(s, WIZNET_SnSR) == WIZNET_SOCK_CLOSED)
     {
       //uprintln("connection closed");
       return 0;
@@ -472,36 +472,36 @@ word wizWriteDataFromMemory(word s, char* buf, word buflen)
       partToSend = WIZNET_MAX_TBUF;
 
     // Make sure there is room in the transmit buffer for what we want to send
-    word txfree = wizGetSockReg16(s, WIZNET_SnTX_FSR); // Size of the available buffer area
+    word txfree = wiz_get_sock_reg_16(s, WIZNET_SnTX_FSR); // Size of the available buffer area
 
     word timeout = 0;
     while (txfree < partToSend) 
     {
       timeout++; // Increase timeout counter
       delay(1); // Wait a bit
-      txfree = wizGetSockReg16(s, WIZNET_SnTX_FSR); // Size of the available buffer area
+      txfree = wiz_get_sock_reg_16(s, WIZNET_SnTX_FSR); // Size of the available buffer area
       
       // After a second
       if (timeout > 1000) 
       {
-        wizCmd(s, WIZNET_CR_DISCON); // Disconnect the connection
+        wiz_send_cmd(s, WIZNET_CR_DISCON); // Disconnect the connection
         //uprintln("timeout");
         return 0;
       }
     }
 
      // Space is available so we will send the buffer
-    word txwr = wizGetSockReg16(s, WIZNET_SnTX_WR);  // Read the Tx Write Pointer
+    word txwr = wiz_get_sock_reg_16(s, WIZNET_SnTX_WR);  // Read the Tx Write Pointer
 
     // Write the outgoing data to the transmit buffer
-    wizWrite(txwr, WIZNET_WRITE_SnTX + (s << 5), buf + bytesSent, partToSend);
+    wiz_write(txwr, WIZNET_WRITE_SnTX + (s << 5), buf + bytesSent, partToSend);
 
     // update the buffer pointer
     word newSize = txwr + partToSend;
-    wizSetSockReg16(s, WIZNET_SnTX_WR, newSize);
+    wiz_set_sock_reg_16(s, WIZNET_SnTX_WR, newSize);
 
     // Now Send the SEND command which tells the wiznet the pointer is updated
-    wizCmd(s, WIZNET_CR_SEND);
+    wiz_send_cmd(s, WIZNET_CR_SEND);
 
     // Update the amount of bytes sent
     bytesSent += partToSend;
@@ -514,7 +514,7 @@ word wizWriteDataFromMemory(word s, char* buf, word buflen)
 
 
 // Read received data
-word wizReadRecvData(word s, char* buf, word buflen)
+word wiz_read_recv_data(word s, char* buf, word buflen)
 {
   if (buflen == 0)
   {
@@ -528,16 +528,16 @@ word wizReadRecvData(word s, char* buf, word buflen)
   }
    
   // Get the address where the wiznet is holding the data
-  word rxrd = wizGetSockReg16(s, WIZNET_SnRX_RD); 
+  word rxrd = wiz_get_sock_reg_16(s, WIZNET_SnRX_RD); 
 
   // Read the data into the buffer
-  wizRead(rxrd, WIZNET_READ_SnRX + (s << 5), buf, buflen);
+  wiz_read(rxrd, WIZNET_READ_SnRX + (s << 5), buf, buflen);
 
   // Remove read data from rxbuffer to make space for new data
   word nsize = rxrd + buflen;
-  wizSetSockReg16(s, WIZNET_SnRX_RD, nsize);  //replace read data pointer
+  wiz_set_sock_reg_16(s, WIZNET_SnRX_RD, nsize);  //replace read data pointer
   //tell the wiznet we have retrieved the data
-  wizCmd(s, WIZNET_CR_RECV);
+  wiz_send_cmd(s, WIZNET_CR_RECV);
 
   // Terminate buffer for printing in case the data was a string
   *(buf + buflen) = 0;
@@ -547,14 +547,14 @@ word wizReadRecvData(word s, char* buf, word buflen)
 
 
 // Remove the received data
-void wizFlush(word s, word rsize)
+void wiz_flush(word s, word rsize)
 {
   if (rsize > 0)
   {
-    word rxrd = wizGetSockReg16(s, WIZNET_SnRX_RD);         //retrieve read data pointer
+    word rxrd = wiz_get_sock_reg_16(s, WIZNET_SnRX_RD);         //retrieve read data pointer
     word nsize = rxrd + rsize;
-    wizSetSockReg16(s, WIZNET_SnRX_RD, nsize);  //replace read data pointer
+    wiz_set_sock_reg_16(s, WIZNET_SnRX_RD, nsize);  //replace read data pointer
     //tell the wiznet we have retrieved the data
-    wizCmd(s, WIZNET_CR_RECV);
+    wiz_send_cmd(s, WIZNET_CR_RECV);
   }
 }

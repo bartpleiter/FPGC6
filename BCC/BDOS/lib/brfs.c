@@ -1083,6 +1083,12 @@ word brfs_write(word file_pointer, word* buffer, word length)
 */
 struct brfs_dir_entry* brfs_stat(char* file_path)
 {
+  // Remove all trailing slashes
+  while (strlen(file_path) > 1 && file_path[strlen(file_path)-1] == '/')
+  {
+    file_path[strlen(file_path)-1] = 0;
+  }
+
   // Split filename from path using basename and dirname
   char dirname_output[MAX_PATH_LENGTH];
   char* file_path_basename = basename(file_path);

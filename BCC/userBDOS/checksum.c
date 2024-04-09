@@ -35,8 +35,6 @@ int main()
 
   // Get file size
   struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(absolute_path);
-  uprint("Entry address: ");
-  uprintlnHex((word)entry);
   if ((word)entry == -1)
   {
     bdos_println("File not found");
@@ -57,6 +55,8 @@ int main()
   word buffer[128];
   word read;
   word i;
+  // BUG: this will not work for files smaller than 128 words
+  // Look at webserv for better way
   while (filesize > 0)
   {
     read = fs_read(fd, (char*)buffer, 128);

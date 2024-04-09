@@ -29,10 +29,10 @@ void initClient(word ip, word port)
 
   word sub_mask[4] = {255, 255, 255, 0};
 
-  wiz_Init(ip_addr, gateway_addr, mac_addr, sub_mask);
+  wiz_init(ip_addr, gateway_addr, mac_addr, sub_mask);
 
   // Open socket in TCP Client mode at port
-  wizInitSocketTCPClient(SOCKET_CLIENT, port);
+  wiz_init_socket_tcp_client(SOCKET_CLIENT, port);
 }
 
 
@@ -40,11 +40,11 @@ void initClient(word ip, word port)
 // Return 1 on success, 0 on failure
 word connectToTarget(char* ipTarget, word portTarget)
 {
-  wizWrite(WIZNET_SnDIPR,  WIZNET_WRITE_SnR + (SOCKET_CLIENT << 5), ipTarget, 4);
-  wizSetSockReg16(SOCKET_CLIENT, WIZNET_SnDPORT, portTarget);
-  wizCmd(SOCKET_CLIENT, WIZNET_CR_CONNECT);
+  wiz_write(WIZNET_SnDIPR,  WIZNET_WRITE_SnR + (SOCKET_CLIENT << 5), ipTarget, 4);
+  wiz_set_sock_reg_16(SOCKET_CLIENT, WIZNET_SnDPORT, portTarget);
+  wiz_send_cmd(SOCKET_CLIENT, WIZNET_CR_CONNECT);
 
-  word sxStatus = wizGetSockReg8(SOCKET_CLIENT, WIZNET_SnSR);
+  word sxStatus = wiz_get_sock_reg_8(SOCKET_CLIENT, WIZNET_SnSR);
 
   word retries = 0;
 
@@ -56,7 +56,7 @@ word connectToTarget(char* ipTarget, word portTarget)
       return 0;
     }
 
-    sxStatus = wizGetSockReg8(SOCKET_CLIENT, WIZNET_SnSR);
+    sxStatus = wiz_get_sock_reg_8(SOCKET_CLIENT, WIZNET_SnSR);
 
     if (sxStatus != WIZNET_SOCK_ESTABLISHED)
     {
@@ -96,7 +96,7 @@ void sendRequest()
   catLen = strcpy(rTxt + rLen, "\r\n\r\n");
   rLen += catLen;
 
-  wizWriteDataFromMemory(SOCKET_CLIENT, rTxt, rLen);
+  wiz_write_data(SOCKET_CLIENT, rTxt, rLen);
   BDOS_PrintConsole("Request sent\n");
 }
 
@@ -277,13 +277,13 @@ void receiveResponse(char* path, char* fname)
   word currentProgress = 0;
 
   BDOS_PrintConsole("Downloading response (any key to stop)\n");
-  while (wizGetSockReg8(SOCKET_CLIENT, WIZNET_SnSR) == WIZNET_SOCK_ESTABLISHED)
+  while (wiz_get_sock_reg_8(SOCKET_CLIENT, WIZNET_SnSR) == WIZNET_SOCK_ESTABLISHED)
   {
-    word rsize = wizGetSockReg16(SOCKET_CLIENT, WIZNET_SnRX_RSR);
+    word rsize = wiz_get_sock_reg_16(SOCKET_CLIENT, WIZNET_SnRX_RSR);
     if (rsize != 0)
     {
       char* rbuf = (char*) HEAP_LOCATION; // we use heap for the receive data buffer
-      wizReadRecvData(SOCKET_CLIENT, rbuf, rsize);
+      wiz_read_recv_data(SOCKET_CLIENT, rbuf, rsize);
       if (firstResponse)
       {
         word dataStart = getDataStart(rbuf, rsize);
@@ -335,7 +335,7 @@ void receiveResponse(char* path, char* fname)
       break;
     }
   }
-  wizCmd(SOCKET_CLIENT, WIZNET_CR_DISCON);
+  wiz_send_cmd(SOCKET_CLIENT, WIZNET_CR_DISCON);
   BDOS_PrintConsole("Output written to ");
   BDOS_PrintConsole(path);
   BDOS_PrintConsole("/");

@@ -26,12 +26,12 @@ void NETHID_handleSession(word s)
     word rsize = 0;
     word rsizeValidate = 0;
     do {
-        rsize = wizGetSockReg16(s, WIZNET_SnRX_RSR);
+        rsize = wiz_get_sock_reg_16(s, WIZNET_SnRX_RSR);
         if (rsize != 0)
         {
             // twice on purpose
-            rsizeValidate = wizGetSockReg16(s, WIZNET_SnRX_RSR);
-            rsizeValidate = wizGetSockReg16(s, WIZNET_SnRX_RSR);
+            rsizeValidate = wiz_get_sock_reg_16(s, WIZNET_SnRX_RSR);
+            rsizeValidate = wiz_get_sock_reg_16(s, WIZNET_SnRX_RSR);
         }
     } 
     while (rsize != rsizeValidate);
@@ -43,11 +43,11 @@ void NETHID_handleSession(word s)
     }
 
     // receive data
-    wizReadRecvData(s, NETHID_rxBuf, rsize);
+    wiz_read_recv_data(s, NETHID_rxBuf, rsize);
     NETHID_rxBuf[rsize] = 0; //terminate
 
     // echo data back to confirm receive
-    wizWriteDataFromMemory(s, NETHID_rxBuf, rsize);
+    wiz_write_data(s, NETHID_rxBuf, rsize);
 
     // loop through the received data
     word isEscaped = 0;
@@ -112,7 +112,7 @@ void NETHID_handleSession(word s)
 void NETHID_init(word s)
 {
     // Open socket in TCP Server mode
-    wizInitSocketTCP(s, NETHID_PORT);
+    wiz_init_socket_tcp_host(s, NETHID_PORT);
 
     NETHID_isInitialized = 1;
 }
@@ -123,12 +123,12 @@ void NETHID_init(word s)
 void NETHID_loop(word s)
 {
     // Get status for socket s
-    word sxStatus = wizGetSockReg8(s, WIZNET_SnSR);
+    word sxStatus = wiz_get_sock_reg_8(s, WIZNET_SnSR);
 
     if (sxStatus == WIZNET_SOCK_CLOSED)
     { 
         // Open the socket when closed
-        wizInitSocketTCP(s, NETHID_PORT);
+        wiz_init_socket_tcp_host(s, NETHID_PORT);
     }
     else if (sxStatus == WIZNET_SOCK_ESTABLISHED)
     {
@@ -150,7 +150,7 @@ void NETHID_loop(word s)
         uprintlnHex(sxStatus);
         */
         // In other cases, reset the socket
-        wizInitSocketTCP(s, NETHID_PORT);
+        wiz_init_socket_tcp_host(s, NETHID_PORT);
     }
     return;
 }

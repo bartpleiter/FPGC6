@@ -145,7 +145,7 @@ void bdos_init_network()
 
   word sub_mask[4] = {255, 255, 255, 0};
 
-  wiz_Init(ip_addr, gateway_addr, mac_addr, sub_mask);
+  wiz_init(ip_addr, gateway_addr, mac_addr, sub_mask);
 }
 
 

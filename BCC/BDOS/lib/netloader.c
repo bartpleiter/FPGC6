@@ -198,13 +198,13 @@ void NETLOADER_handleSession(word s)
     word leftOverData[4];
     word leftOverBytes = 0;
 
-    while (wizGetSockReg8(s, WIZNET_SnSR) == WIZNET_SOCK_ESTABLISHED)
+    while (wiz_get_sock_reg_8(s, WIZNET_SnSR) == WIZNET_SOCK_ESTABLISHED)
     {
-        word rsize = wizGetSockReg16(s, WIZNET_SnRX_RSR);
+        word rsize = wiz_get_sock_reg_16(s, WIZNET_SnRX_RSR);
         if (rsize != 0)
         {
             char* rbuf = (char *) TEMP_ADDR;
-            wizReadRecvData(s, rbuf, rsize);
+            wiz_read_recv_data(s, rbuf, rsize);
             if (firstResponse)
             {
                 GFX_PrintConsole("\n");
@@ -261,8 +261,8 @@ void NETLOADER_handleSession(word s)
 
                     if (failedToCreateFile)
                     {
-                        wizWriteDataFromMemory(s, "ERR!", 4);
-                        wizCmd(s, WIZNET_CR_DISCON);
+                        wiz_write_data(s, "ERR!", 4);
+                        wiz_send_cmd(s, WIZNET_CR_DISCON);
                         GFX_PrintConsole("E: Could not create file\n");
                         // clear the shell
                         shell_clear_command();
@@ -274,8 +274,8 @@ void NETLOADER_handleSession(word s)
                 else
                 {
                     // unsupported command
-                    wizWriteDataFromMemory(s, "ERR!", 4);
-                    wizCmd(s, WIZNET_CR_DISCON);
+                    wiz_write_data(s, "ERR!", 4);
+                    wiz_send_cmd(s, WIZNET_CR_DISCON);
                     GFX_PrintConsole("E: Unknown netloader cmd\n");
                     // clear the shell
                     shell_clear_command();
@@ -347,8 +347,8 @@ void NETLOADER_handleSession(word s)
                 // all data downloaded
                 if (contentLength == 0)
                 {
-                    wizWriteDataFromMemory(s, "THX!", 4);
-                    wizCmd(s, WIZNET_CR_DISCON);
+                    wiz_write_data(s, "THX!", 4);
+                    wiz_send_cmd(s, WIZNET_CR_DISCON);
 
                     if (downloadToFile)
                     {
@@ -479,8 +479,8 @@ void NETLOADER_handleSession(word s)
                 // all data downloaded
                 if (contentLength == 0)
                 {
-                    wizWriteDataFromMemory(s, "THX!", 4);
-                    wizCmd(s, WIZNET_CR_DISCON);
+                    wiz_write_data(s, "THX!", 4);
+                    wiz_send_cmd(s, WIZNET_CR_DISCON);
 
                     // remove progress prints
                     word i = strlen(dbuf);
@@ -514,7 +514,7 @@ void NETLOADER_handleSession(word s)
 void NETLOADER_init(word s)
 {
     // Open socket in TCP Server mode
-    wizInitSocketTCP(s, NETLOADER_PORT);
+    wiz_init_socket_tcp_host(s, NETLOADER_PORT);
 }
 
 
@@ -523,12 +523,12 @@ void NETLOADER_init(word s)
 word NETLOADER_loop(word s)
 {
     // Get status for socket s
-    word sxStatus = wizGetSockReg8(s, WIZNET_SnSR);
+    word sxStatus = wiz_get_sock_reg_8(s, WIZNET_SnSR);
 
     if (sxStatus == WIZNET_SOCK_CLOSED)
     { 
         // Open the socket when closed
-        wizInitSocketTCP(s, NETLOADER_PORT);
+        wiz_init_socket_tcp_host(s, NETLOADER_PORT);
     }
     else if (sxStatus == WIZNET_SOCK_ESTABLISHED)
     {
@@ -548,7 +548,7 @@ word NETLOADER_loop(word s)
     else
     {
         // In other cases, reset the socket
-        wizInitSocketTCP(s, NETLOADER_PORT);
+        wiz_init_socket_tcp_host(s, NETLOADER_PORT);
     }
 
     return 0;

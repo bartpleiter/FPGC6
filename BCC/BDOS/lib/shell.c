@@ -361,6 +361,70 @@ void shell_format_filesystem()
 }
 
 /**
+ * Show filesystem usage
+*/
+void shell_show_fs_usage()
+{
+  struct brfs_superblock* superblock = (struct brfs_superblock*)brfs_ram_storage;
+  word total_blocks = superblock->total_blocks;
+  word block_size = superblock->words_per_block;
+
+  char* fat_addr = brfs_ram_storage + SUPERBLOCK_SIZE;
+
+  // Loop through FAT table and count free blocks
+  word free_blocks = 0;
+  word i = 0;
+  while (i < total_blocks)
+  {
+    if (fat_addr[i] == 0)
+    {
+      free_blocks++;
+    }
+    i++;
+  }
+
+  word used_blocks = total_blocks - free_blocks;
+  word used_space = used_blocks * block_size;
+  word free_space = free_blocks * block_size;
+  word total_space = total_blocks * block_size;
+
+  GFX_PrintConsole("Usage:\n");
+  GFX_PrintConsole("------\n");
+
+  GFX_PrintConsole("Used blocks : ");
+  GFX_PrintDecConsole(used_blocks);
+  GFX_PrintConsole("/");
+  GFX_PrintDecConsole(total_blocks);
+  GFX_PrintConsole("\n");
+  GFX_PrintConsole("Used space  : ");
+  GFX_PrintDecConsole(MATH_divU(used_space, 1000));
+  GFX_PrintConsole("/");
+  GFX_PrintDecConsole(MATH_divU(total_space, 1000));
+  GFX_PrintConsole(" kwords\n");
+
+  GFX_PrintConsole("\nFree space:\n");
+  GFX_PrintConsole("-----------\n");
+
+  GFX_PrintConsole("Free blocks : ");
+  GFX_PrintDecConsole(free_blocks);
+  GFX_PrintConsole("\n");
+  GFX_PrintConsole("Free space  : ");
+  GFX_PrintDecConsole(MATH_divU(free_space, 1000));
+  GFX_PrintConsole(" kwords\n");
+  
+
+  GFX_PrintConsole("\nBlocks:\n");
+  GFX_PrintConsole("-------\n");
+
+  GFX_PrintConsole("Total blocks: ");
+  GFX_PrintDecConsole(total_blocks);
+  GFX_PrintConsole("\n");
+  GFX_PrintConsole("Block size  : ");
+  GFX_PrintDecConsole(block_size);
+  GFX_PrintConsole(" words\n");
+}
+
+/**
  * Handle the command
 */
 void shell_handle_command()
@@ -384,10 +448,6 @@ void shell_handle_command()
   {
     brfs_write_to_flash();
   }
-  else if (strcmp(shell_tokens[0], "read") == 0)
-  {
-    brfs_read_from_flash();
-  }
   else if (strcmp(shell_tokens[0], "dump") == 0)
   {
     // Dump FAT
@@ -396,6 +456,10 @@ void shell_handle_command()
   else if (strcmp(shell_tokens[0], "format") == 0)
   {
     shell_format_filesystem();
+  }
+  else if (strcmp(shell_tokens[0], "df") == 0)
+  {
+    shell_show_fs_usage();
   }
   // Attempt to run program both from local dir and from SHELL_BIN_PATH
   else if (!shell_run_program(0))
@@ -412,12 +476,16 @@ void shell_handle_command()
 */
 void shell_init()
 {
+  // Clear screen by clearing window tables and resetting the cursor
+  GFX_clearWindowtileTable();
+  GFX_clearWindowpaletteTable();
+  GFX_cursor = 0;
+
   shell_clear_command();
   // Set path to root
   strcpy(shell_path, "/");
   shell_print_prompt();
 }
-
 
 /**
  * Main shell loop

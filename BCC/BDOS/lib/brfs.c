@@ -14,6 +14,7 @@ Implementing in BDOS on PCB v3:
 #define BRFS_RAM_STORAGE_ADDR 0x100000 // From 4th MiB
 
 // Addresses in SPI Flash
+#define SPIFLASH_MEMMAP_ADDR 0x800000
 // Note that each section should be in a different 4KiB sector in SPI Flash
 #define BRFS_SPIFLASH_SUPERBLOCK_ADDR 0xDF000 // One sector before FAT
 #define BRFS_SPIFLASH_FAT_ADDR 0xE0000 // Can be 32768 words (128KiB) for 32MiB of 256word blocks
@@ -1131,31 +1132,6 @@ struct brfs_dir_entry* brfs_stat(char* file_path)
 }
 
 /**
- * Check if a block has changed by comparing it to the flash, returns 1 if changed and 0 if not
- * Note: this is slow and should eventually be replaced by a list of changed blocks
- * block_idx: index of the block
-*/
-word brfs_check_block_changed(word block_idx)
-{
-  struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
-  word* data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks;
-
-  word spi_data_buffer[256];
-
-  if (superblock->words_per_block > 256)
-  {
-    uprintln("Error: words_per_block should be <= 256 for this function!");
-    return 0;
-  }
-
-  // Read block from flash, and enable bytes to word
-  spiflash_read_from_address(spi_data_buffer, BRFS_SPIFLASH_BLOCK_ADDR + block_idx * superblock->words_per_block, superblock->words_per_block, 1);
-
-  // Compare block to flash
-  return memcmp(data_block_addr + (block_idx * superblock->words_per_block), spi_data_buffer, superblock->words_per_block);
-}
-
-/**
  * Write the FAT table to SPI flash by performing three steps:
  * 1. Check which FAT entries have changed
  * 2. Erase the 4KiB sectors that contain these FAT entries
@@ -1395,28 +1371,36 @@ word brfs_superblock_is_valid(struct brfs_superblock* superblock)
 
 /**
  * Read the superblock, FAT and data blocks from SPI flash
+ * Reads in QSPI mode and returns to SPI mode after reading
  * Returns 1 on success, or 0 on error
 */
 word brfs_read_from_flash()
 {
+  // Set QSPI memory mapped mode
+  spiflash_qspi();
+
   // Read superblock from flash
-  spiflash_read_from_address(brfs_ram_storage, BRFS_SPIFLASH_SUPERBLOCK_ADDR, SUPERBLOCK_SIZE, 1);
+  char* spi_flash_read_addr = (char*) SPIFLASH_MEMMAP_ADDR + (BRFS_SPIFLASH_SUPERBLOCK_ADDR >> 2);
+  memcpy(brfs_ram_storage, spi_flash_read_addr, SUPERBLOCK_SIZE);
 
   // Perform validity checks on superblock
   struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
   if (!brfs_superblock_is_valid(superblock))
   {
     uprintln("Error: superblock is not valid!");
+    spiflash_init(); // Return to SPI mode
     return 0;
   }
   
-  word* data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks;
-
   // Read FAT from flash
-  spiflash_read_from_address(brfs_ram_storage + SUPERBLOCK_SIZE, BRFS_SPIFLASH_FAT_ADDR, superblock->total_blocks, 1);
+  spi_flash_read_addr = (char*) SPIFLASH_MEMMAP_ADDR + (BRFS_SPIFLASH_FAT_ADDR >> 2);
+  memcpy(brfs_ram_storage + SUPERBLOCK_SIZE, spi_flash_read_addr, superblock->total_blocks);
 
   // Read data blocks from flash
-  spiflash_read_from_address(data_block_addr, BRFS_SPIFLASH_BLOCK_ADDR, superblock->total_blocks * superblock->words_per_block, 1);
+  word* data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks;
+  spi_flash_read_addr = (char*) SPIFLASH_MEMMAP_ADDR + (BRFS_SPIFLASH_BLOCK_ADDR >> 2);
+  memcpy(data_block_addr, spi_flash_read_addr, superblock->total_blocks * superblock->words_per_block);
 
+  spiflash_init(); // Return to SPI mode
   return 1;
 }

@@ -56,6 +56,22 @@ word spiflash_transfer(word dataByte)
   return retval;
 }
 
+// Disable manual operation and set SPI0 back to QSPI mode
+// This allows SPI content to be read directly from memory at high speeds
+// However, this disables writing and other manual operations
+void spiflash_qspi()
+{
+  // Send QSPI command
+  spiflash_begin_transfer();
+  spiflash_transfer(0xEB);
+  spiflash_end_transfer();
+
+  // Disable SPI0 (connects SPIreader.v and disconnects simpleSPI.v)
+  word *p = (word *) 0xC0272A; // Set address (SPI0 enable)
+  *p = 0; // Write value
+  delay(10);
+}
+
 // Initialize manual operation of SPI flash by enabling SPI0 and resetting the chip
 // This is needed to get out of continuous read mode and allow manual commands
 void spiflash_init()

@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# script to sync all C files in UserBDOS/ to /C/SRC/ on FPGC
-# assumes the subdirectories already exist. In theory a mkdir command could be added
-#  (mkdir does nothing if the directory already exists)
+# script to sync all C files in UserBDOS/ to /c/src on FPGC
 
 MAINPATH=$(pwd)
 
@@ -10,19 +8,27 @@ echo $MAINPATH
 
 cd userBDOS
 
+# Go to root directory
 echo "clear" | python3 "$MAINPATH/../Programmer/sendCommand.py"
-echo "cd" | python3 "$MAINPATH/../Programmer/sendCommand.py"
-echo "clear" | python3 "$MAINPATH/../Programmer/sendCommand.py"
+echo "cd /" | python3 "$MAINPATH/../Programmer/sendCommand.py"
+
+# Create directories
+echo "mkdir c" | python3 "$MAINPATH/../Programmer/sendCommand.py"
+echo "mkdir c/src" | python3 "$MAINPATH/../Programmer/sendCommand.py"
 
 for i in $(find . -type f -print)
 do
     FNAME=$(basename $i)
-    DIR=$(dirname $i | cut -c 2-)
+    DIR="/c/src$(dirname $i | cut -c 2-)"
 
-    echo "sending $DIR/$FNAME"
-    # move to directory
-    echo "cd /C/SRC$DIR" | python3 "$MAINPATH/../Programmer/sendCommand.py"
-    # send file
-    python3 "$MAINPATH/../Programmer/netUpload.py" "$i" "$FNAME"
+    # Create directory
+    echo "mkdir $DIR" | python3 "$MAINPATH/../Programmer/sendCommand.py"
+
+    # Move to directory
+    echo "cd $DIR" | python3 "$MAINPATH/../Programmer/sendCommand.py"
+    
+    # Send file
+    cd $MAINPATH/../Programmer
+    sh sendTextFile.sh $MAINPATH/userBDOS/$i
 
 done

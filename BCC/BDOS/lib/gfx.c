@@ -13,6 +13,7 @@
 #define GFX_CURSOR_ASCII        219
 
 word GFX_cursor = 0;
+word GFX_disable_cursor = 0;
 
 // Workaround to allow for defines in asm functions
 void GFX_asmDefines()
@@ -524,9 +525,12 @@ void GFX_ScrollUp()
 // Prints cursor character at cursor
 void GFX_printCursor()
 {
-    // print character at cursor
-    word *v = (word *) GFX_WINDOW_PATTERN_ADDR;
-    *(v+GFX_cursor) = GFX_CURSOR_ASCII;
+    if (!GFX_disable_cursor)
+    {
+        // print character at cursor
+        word *v = (word *) GFX_WINDOW_PATTERN_ADDR;
+        *(v+GFX_cursor) = GFX_CURSOR_ASCII;
+    }
 }
 
 

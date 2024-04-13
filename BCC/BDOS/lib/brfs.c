@@ -558,6 +558,7 @@ word brfs_create_file(char* parent_dir_path, char* filename)
 
   // Update changed block
   brfs_changed_blocks[next_free_block >> 5] |= (1 << (next_free_block & 31));
+  brfs_changed_blocks[parent_dir_fat_idx >> 5] |= (1 << (parent_dir_fat_idx & 31));
 
   return 1;
 }
@@ -878,7 +879,7 @@ word brfs_get_fat_idx_at_cursor(word file_pointer, word cursor)
   struct brfs_superblock* superblock = (struct brfs_superblock*) brfs_ram_storage;
 
   // Loop through FAT until cursor is reached
-  while (cursor > superblock->words_per_block)
+  while (cursor >= superblock->words_per_block)
   {
     current_fat_idx = brfs_ram_storage[SUPERBLOCK_SIZE + current_fat_idx];
     if (current_fat_idx == -1)
@@ -948,7 +949,7 @@ word brfs_read(word file_pointer, word* buffer, word length)
 
         // Copy words to buffer
         memcpy(buffer, data_block_addr + (current_fat_idx * superblock->words_per_block) + MATH_modU(brfs_cursors[i], superblock->words_per_block), words_to_read);
-
+        
         // Update cursor and length
         brfs_cursors[i] += words_to_read;
         length -= words_to_read;
@@ -961,10 +962,7 @@ word brfs_read(word file_pointer, word* buffer, word length)
           uprintln("There is no next block in the file!");
           return 0;
         }
-
-        
       }
-
       return 1;
     }
   }
@@ -1399,7 +1397,39 @@ word brfs_read_from_flash()
   // Read data blocks from flash
   word* data_block_addr = brfs_ram_storage + SUPERBLOCK_SIZE + superblock->total_blocks;
   spi_flash_read_addr = (char*) SPIFLASH_MEMMAP_ADDR + (BRFS_SPIFLASH_BLOCK_ADDR >> 2);
-  memcpy(data_block_addr, spi_flash_read_addr, superblock->total_blocks * superblock->words_per_block);
+  word read_length = superblock->total_blocks * superblock->words_per_block;
+
+  // Check if read_length is a multiple of 16
+  if (read_length & 15)
+  {
+    // Read without progress bar
+    memcpy(data_block_addr, spi_flash_read_addr, read_length);
+    spiflash_init(); // Return to SPI mode
+    return 1;
+  }
+
+  
+  // Print progress bar
+  GFX_disable_cursor = 1;
+  GFX_PrintConsole("Loading blocks: ");
+  // Print emtpy block character
+  word i;
+  for (i = 0; i < 16; i++)
+  {
+    GFX_PrintcConsole(176);
+  }
+  // Set cursor back to start of progress bar
+  GFX_cursor -= 16;
+
+  // Split in 16 parts
+  word read_length_per_part = read_length >> 4;
+  for (i = 0; i < 16; i++)
+  {
+    memcpy(data_block_addr + (i * read_length_per_part), spi_flash_read_addr + (i * read_length_per_part), read_length_per_part);
+    GFX_PrintcConsole(219); // Print full block character
+  }
+  GFX_disable_cursor = 0;
+  GFX_PrintcConsole('\n');
 
   spiflash_init(); // Return to SPI mode
   return 1;

@@ -109,17 +109,12 @@ word bdos_init_brfs()
   spiflash_init();
 
   // Try to read the filesystem from the SPI flash
-  GFX_PrintConsole("Reading BRFS from SPI flash...\n");
-  if (brfs_read_from_flash())
-  {
-    GFX_PrintConsole("BRFS read from flash\n");
-  }
-  else
+  GFX_PrintConsole("Reading BRFS from SPI flash\n");
+  if (!brfs_read_from_flash())
   {
     GFX_PrintConsole("Could not read BRFS from flash!\n");
     return 0;
   }
-
   return 1;
 }
 

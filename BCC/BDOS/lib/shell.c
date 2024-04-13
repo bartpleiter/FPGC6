@@ -277,9 +277,10 @@ void shell_process_dots(char* path)
 */
 void shell_change_directory()
 {
-  if (shell_num_tokens != 2)
+  if (shell_num_tokens == 1)
   {
-    GFX_PrintConsole("Usage: cd <path>\n");
+    // Set path to root if no argument
+    strcpy(shell_path, "/");
     return;
   }
 
@@ -387,41 +388,36 @@ void shell_show_fs_usage()
   word used_space = used_blocks * block_size;
   word free_space = free_blocks * block_size;
   word total_space = total_blocks * block_size;
+  word percentage_used_space = MATH_divU(used_space*100, total_space);
 
-  GFX_PrintConsole("Usage:\n");
-  GFX_PrintConsole("------\n");
+  GFX_PrintConsole("Usage: ");
+  GFX_PrintDecConsole(percentage_used_space);
+  GFX_PrintConsole("%\n-----------\n");
 
-  GFX_PrintConsole("Used blocks : ");
-  GFX_PrintDecConsole(used_blocks);
-  GFX_PrintConsole("/");
-  GFX_PrintDecConsole(total_blocks);
-  GFX_PrintConsole("\n");
   GFX_PrintConsole("Used space  : ");
   GFX_PrintDecConsole(MATH_divU(used_space, 1000));
   GFX_PrintConsole("/");
   GFX_PrintDecConsole(MATH_divU(total_space, 1000));
   GFX_PrintConsole(" kwords\n");
+  GFX_PrintConsole("Used blocks : ");
+  GFX_PrintDecConsole(used_blocks);
+  GFX_PrintConsole("/");
+  GFX_PrintDecConsole(total_blocks);
+  GFX_PrintConsole("\n\n");
 
-  GFX_PrintConsole("\nFree space:\n");
-  GFX_PrintConsole("-----------\n");
-
-  GFX_PrintConsole("Free blocks : ");
-  GFX_PrintDecConsole(free_blocks);
-  GFX_PrintConsole("\n");
   GFX_PrintConsole("Free space  : ");
   GFX_PrintDecConsole(MATH_divU(free_space, 1000));
   GFX_PrintConsole(" kwords\n");
+  GFX_PrintConsole("Free blocks : ");
+  GFX_PrintDecConsole(free_blocks);
+  GFX_PrintConsole("\n\n");
   
-
-  GFX_PrintConsole("\nBlocks:\n");
-  GFX_PrintConsole("-------\n");
-
-  GFX_PrintConsole("Total blocks: ");
-  GFX_PrintDecConsole(total_blocks);
-  GFX_PrintConsole("\n");
   GFX_PrintConsole("Block size  : ");
   GFX_PrintDecConsole(block_size);
   GFX_PrintConsole(" words\n");
+  GFX_PrintConsole("Total blocks: ");
+  GFX_PrintDecConsole(total_blocks);
+  GFX_PrintConsole("\n");
 }
 
 /**

@@ -1,5 +1,8 @@
 // Simple text editor
 
+// NOTE: this uses more memory than is allowed in FPGC7, so update this when new BDOS memory map.
+// Also, code should be refactored.
+
 /* global structure of program:
 - check first argument, exit if none
 - read file from first argument into mem
@@ -40,9 +43,8 @@
 #include "lib/sys.c"
 #include "lib/gfx.c"
 #include "lib/stdlib.c"
-#include "lib/fs.c"
+#include "lib/brfs.c"
 
-#define FBUF_ADDR           0x440000 // location of input file buffer
 #define FILE_MEMORY_ADDR    0x480000 // location of file content
 #define MAX_LINE_WIDTH      240     // max width of line in mem buffer, multiple of 40 (screen width)
 #define MAX_LINES           8192    // maximum number of lines to prevent out of memory writes (8192*256*4 = 8MiB)
@@ -68,21 +70,14 @@
 #define BTN_END       263
 #define BTN_PAGEDOWN  264
 
-
-char infilename[96];  // input filename to edit the contents of
-
 char headerText[SCREEN_WIDTH]; // text on header (first line)
 
 // Buffer for file contents in memory
 char (*mem)[MAX_LINE_WIDTH] = (char (*)[MAX_LINE_WIDTH]) FILE_MEMORY_ADDR; // 2d array containing all lines of the input file
 
 // Buffer for file reading
-// Length of buffer always should be less than 65536, since this is the maximum FS_readFile can do in a single call
 #define FBUF_LEN 4096
 #define EOF -1
-char *inputBuffer = (char*) FBUF_ADDR; //[FBUF_LEN];
-word inbufStartPos = 0; // where in the file the buffer starts
-word inbufCursor = 0; // where in the buffer we currently are working
 word lastLineNumber = 0;
 
 // Cursors
@@ -91,125 +86,16 @@ word windowXscroll = 0; // horizontal position offset for drawing window
 word userCursorX = 0; // char position within line, of user cursor
 word userCursorY = 0; // line of user cursor
 
-// Opens file for reading
-// requires full paths
-// returns 1 on success
-word fopenRead()
-{
-  if (infilename[0] != '/')
-  {
-    BDOS_PrintConsole("E: Filename should be a full path\n");
-    return 0;
-  }
-
-  FS_close(); // to be sure
-
-  // convert to uppercase
-  strToUpper(infilename);
-
-  // init read buffer
-  inbufStartPos = 0; // start at 0
-  inbufCursor = 0; // start at 0
-
-  // if the resulting path is correct (can be file or directory)
-  if (FS_sendFullPath(infilename) == FS_ANSW_USB_INT_SUCCESS)
-  {
-
-    // if we can successfully open the file (not directory)
-    if (FS_open() == FS_ANSW_USB_INT_SUCCESS)
-    {
-      FS_setCursor(0); // set cursor to start
-      return 1;
-    }
-    else
-    {
-      return 0;
-    }
-  }
-  else
-  {
-    return 0;
-  }
-
-  return 0;
-}
-
-// opens file for writing by recreating it
-// should not be called before fopenRead, therefore exits on error
-word fopenWrite()
-{
-  if (infilename[0] != '/')
-  {
-    BDOS_PrintConsole("E: Filename should be a full path\n");
-    exit();
-  }
-
-  FS_close(); // to be sure
-
-  // convert to uppercase
-  strToUpper(infilename);
-
-  // if current path is correct (can be file or directory)
-  if (FS_sendFullPath(infilename) == FS_ANSW_USB_INT_SUCCESS)
-  {
-    // create the file
-    
-    if (FS_createFile() == FS_ANSW_USB_INT_SUCCESS)
-    {
-      //BDOS_PrintConsole("File created\n");
-      // open again and start at 0
-      FS_sendFullPath(infilename);
-      FS_open();
-      FS_setCursor(0); // set cursor to start
-      return 1;
-    }
-    else
-    {
-      BDOS_PrintConsole("E: Could not create file\n");
-      exit();
-    }
-  }
-  else
-  {
-    BDOS_PrintConsole("E: Invalid path\n");
-    exit();
-  }
-
-  exit();
-  return 0;
-}
-
-// Writes data of given length to opened file
-void fputData(char* datBuf, word lenOfData)
-{
-  if (lenOfData == 0)
-  {
-    return;
-  }
-
-  word bytesWritten = 0;
-
-  // loop until all bytes are sent
-  while (bytesWritten != lenOfData)
-  {
-    word partToSend = lenOfData - bytesWritten;
-    // send in parts of 0xFFFF
-    if (partToSend > 0xFFFF)
-      partToSend = 0xFFFF;
-
-    // write away
-    if (FS_writeFile((datBuf +bytesWritten), partToSend) != FS_ANSW_USB_INT_SUCCESS)
-      BDOS_PrintConsole("write error\n");
-
-    // Update the amount of bytes sent
-    bytesWritten += partToSend;
-  }
-}
-
 // Write mem to file
-void writeMemToFile()
+void writeMemToFile(char* absolute_path)
 {
-  fopenWrite(); // open file for writing
+  // Open file
+  word fd = fs_open(absolute_path);
+  if (fd == -1)
+  {
+    bdos_println("File not found");
+    exit();
+  }
 
   word y;
   for (y = 0; y <= lastLineNumber; y++)
@@ -221,68 +107,46 @@ void writeMemToFile()
       if (lineEndPos == MAX_LINE_WIDTH)
       {
         exitRoutine();
-        BDOS_PrintConsole("E: could not find end of line\n");
-        FS_close();
+        bdos_print("E: could not find end of line\n");
+        fs_close(fd);
         exit();
       }
     }
 
     if (mem[y][lineEndPos] == EOF)
     {
-      fputData(mem[y], lineEndPos);
-      FS_close();
+      fs_write(fd, mem[y], lineEndPos);
+      fs_close(fd);
       return;
     }
 
     lineEndPos++; // include the newline token
-    fputData(mem[y], lineEndPos);
+    fs_write(fd, mem[y], lineEndPos);
   }
-  FS_close();
+  fs_close(fd);
 }
 
 
 // returns the current char at cursor within the opened file (EOF if end of file)
 // increments the cursor
-word fgetc()
+word fgetc(word fd, word filesize)
 {
-  // workaround for missing compiler check for ALU constants > 11 bit
-  word stdioBufLen = FBUF_LEN;
-
-  if (inbufCursor >= FBUF_LEN || inbufCursor == 0)  // we are at the end of the buffer (or it is not initialized yet)
+  word cursor = fs_getcursor(fd);
+  if (cursor == filesize)
   {
-    // get filesize
-    word sizeOfFile = FS_getFileSize();
-    
-    // if we cannot completely fill the buffer:
-    if (inbufStartPos + stdioBufLen > sizeOfFile)
-    {
-      //  fill the buffer, and append with EOF token
-      FS_readFile(inputBuffer, sizeOfFile - inbufStartPos, 0);
-      inputBuffer[sizeOfFile - inbufStartPos] = EOF;
-    }
-    else
-    {
-      //  fill buffer again
-      FS_readFile(inputBuffer, FBUF_LEN, 0);
-    }
-    
-    inbufStartPos += stdioBufLen; // for the next fill
-
-    inbufCursor = 0; // start at the beginning of the buffer again
+    return EOF;
   }
 
-  // return from the buffer, and increment
-  char gotchar = inputBuffer[inbufCursor];
-  inbufCursor++;
-  // BDOS_PrintcConsole(gotchar); // useful for debugging
-  return gotchar;
+  char c;
+  fs_read(fd, &c, 1);
+  return c;
 }
 
 
 // reads a line from the input file
-word readFileLine()
+word readFileLine(word fd, word filesize)
 {
-  char c = fgetc();
+  char c = fgetc(fd, filesize);
   char cprev = c;
 
   word currentChar = 0;
@@ -293,13 +157,14 @@ word readFileLine()
     mem[lastLineNumber][currentChar] = c;
     currentChar++;
     cprev = c;
-    c = fgetc();
+    c = fgetc(fd, filesize);
   }
 
   // error when line was too long
   if (c != EOF && c != '\n' && currentChar >= (MAX_LINE_WIDTH-1))
   {
-    BDOS_PrintConsole("E: line is too long\n");
+    bdos_print("E: line is too long\n");
+    fs_close(fd);
     exit();
   }
 
@@ -321,13 +186,22 @@ word readFileLine()
 }
 
 
-void readInputFile()
+void readInputFile(char* absolute_path, word filesize)
 {
-  while (readFileLine() != EOF)
+  // Open file
+  word fd = fs_open(absolute_path);
+  if (fd == -1)
+  {
+    bdos_println("File not found");
+    exit();
+  }
+
+  while (readFileLine(fd, filesize) != EOF)
   {
     if (lastLineNumber >= MAX_LINES)
     {
-      BDOS_PrintConsole("E: File too large\n");
+      fs_close(fd);
+      bdos_print("E: File too large\n");
       exit();
     }
     else
@@ -336,7 +210,7 @@ void readInputFile()
     }
   }
 
-  FS_close();
+  fs_close(fd);
 }
 
 
@@ -437,7 +311,7 @@ void fixCursorToNewline()
     if (newLinePos == MAX_LINE_WIDTH)
     {
       exitRoutine();
-      BDOS_PrintConsole("E: could not find newline\n");
+      bdos_print("E: could not find newline\n");
       exit();
     }
   }
@@ -461,7 +335,7 @@ void fixCursorToNewline()
       else
       {
         exitRoutine();
-        BDOS_PrintConsole("E: scroll left limit reached\n");
+        bdos_print("E: scroll left limit reached\n");
         exit();
       }
     }
@@ -498,7 +372,7 @@ void gotoPosOfPrevLine(word targetPos)
     else
     {
       exitRoutine();
-      BDOS_PrintConsole("E: could not move up a line\n");
+      bdos_print("E: could not move up a line\n");
       exit();
     }
   }
@@ -524,7 +398,7 @@ void gotoPosOfPrevLine(word targetPos)
     if (xpos == MAX_LINE_WIDTH)
     {
       exitRoutine();
-      BDOS_PrintConsole("E: target out of bounds\n");
+      bdos_print("E: target out of bounds\n");
       exit();
     }
   }
@@ -581,7 +455,7 @@ void gotoEndOfPrevLine()
     if (xpos == MAX_LINE_WIDTH)
     {
       exitRoutine();
-      BDOS_PrintConsole("E: could not find newline\n");
+      bdos_print("E: could not find newline\n");
       exit();
     }
   }
@@ -830,7 +704,7 @@ void end()
     if (xpos == MAX_LINE_WIDTH)
     {
       exitRoutine();
-      BDOS_PrintConsole("E: could not find newline\n");
+      bdos_print("E: could not find newline\n");
       exit();
     }
   }
@@ -934,7 +808,7 @@ void removeCharacter()
         if (newLinePos == MAX_LINE_WIDTH)
         {
           exitRoutine();
-          BDOS_PrintConsole("E: could not find newline\n");
+          bdos_print("E: could not find newline\n");
           exit();
         }
       }
@@ -995,44 +869,47 @@ void exitRoutine()
 
 int main() 
 {
-  // input file
-  BDOS_GetArgN(1, infilename);
-
-  // error if none
-  if (infilename[0] == 0)
+  // Read number of arguments
+  word argc = shell_argc();
+  if (argc < 2)
   {
-    BDOS_PrintConsole("E: Missing filename\n");
-    exit();
+    bdos_println("Usage: edit <file>");
+    return 1;
+  }
+  
+  // Read filename
+  char** args = shell_argv();
+  char* filename = args[1];
+
+  char absolute_path[MAX_PATH_LENGTH];
+  // Check if absolute path
+  if (filename[0] != '/')
+  {
+    char* cwd = fs_getcwd();
+    strcpy(absolute_path, cwd);
+    strcat(absolute_path, "/");
+    strcat(absolute_path, filename);
+  }
+  else
+  {
+    strcpy(absolute_path, filename);
   }
 
-  // Make full path if it is not already
-  if (infilename[0] != '/')
+  // Get file size
+  struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(absolute_path);
+  if ((word)entry == -1)
   {
-    char bothPath[96];
-    bothPath[0] = 0;
-    strcat(bothPath, BDOS_GetPath());
-    if (bothPath[strlen(bothPath)-1] != '/')
-    {
-      strcat(bothPath, "/");
-    }
-    strcat(bothPath, infilename);
-    strcpy(infilename, bothPath);
+    bdos_println("File not found");
+    return 1;
   }
+  word filesize = entry->filesize;
 
-  if (!fopenRead())
-  {
-    BDOS_PrintConsole("E: Could not open file\n");
-    exit();
-  }
+  // Get filename
+  char decompressed_filename[17];
+  strdecompress(decompressed_filename, entry->filename);
+  strcpy(headerText, decompressed_filename);
 
-  // Open the input file
-  BDOS_PrintConsole("Opening ");
-  BDOS_PrintConsole(infilename);
-  BDOS_PrintConsole("...\n");
-
-  readInputFile();
-
-  strcpy(headerText, infilename);
+  readInputFile(absolute_path, filesize);
 
   // init gfx
   GFX_clearWindowtileTable();
@@ -1047,9 +924,9 @@ int main()
   // main loop
   while (1)
   {
-    if (HID_FifoAvailable())
+    if (hid_checkfifo())
     {
-      word c = HID_FifoRead();
+      word c = hid_fiforead();
       switch (c)
       {
         case 27: // escape
@@ -1060,14 +937,19 @@ int main()
           while (c != 'y' && c != 'n' && c != 'Y' && c != 'N' && c != 'c' && c != 'C')
           {
             // wait until a character is pressed
-            while (HID_FifoAvailable() == 0);
+            while (!hid_checkfifo());
 
-            c = HID_FifoRead();
+            c = hid_fiforead();
           }
 
           if (c == 'y' || c == 'Y')
           {
-            writeMemToFile();
+            // First delete file
+            fs_delete(absolute_path);
+            // Then create file
+            fs_mkfile(absolute_path);
+            // Then write to file
+            writeMemToFile(absolute_path);
             exitRoutine();
             return 'q'; // exit
           }
@@ -1131,7 +1013,7 @@ int main()
 void interrupt()
 {
   // Handle all interrupts
-  word i = getIntID();
+  word i = get_int_id();
   switch(i)
   {
     case INTID_TIMER1:

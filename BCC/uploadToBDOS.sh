@@ -8,7 +8,10 @@ then
     exit 1
 fi
 
-OUTFILE="file.out"
+# Default output filename is filename of first argument
+OUTFILE=$(basename $1)
+# Remove file extension
+OUTFILE=${OUTFILE%.*}
 
 if [ "$2" != "" ]
 then

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021-2022, bartpleiter
+Copyright (c) 2021-2024, bartpleiter
 Copyright (c) 2012-2015, Alexey Frunze
 All rights reserved.
 
@@ -627,13 +627,13 @@ void GenWriteFrameSize(void) //WORDSIZE
 void GenUpdateFrameSize(void)
 {
   word curpos = 0;
-  curpos = fgetpos(OutFile);
+  curpos = fs_getcursor(OutFile);
   //printf("cur: ");
   //printd(curpos);
   //printf("\ngoto: ");
   //printd(GenPrologPos);
   //printf("\n");
-  fsetpos(OutFile, GenPrologPos);
+  fs_setcursor(OutFile, GenPrologPos);
   GenWriteFrameSize();
 
   //printf("back to cur: ");
@@ -641,7 +641,7 @@ void GenUpdateFrameSize(void)
   //printf("\n");
   //printf("\n");
 
-  fsetpos(OutFile, curpos);
+  fs_setcursor(OutFile, curpos);
 }
 
 void GenFxnProlog(void)
@@ -664,7 +664,7 @@ void GenFxnProlog(void)
 
   GenLeaf = 1; // will be reset to 0 if a call is generated
 
-  GenPrologPos = fgetpos(OutFile);
+  GenPrologPos = fs_getcursor(OutFile);
   
   // write an empty space for the frame size
   word x;
@@ -1767,7 +1767,7 @@ void GenExpr0(void)
       if (maxCallDepth == 1 && paramOfs >= 0 && paramOfs <= 12)
       {
         // Work directly in A0-A3 instead of working in V0 and avoid copying V0 to A0-A3
-        GenWreg = B32POpRegA0 + division(paramOfs, 4); //(paramOfs >> 2); //division(paramOfs, 4);
+        GenWreg = B32POpRegA0 + MATH_divU(paramOfs, 4); //(paramOfs >> 2); //MATH_divU(paramOfs, 4);
       }
       break;
 

@@ -16,6 +16,16 @@
 #define TIMER3_VAL 0xC0273D
 #define TIMER3_CTRL 0xC0273E
 
+word timer1Value = 0;
+word timer2Value = 0;
+word timer3Value = 0;
+
+/*
+* TODO:
+* - Convert most of these functions to assembly
+*/
+
+
 // isalpha
 word isalpha(word argument)
 {
@@ -139,6 +149,66 @@ char* strchr (const char *s, word c)
   return (0);
 }
 
+/*
+Returns a pointer to the last occurance of a character, or 0 if the character is not found.
+*/
+char* strrchr (const char *s, int c)
+{
+  char *rtnval = 0;
+
+  do {
+    if (*s == c)
+      rtnval = (char*) s;
+  } while (*s++);
+  return (rtnval);
+}
+
+
+char * strtok_old_str;
+/* 
+Parse str into tokens separated by characters in delim.
+If S is NULL, the last string strtok() was called with is used.
+Note that strtok() modifies the input string.
+For example:
+	char s[] = "-abc-=-def";
+	x = strtok(s, "-");		// x = "abc"
+	x = strtok(NULL, "-=");		// x = "def"
+	x = strtok(NULL, "=");		// x = NULL
+		// s = "abc\0=-def\0"
+*/
+char* strtok(char* str, const char* delim)
+{
+  if (str != (word*)-1)
+    strtok_old_str = str;
+
+  if (strtok_old_str == (word*)-1)
+    return (word*)-1;
+
+  // Return reached end of string
+  if (*strtok_old_str == 0)
+  {
+    return (word*)-1;
+  }
+  // Skip leading delimiters
+  while (strchr(delim, *strtok_old_str) != 0)
+    strtok_old_str++;
+
+  // Find end of token
+  char* start = strtok_old_str;
+  while (*strtok_old_str != 0 && strchr(delim, *strtok_old_str) == 0)
+    strtok_old_str++;
+
+  if (*strtok_old_str == 0)
+  {
+    strtok_old_str = (word*)-1;
+    return start;
+  }
+
+  *strtok_old_str = 0;
+  strtok_old_str++;
+  return start;
+}
+
 
 word strcmp(const char* s1, const char* s2)
 {
@@ -168,18 +238,41 @@ word strncmp(const char * s1, const char * s2, size_t n )
   }
 }
 
-// Returns interrupt ID by using the readintid asm instruction
-word getIntID()
+/**
+ * Return the basename of a path
+ * path: full path
+*/
+char* basename(char *path)
 {
-  word retval = 0;
-
-  asm(
-    "readintid r2  ;reads interrupt id to r2\n"
-    "write -4 r14 r2 ;write to stack to return\n"
-    );
-
-  return retval;
+  char *base = strrchr(path, '/');
+  return base ? base + 1 : path;
 }
+
+/**
+ * Return the dirname of a path
+ * output: buffer to store the dirname
+ * path: full path
+*/
+char* dirname(char* output, char *path)
+{
+  strcpy(output, path);
+  char *last_slash = strrchr(output, '/');
+  if (last_slash != 0)
+  {
+    *last_slash = 0;
+    // If the last slash is the first character, return "/"
+    if (last_slash == output)
+    {
+      strcpy(output, "/");
+    }
+  } else
+  {
+    // No slash found, return "."
+    strcpy(output, ".");
+  }
+  return output;
+}
+
 
 /*
 Recursive helper function for itoa

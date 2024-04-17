@@ -944,11 +944,12 @@ word brfs_read(word file_pointer, word* buffer, word length)
       // - repeat until length is 0
       while (length > 0)
       {
-        word words_until_end_of_block = superblock->words_per_block - (MATH_modU(brfs_cursors[i], superblock->words_per_block));
+        word cursor_in_block = MATH_modU(brfs_cursors[i], superblock->words_per_block);
+        word words_until_end_of_block = superblock->words_per_block - cursor_in_block;
         word words_to_read = words_until_end_of_block > length ? length : words_until_end_of_block;
 
         // Copy words to buffer
-        memcpy(buffer, data_block_addr + (current_fat_idx * superblock->words_per_block) + MATH_modU(brfs_cursors[i], superblock->words_per_block), words_to_read);
+        memcpy(buffer, data_block_addr + (current_fat_idx * superblock->words_per_block) + cursor_in_block, words_to_read);
         
         // Update cursor and length
         brfs_cursors[i] += words_to_read;
@@ -1033,7 +1034,7 @@ word brfs_write(word file_pointer, word* buffer, word length)
         buffer += words_to_write;
 
         // Get next block from FAT, or find next free block if end of block
-        if (words_until_end_of_block == words_to_write && length > 0)
+        if (words_until_end_of_block == words_to_write)
         {
           
           word next_fat_idx = brfs_ram_storage[SUPERBLOCK_SIZE + current_fat_idx];

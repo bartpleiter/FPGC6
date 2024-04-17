@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021, bartpleiter
+Copyright (c) 2021-2024, bartpleiter
 Copyright (c) 2012-2020, Alexey Frunze
 All rights reserved.
 
@@ -37,15 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*                                Main file                                  */
 /*                                                                           */
 /*****************************************************************************/
-
-/* PLAN:
-- move through program from execution start to finish
-- implement missing (mostly FS) functions on the go (skip unimportant ones first, and do them later)
-- try to implement vararg printf, since it will save hours of printf replacements
-- FS functions (test/create library in a seperate test program):
-  - fopen: just return a pointer to (global var!) the full path of the file, init cursor (private)
-  - fput/get: open the file if not already opened, use cursor to read/write
-*/
 
 // Making most functions static helps with code optimization,
 // use that to further reduce compiler's code size on RetroBSD.
@@ -90,9 +81,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "lib/math.c"
 #include "lib/sys.c"
-//#include "lib/gfx.c"
 #include "lib/stdlib.c"
-#include "lib/fs.c"
+#include "lib/brfs.c"
 #include "lib/stdio.c"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +96,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_MACRO_TABLE_LEN   (4096+1024)
 #define MAX_IDENT_TABLE_LEN   (4096+1024+512) // must be greater than MAX_IDENT_LEN
 #define SYNTAX_STACK_MAX      (2048+1024)
-#define MAX_FILE_NAME_LEN     95
+#define MAX_FILE_NAME_LEN     128
 
 #define MAX_INCLUDES         8
 #define PREP_STACK_SIZE      8
@@ -410,6 +400,7 @@ char (*FileNames)[MAX_FILE_NAME_LEN + 1] = (char (*)[MAX_FILE_NAME_LEN + 1]) FIL
 
 
 word Files[MAX_INCLUDES]; // FILE
+word FileSizes[MAX_INCLUDES]; // file size in words
 word OutFile; // FILE
 char CharQueues[MAX_INCLUDES][3];
 word LineNos[MAX_INCLUDES];
@@ -781,7 +772,7 @@ word GetTokenByWord(char* wrd)
 {
   unsigned i;
 
-  for (i = 0; i < division(sizeof rws, sizeof rws[0]); i++)
+  for (i = 0; i < MATH_divU(sizeof rws, sizeof rws[0]); i++)
     if (!strcmp(rws[i], wrd))
       return rwtk[i];
 
@@ -841,12 +832,12 @@ char* GetTokenName(word token)
 /* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
 
   // Tokens other than reserved keywords:
-  for (i = 0; i < division(sizeof tktk , sizeof tktk[0]); i++)
+  for (i = 0; i < MATH_divU(sizeof tktk , sizeof tktk[0]); i++)
     if (tktk[i] == token)
       return tks[i];
 
   // Reserved keywords:
-  for (i = 0; i < division(sizeof rws , sizeof rws[0]); i++)
+  for (i = 0; i < MATH_divU(sizeof rws , sizeof rws[0]); i++)
     if (rwtk[i] == token)
       return rws[i];
 
@@ -861,9 +852,9 @@ word GetNextChar(void)
 
   if (FileCnt && Files[FileCnt - 1])
   {
-    if ((ch = fgetc(Files[FileCnt - 1])) == EOF)
+    if ((ch = fgetc(Files[FileCnt - 1], FileSizes[FileCnt - 1])) == EOF)
     {
-      fclose(Files[FileCnt - 1]);
+      fs_close(Files[FileCnt - 1]);
       Files[FileCnt - 1] = NULL;
 
       // store the last line/pos, they may still be needed later
@@ -951,7 +942,12 @@ void IncludeFile(word quot)
     }
     strcpy(FileNames[FileCnt], TokenValueString);
     strcat(cFileDir, FileNames[FileCnt]);
-    Files[FileCnt] = fopen(cFileDir, 0);
+    Files[FileCnt] = fs_open(cFileDir);
+
+    // Get file size
+    struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(cFileDir);
+    word filesize = entry->filesize;
+    FileSizes[FileCnt] = filesize;
   }
 
   // Next, iterate the search paths trying to open "file" or <file>.
@@ -980,8 +976,14 @@ void IncludeFile(word quot)
           // Use '/' as a separator, typical for Linux/Unix,
           // but also supported by file APIs in DOS/Windows just as '\\'
           FileNames[FileCnt][plen] = '/';
-          if ((Files[FileCnt] = fopen(FileNames[FileCnt], 0)) != NULL)
+          if ((Files[FileCnt] = fs_open(FileNames[FileCnt])) != NULL)
+          {
+            // Get file size
+            struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(FileNames[FileCnt]);
+            word filesize = entry->filesize;
+            FileSizes[FileCnt] = filesize;
             break;
+          }
         }
         i += plen + 1;
       }
@@ -2017,7 +2019,7 @@ word isop(word tok)
     '?'
   };
   unsigned i;
-  for (i = 0; i < division(sizeof toks , sizeof toks[0]); i++)
+  for (i = 0; i < MATH_divU(sizeof toks , sizeof toks[0]); i++)
     if (toks[i] == tok)
       return 1;
   return 0;
@@ -2076,8 +2078,8 @@ char* lab2str(char* p, word n)
 {
   do
   {
-    *--p = '0' + modulo(n , 10);
-    n = division(n, 10);
+    *--p = '0' + MATH_modU(n , 10);
+    n = MATH_divU(n, 10);
   } while (n);
 
   return p;
@@ -2192,7 +2194,7 @@ word exprUnary(word tok, word* gotUnary, word commaSeparator, word argOfSizeOf)
       // DONE: can this break incomplete yet declarations???, e.g.: int x[sizeof("az")][5];
       PushSyntax2(tokIdent, id = AddNumericIdent(lbl));
       PushSyntax('[');
-      PushSyntax2(tokNumUint, division(sz, chsz));
+      PushSyntax2(tokNumUint, MATH_divU(sz, chsz));
       PushSyntax(']');
 
       PushSyntax(tokChar);
@@ -2781,7 +2783,7 @@ word divCheckAndCalc(word tok, word* psl, word sr, word Unsigned, word ConstExpr
   {
     return !div0;
   }
-  else if (!Unsigned && ((sl == int_min && sr == -1) || division(sl , sr) != truncInt(division(sl , sr))))
+  else if (!Unsigned && ((sl == int_min && sr == -1) || MATH_divU(sl , sr) != truncInt(MATH_divU(sl , sr))))
   {
     div0 = 1;
   }
@@ -2790,9 +2792,9 @@ word divCheckAndCalc(word tok, word* psl, word sr, word Unsigned, word ConstExpr
     if (Unsigned)
     {
       if (tok == '/')
-        sl = (word)((unsigned)division(sl , sr));
+        sl = (word)((unsigned)MATH_divU(sl , sr));
       else
-        sl = (word)((unsigned)modulo(sl , sr));
+        sl = (word)((unsigned)MATH_modU(sl , sr));
     }
     else
     {
@@ -2801,9 +2803,9 @@ word divCheckAndCalc(word tok, word* psl, word sr, word Unsigned, word ConstExpr
       // A stricter, C99-conforming implementation, non-dependent on the
       // compiler used to compile Smaller C is needed.
       if (tok == '/')
-        sl = division(sl, sr);
+        sl = MATH_divU(sl, sr);
       else
-        sl = modulo(sl, sr);
+        sl = MATH_modU(sl, sr);
     }
     *psl = sl;
   }
@@ -4614,7 +4616,7 @@ void error(char* strToPrint)
 
   for (i = 0; i < FileCnt; i++)
     if (Files[i])
-      fclose(Files[i]);
+      fs_close(Files[i]);
 
   /*
   puts2("");
@@ -4635,7 +4637,7 @@ void error(char* strToPrint)
   //GenStartCommentLine(); printf2("Compilation failed.\n");
 
   if (OutFile)
-    fclose(OutFile);
+    fs_close(OutFile);
 
   printf("Error in ");
   printf(FileNames[fidx]);
@@ -4770,7 +4772,7 @@ word TokenStartsDeclaration(word t, word params)
 {
   unsigned i;
 
-  for (i = 0; i < division(sizeof tsd, sizeof tsd[0]); i++)
+  for (i = 0; i < MATH_divU(sizeof tsd, sizeof tsd[0]); i++)
     if (tsd[i] == t)
       return 1;
 
@@ -7445,7 +7447,7 @@ word ParseStatement(word tok, word BrkCntTarget[2], word casesIdx)
         errorUnexpectedToken(tok);
 
       // Try to reorder expr3 with body to reduce the number of jumps, favor small expr3's
-      if (gotUnary && sp <= 16 && (unsigned)sp <= division(sizeof expr3Stack , sizeof expr3Stack[0]) - expr3Sp)
+      if (gotUnary && sp <= 16 && (unsigned)sp <= MATH_divU(sizeof expr3Stack , sizeof expr3Stack[0]) - expr3Sp)
       {
         word cnt = sp;
         // Stash the stack containing expr3
@@ -7781,6 +7783,50 @@ word ParseBlock(word BrkCntTarget[2], word casesIdx)
 int main() 
 {
   printf("BCC Compiler\n");
+
+  // Read number of arguments
+  word argc = shell_argc();
+  if (argc < 2)
+  {
+    printf("Usage: BCC <source file> <output file>\n");
+    return 1;
+  }
+
+  // Get input filename
+  char** args = shell_argv();
+  char* filename = args[1];
+
+  char absolute_path_in[MAX_PATH_LENGTH];
+  // Check if absolute path
+  if (filename[0] != '/')
+  {
+    strcpy(absolute_path_in, fs_getcwd());
+    strcat(absolute_path_in, "/");
+    strcat(absolute_path_in, filename);
+  }
+  else
+  {
+    strcpy(absolute_path_in, filename);
+  }
+
+  // Get output filename
+  args = shell_argv();
+  filename = args[2];
+
+  char absolute_path_out[MAX_PATH_LENGTH];
+  // Check if absolute path
+  if (filename[0] != '/')
+  {
+    strcpy(absolute_path_out, fs_getcwd());
+    strcat(absolute_path_out, "/");
+    strcat(absolute_path_out, filename);
+  }
+  else
+  {
+    strcpy(absolute_path_out, filename);
+  }
+
+
   // Run-time initializer for SyntaxStack0[] to reduce
   // executable file size (SyntaxStack0[] will be in .bss)
   static unsigned char SyntaxStackInit[] =
@@ -7803,47 +7849,27 @@ int main()
 
   GenInit();
 
-  // TODO: add BDOS path to filenames if not absolute path
   compileOS = 0;
   compileUserBDOS = 1;
 
-  char infilename[64];
-  BDOS_GetArgN(1, infilename);
-  if (infilename[0] == 0)
-  {
-    strcat(infilename, BDOS_GetPath());
-    if (infilename[strlen(infilename)-1] != '/')
-    {
-        strcat(infilename, "/");
-    }
-    strcat(infilename, "CODE.C");
-    //strcpy(infilename, "/TEST/TEST.C");
-  }
-  if (infilename[0] != '/')
-  {
-    char bothPath[64];
-    bothPath[0] = 0;
-    strcat(bothPath, BDOS_GetPath());
-    if (bothPath[strlen(bothPath)-1] != '/')
-    {
-        strcat(bothPath, "/");
-    }
-    strcat(bothPath, infilename);
-    strcpy(infilename, bothPath);
-  }
 
   if (FileCnt == 0)
   {
     // If it's none of the known options,
     // assume it's the source code file name
-    if (strlen(infilename) > MAX_FILE_NAME_LEN)
+    if (strlen(absolute_path_in) > MAX_FILE_NAME_LEN)
     {
       //error("File name too long\n");
       errorFileName();
     }
-    strcpy(FileNames[0], infilename);
-    Files[0] = fopen(FileNames[0], 0);
-    if (fcanopen(Files[0]) == EOF)
+    strcpy(FileNames[0], absolute_path_in);
+    Files[0] = fs_open(FileNames[0]);
+    // Get file size
+    struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(FileNames[0]);
+    word filesize = entry->filesize;
+    FileSizes[0] = filesize;
+    
+    if (Files[0] == EOF)
     {
       //error("Cannot open file \"%s\"\n", FileNames[0]);
       errorFile(FileNames[0]);
@@ -7857,39 +7883,19 @@ int main()
     FileCnt++;
   }
 
-  char outfilename[64];
-  BDOS_GetArgN(2, outfilename);
-  if (outfilename[0] == 0)
-  {
-    strcat(outfilename, BDOS_GetPath());
-    if (outfilename[strlen(outfilename)-1] != '/')
-    {
-        strcat(outfilename, "/");
-    }
-    strcat(outfilename, "OUT.ASM");
-    //strcpy(outfilename, "/TEST/A.OUT");
-  }
-  if (outfilename[0] != '/')
-  {
-    char bothPath[64];
-    bothPath[0] = 0;
-    strcat(bothPath, BDOS_GetPath());
-    if (bothPath[strlen(bothPath)-1] != '/')
-    {
-        strcat(bothPath, "/");
-    }
-    strcat(bothPath, outfilename);
-    strcpy(outfilename, bothPath);
-  }
 
   if (FileCnt == 1 && OutFile == NULL)
   {
+    // (re)create file for output
+    fs_delete(absolute_path_out);
+    fs_mkfile(absolute_path_out);
+
     // This should be the output file name
-    OutFile = fopen(outfilename, 1);
-    if (fcanopen(OutFile) == EOF)
+    OutFile = fs_open(absolute_path_out);
+    if (OutFile == EOF)
     {
       //error("Cannot open output file \"%s\"\n", argv[i]);
-      errorFile(outfilename);
+      errorFile(absolute_path_out);
     }
     else
     {
@@ -7942,11 +7948,19 @@ int main()
   printf("Finished compiling\n");
 
   if (OutFile)
-    fclose(OutFile);
+    fs_close(OutFile);
 
   return 'q';
 }
 
 void interrupt()
 {
+  // Handle all interrupts
+  word i = get_int_id();
+  switch(i)
+  {
+    case INTID_TIMER1:
+      timer1Value = 1;  // Notify ending of timer1
+      break;
+  }
 }

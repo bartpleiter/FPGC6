@@ -120,27 +120,6 @@ word strcat(char* dest, char* src)
     return strcpy(dest+endOfDest, src);
 }
 
-/*
-Appends string from src to dest up to n characters
-Returns pointer to resulting dest string
-*/
-char *strncat(char *dest, char *src, word n)
-{
-  word len1 = strlen(dest);
-  word len2 = strlen(src);
-    
-  if (len2 < n) 
-  {
-	  strcpy(&dest[len1], src);
-  }
-  else
-  {
-    strncpy(&dest[len1], src, n);
-    dest[len1 + n] = '\0';
-  }
-  return dest;
-}
-
 
 /*
 Compares two strings a and b

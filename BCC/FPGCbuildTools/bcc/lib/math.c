@@ -165,13 +165,14 @@ word MATH_abs(word x)
     return -x;
 }
 
-
+/*
 word division(word dividend, word divisor)
 {
-    return MATH_divU(dividend, divisor);
+  return MATH_divU(dividend, divisor);
 }
 
 word modulo(word dividend, word divisor)
 {
-    return MATH_modU(dividend, divisor);
+  return MATH_modU(dividend, divisor);
 }
+*/

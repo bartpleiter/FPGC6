@@ -44,6 +44,32 @@ void write_file_from_fs(word s, char* path, word filesize)
 
   // Read file in chunks of WIZNET_MAX_TBUF
   word file_buffer[WIZNET_MAX_RBUF];
+
+  /* // Program download mode
+  word file_buffer[WIZNET_MAX_RBUF];
+  word file_buffer2[WIZNET_MAX_RBUF>>2];
+  word chunk_to_read;
+
+  char dbuf[10]; // Percentage done for progress indication
+  dbuf[0] = 0;
+
+  while (filesize > 0)
+  {
+    chunk_to_read = filesize > WIZNET_MAX_RBUF>>2 ? WIZNET_MAX_RBUF>>2 : filesize;
+    fs_read(fd, (char*)file_buffer2, chunk_to_read);
+
+    // Convert each 32-bit word into 4 8-bit words
+    word x;
+    for (x = 0; x < chunk_to_read; x++)
+    {
+      word w = file_buffer2[x];
+      file_buffer[(x << 2) + 3] = (w >> 0) & 0xFF;
+      file_buffer[(x << 2) + 2] = (w >> 8) & 0xFF;
+      file_buffer[(x << 2) + 1] = (w >> 16) & 0xFF;
+      file_buffer[(x << 2) + 0] = (w >> 24) & 0xFF;
+    }
+  */
+
   word chunk_to_read;
 
   char dbuf[10]; // Percentage done for progress indication

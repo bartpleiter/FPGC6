@@ -145,6 +145,56 @@ word getIntID()
 }
 
 /*
+Recursive helper function for itoa
+Eventually returns the number of digits in n
+s is the output buffer
+*/
+word itoahr(word n, char *s)
+{
+  word digit = MATH_modU(n, 16);
+  word i = 0;
+
+  n = MATH_divU(n,16);
+  if ((unsigned int) n > 0)
+    i += itoahr(n, s);
+
+  char c;
+  if (digit > 9)
+  {
+    c = digit + 'A' - 10;
+  }
+  else
+  {
+    c = digit + '0';
+  }
+  s[i++] = c;
+
+  return i;
+}
+
+
+/*
+Converts integer n to hex string characters.
+The characters are placed in the buffer s.
+A prefix of 0x is added.
+The buffer is terminated with a 0 value.
+Uses recursion, division and mod to compute.
+*/
+void itoah(word n, char *s)
+{
+  // add prefix
+  s[0] = '0';
+  s[1] = 'x';
+  s+=2;
+
+  // compute and fill the buffer
+  word i = itoahr(n, s);
+
+  // end with terminator
+  s[i] = 0;
+}
+
+/*
 Converts string into int.
 Assumes the string is valid.
 Unsigned only!
@@ -254,7 +304,7 @@ word binToInt(char *binStr) {
         }
         else if (c != '0')
         {
-            BDOS_PrintConsole("Invalid binary number\n");
+            bdos_print("Invalid binary number\n");
             exit(1);
         }
     }
@@ -283,4 +333,88 @@ void strToUpper(char* str)
         str++;                  // go to next character address
         chr = *str;             // get character from address
     }
+}
+
+/*
+Prints a single char c by writing it to UART_TX_ADDR
+*/
+void uprintc(char c) 
+{
+  word *p = (word *)UART_TX_ADDR; // address of UART TX
+  *p = (word)c;           // write char over UART
+}
+
+
+/*
+Sends each character from str over UART
+by writing them to UART_TX_ADDR
+until a 0 value is found.
+Does not send a newline afterwards.
+*/
+void uprint(char* str) 
+{
+  word *p = (word *)UART_TX_ADDR; // address of UART TX
+  char chr = *str;        // first character of str
+
+  while (chr != 0)        // continue until null value
+  {
+    *p = (word)chr;       // write char over UART
+    str++;            // go to next character address
+    chr = *str;         // get character from address
+  }
+}
+
+
+/*
+Same as uprint(char* str),
+except it sends a newline afterwards.
+*/
+void uprintln(char* str) 
+{
+  uprint(str);
+  uprintc('\n');
+}
+
+
+/*
+Prints decimal integer over UART
+*/
+void uprintDec(word i) 
+{
+  char buffer[11];
+  itoa(i, buffer);
+  uprint(buffer);
+}
+
+/*
+Prints hex integer over UART
+*/
+void uprintHex(word i) 
+{
+  char buffer[11];
+  itoah(i, buffer);
+  uprint(buffer);
+}
+
+
+/*
+Prints decimal integer over UART, with newline
+*/
+void uprintlnDec(word i) 
+{
+  char buffer[11];
+  itoa(i, buffer);
+  uprint(buffer);
+  uprintc('\n');
+}
+
+/*
+Prints hex integer over UART, with newline
+*/
+void uprintlnHex(word i) 
+{
+  char buffer[11];
+  itoah(i, buffer);
+  uprint(buffer);
+  uprintc('\n');
 }

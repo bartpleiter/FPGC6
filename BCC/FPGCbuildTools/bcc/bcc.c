@@ -944,6 +944,9 @@ void IncludeFile(word quot)
     strcat(cFileDir, FileNames[FileCnt]);
     Files[FileCnt] = fs_open(cFileDir);
 
+    bdos_print("- Compiling: ");
+    bdos_println(cFileDir);
+
     // Get file size
     struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(cFileDir);
     word filesize = entry->filesize;
@@ -978,6 +981,8 @@ void IncludeFile(word quot)
           FileNames[FileCnt][plen] = '/';
           if ((Files[FileCnt] = fs_open(FileNames[FileCnt])) != NULL)
           {
+            bdos_print("- Compiling: ");
+            bdos_println(FileNames[FileCnt]);
             // Get file size
             struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(FileNames[FileCnt]);
             word filesize = entry->filesize;
@@ -7786,7 +7791,7 @@ int main()
 
   // Read number of arguments
   word argc = shell_argc();
-  if (argc < 2)
+  if (argc < 3)
   {
     printf("Usage: BCC <source file> <output file>\n");
     return 1;
@@ -7864,6 +7869,10 @@ int main()
     }
     strcpy(FileNames[0], absolute_path_in);
     Files[0] = fs_open(FileNames[0]);
+
+    bdos_print("Compiling: ");
+    bdos_println(FileNames[0]);
+
     // Get file size
     struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(FileNames[0]);
     word filesize = entry->filesize;

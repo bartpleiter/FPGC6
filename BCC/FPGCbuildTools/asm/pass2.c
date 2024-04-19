@@ -18,27 +18,18 @@ word getNumberForLabel(char* labelName)
             return (labelListLineNumber[i] + bdosOffset);
         }
     }
-    BDOS_PrintConsole("Could not find label: ");
-    BDOS_PrintConsole(labelName);
-    BDOS_PrintConsole("\n");
+    bdos_print("Could not find label: ");
+    bdos_print(labelName);
+    bdos_print("\n");
     exit(1);
     return 0;
 }
 
-// Convert a 32 bit word into an array of 4 bytes
-void instrToByteArray(word instr, char* byteArray)
-{
-    byteArray[0] = ((unsigned)instr >> 24) & 0xFF;
-    byteArray[1] = ((unsigned)instr >> 16) & 0xFF;
-    byteArray[2] = ((unsigned)instr >> 8) & 0xFF;
-    byteArray[3] = instr & 0xFF;
-}
-
 void pass2Halt(char* outputAddr, char* outputCursor)
 {
-    char instr[4] = {0xff, 0xff, 0xff, 0xff};
-    memcpy((outputAddr + *outputCursor), instr, 4);
-    (*outputCursor) += 4;
+    char instr = 0xFFFFFFFF;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Read(char* outputAddr, char* outputCursor)
@@ -46,21 +37,20 @@ void pass2Read(char* outputAddr, char* outputCursor)
     word instr = 0xE0000000;
 
     word arg1num = getNumberAtArg(1);
-    word negative = 0;
+    // arg1 should fit in 16 bits (signed numbers have 1 bit less)
+    word bitsCheck = 16;
     if (arg1num < 0)
     {
-        negative = 1;
-        arg1num = -arg1num;
+        bitsCheck = 15;
     }
-
-    // arg1 should fit in 16 bits
-    if (((unsigned)arg1num >> 16) > 0)
+    if ((MATH_abs(arg1num) >> bitsCheck) > 0)
     {
-        BDOS_PrintConsole("READ: arg1 is >16 bits\n");
+        bdos_print("READ: arg1 is >16 bits\n");
         exit(1);
     }
 
-    instr += (arg1num << 12);
+    word mask = 0xffff;
+    instr += ((arg1num & mask) << 12);
 
     // arg2
     char arg2buf[16];
@@ -68,7 +58,7 @@ void pass2Read(char* outputAddr, char* outputCursor)
     // arg2 should be a reg
     if (arg2buf[0] != 'r')
     {
-        BDOS_PrintConsole("READ: arg2 not a reg\n");
+        bdos_print("READ: arg2 not a reg\n");
         exit(1);
     }
     word arg2num = strToInt(&arg2buf[1]);
@@ -81,23 +71,16 @@ void pass2Read(char* outputAddr, char* outputCursor)
     // arg3 should be a reg
     if (arg3buf[0] != 'r')
     {
-        BDOS_PrintConsole("READ: arg3 not a reg\n");
+        bdos_print("READ: arg3 not a reg\n");
         exit(1);
     }
     word arg3num = strToInt(&arg3buf[1]);
 
     instr += arg3num;
 
-    if (negative)
-    {
-        instr ^= (1 << 5);
-    }
-
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Write(char* outputAddr, char* outputCursor)
@@ -105,21 +88,20 @@ void pass2Write(char* outputAddr, char* outputCursor)
     word instr = 0xD0000000;
 
     word arg1num = getNumberAtArg(1);
-    word negative = 0;
+    // arg1 should fit in 16 bits (signed numbers have 1 bit less)
+    word bitsCheck = 16;
     if (arg1num < 0)
     {
-        negative = 1;
-        arg1num = -arg1num;
+        bitsCheck = 15;
     }
-
-    // arg1 should fit in 16 bits
-    if (((unsigned)arg1num >> 16) > 0)
+    if ((MATH_abs(arg1num) >> bitsCheck) > 0)
     {
-        BDOS_PrintConsole("WRITE: arg1 is >16 bits\n");
+        bdos_print("READ: arg1 is >16 bits\n");
         exit(1);
     }
 
-    instr += (arg1num << 12);
+    word mask = 0xffff;
+    instr += ((arg1num & mask) << 12);
 
     // arg2
     char arg2buf[16];
@@ -127,7 +109,7 @@ void pass2Write(char* outputAddr, char* outputCursor)
     // arg2 should be a reg
     if (arg2buf[0] != 'r')
     {
-        BDOS_PrintConsole("WRITE: arg2 not a reg\n");
+        bdos_print("WRITE: arg2 not a reg\n");
         exit(1);
     }
     word arg2num = strToInt(&arg2buf[1]);
@@ -140,23 +122,16 @@ void pass2Write(char* outputAddr, char* outputCursor)
     // arg3 should be a reg
     if (arg3buf[0] != 'r')
     {
-        BDOS_PrintConsole("WRITE: arg3 not a reg\n");
+        bdos_print("WRITE: arg3 not a reg\n");
         exit(1);
     }
     word arg3num = strToInt(&arg3buf[1]);
 
     instr += (arg3num << 4);
 
-    if (negative)
-    {
-        instr ^= 1;
-    }
-
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Readintid(char* outputAddr, char* outputCursor)
@@ -169,7 +144,7 @@ void pass2Readintid(char* outputAddr, char* outputCursor)
     // arg1 should be a reg
     if (arg1buf[0] != 'r')
     {
-        BDOS_PrintConsole("READINTID: arg1 not a reg\n");
+        bdos_print("READINTID: arg1 not a reg\n");
         exit(1);
     }
     word arg1num = strToInt(&arg1buf[1]);
@@ -177,10 +152,8 @@ void pass2Readintid(char* outputAddr, char* outputCursor)
     instr += arg1num;
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Push(char* outputAddr, char* outputCursor)
@@ -193,7 +166,7 @@ void pass2Push(char* outputAddr, char* outputCursor)
     // arg1 should be a reg
     if (arg1buf[0] != 'r')
     {
-        BDOS_PrintConsole("PUSH: arg1 not a reg\n");
+        bdos_print("PUSH: arg1 not a reg\n");
         exit(1);
     }
     word arg1num = strToInt(&arg1buf[1]);
@@ -201,10 +174,8 @@ void pass2Push(char* outputAddr, char* outputCursor)
     instr += (arg1num << 4);
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Pop(char* outputAddr, char* outputCursor)
@@ -217,7 +188,7 @@ void pass2Pop(char* outputAddr, char* outputCursor)
     // arg1 should be a reg
     if (arg1buf[0] != 'r')
     {
-        BDOS_PrintConsole("POP: arg1 not a reg\n");
+        bdos_print("POP: arg1 not a reg\n");
         exit(1);
     }
     word arg1num = strToInt(&arg1buf[1]);
@@ -225,10 +196,8 @@ void pass2Pop(char* outputAddr, char* outputCursor)
     instr += arg1num;
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Jump(char* outputAddr, char* outputCursor)
@@ -264,17 +233,15 @@ void pass2Jump(char* outputAddr, char* outputCursor)
     // arg1 should fit in 27 bits
     if (((unsigned)arg1num >> 27) > 0)
     {
-        BDOS_PrintConsole("JUMPO: arg1 is >27 bits\n");
+        bdos_print("JUMPO: arg1 is >27 bits\n");
         exit(1);
     }
 
     instr += (arg1num << 1);
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Jumpo(char* outputAddr, char* outputCursor)
@@ -286,7 +253,7 @@ void pass2Jumpo(char* outputAddr, char* outputCursor)
     // arg1 should fit in 27 bits
     if (((unsigned)arg1num >> 27) > 0)
     {
-        BDOS_PrintConsole("JUMPO: arg1 is >27 bits\n");
+        bdos_print("JUMPO: arg1 is >27 bits\n");
         exit(1);
     }
 
@@ -294,10 +261,8 @@ void pass2Jumpo(char* outputAddr, char* outputCursor)
     instr ^= 1;
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Jumpr(char* outputAddr, char* outputCursor)
@@ -309,7 +274,7 @@ void pass2Jumpr(char* outputAddr, char* outputCursor)
     // arg1 should fit in 16 bits
     if (((unsigned)arg1num >> 16) > 0)
     {
-        BDOS_PrintConsole("JUMPR: arg1 is >16 bits\n");
+        bdos_print("JUMPR: arg1 is >16 bits\n");
         exit(1);
     }
 
@@ -321,7 +286,7 @@ void pass2Jumpr(char* outputAddr, char* outputCursor)
     // arg2 should be a reg
     if (arg2buf[0] != 'r')
     {
-        BDOS_PrintConsole("JUMPR: arg2 not a reg\n");
+        bdos_print("JUMPR: arg2 not a reg\n");
         exit(1);
     }
     word arg2num = strToInt(&arg2buf[1]);
@@ -329,18 +294,18 @@ void pass2Jumpr(char* outputAddr, char* outputCursor)
     instr += (arg2num << 4);
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Jumpro(char* outputAddr, char* outputCursor)
 {
+    bdos_print("JUMPRO: unimplemented\n");
+    exit(1);
     return;
 }
 
-void pass2Beq(char* outputAddr, char* outputCursor)
+void pass2BranchBase(char* outputAddr, char* outputCursor, word branchOpCode, word branchSigned)
 {
     word instr = 0x60000000;
 
@@ -350,7 +315,7 @@ void pass2Beq(char* outputAddr, char* outputCursor)
     // arg1 should be a reg
     if (arg1buf[0] != 'r')
     {
-        BDOS_PrintConsole("BEQ: arg1 not a reg\n");
+        bdos_print("BEQ: arg1 not a reg\n");
         exit(1);
     }
     word arg1num = strToInt(&arg1buf[1]);
@@ -363,7 +328,7 @@ void pass2Beq(char* outputAddr, char* outputCursor)
     // arg2 should be a reg
     if (arg2buf[0] != 'r')
     {
-        BDOS_PrintConsole("BEQ: arg2 not a reg\n");
+        bdos_print("BEQ: arg2 not a reg\n");
         exit(1);
     }
     word arg2num = strToInt(&arg2buf[1]);
@@ -373,228 +338,87 @@ void pass2Beq(char* outputAddr, char* outputCursor)
 
     // arg3
     word arg3num = getNumberAtArg(3);
-
-    // arg3 should fit in 16 bits
-    if (((unsigned)arg3num >> 16) > 0)
+    // arg3 should fit in 16 bits (signed numbers have 1 bit less)
+    word bitsCheck = 16;
+    if (branchSigned)
     {
-        BDOS_PrintConsole("BEQ: arg3 is >16 bits\n");
+        bitsCheck = 15;
+    }
+    if ((MATH_abs(arg3num) >> bitsCheck) > 0)
+    {
+        bdos_print("READ: arg3 is >16 bits\n");
         exit(1);
     }
 
-    instr += (arg3num << 12);
+    word mask = 0xffff;
+    instr += ((arg3num & mask) << 12);
+
+    // opcode
+    instr += (branchOpCode << 1);
+
+    // signed bit
+    if (branchSigned)
+    {
+        instr ^= 1;
+    }
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
+}
+
+
+void pass2Beq(char* outputAddr, char* outputCursor)
+{
+    pass2BranchBase(outputAddr, outputCursor, 0x0, 0);
 }
 
 void pass2Bgt(char* outputAddr, char* outputCursor)
 {
-    word instr = 0x40000000;
-
-    // arg1
-    char arg1buf[16];
-    getArgPos(1, arg1buf);
-    // arg1 should be a reg
-    if (arg1buf[0] != 'r')
-    {
-        BDOS_PrintConsole("BGT: arg1 not a reg\n");
-        exit(1);
-    }
-    word arg1num = strToInt(&arg1buf[1]);
-
-    instr += (arg1num << 8);
-
-    // arg2
-    char arg2buf[16];
-    getArgPos(2, arg2buf);
-    // arg2 should be a reg
-    if (arg2buf[0] != 'r')
-    {
-        BDOS_PrintConsole("BGT: arg2 not a reg\n");
-        exit(1);
-    }
-    word arg2num = strToInt(&arg2buf[1]);
-
-    instr += (arg2num << 4);
-
-
-    // arg3
-    word arg3num = getNumberAtArg(3);
-
-    // arg3 should fit in 16 bits
-    if (((unsigned)arg3num >> 16) > 0)
-    {
-        BDOS_PrintConsole("BGT: arg3 is >16 bits\n");
-        exit(1);
-    }
-
-    instr += (arg3num << 12);
-
-    // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    pass2BranchBase(outputAddr, outputCursor, 0x1, 0);
 }
 
 void pass2Bgts(char* outputAddr, char* outputCursor)
 {
-    word instr = 0x40000000;
-
-    // arg1
-    char arg1buf[16];
-    getArgPos(1, arg1buf);
-    // arg1 should be a reg
-    if (arg1buf[0] != 'r')
-    {
-        BDOS_PrintConsole("BGTS: arg1 not a reg\n");
-        exit(1);
-    }
-    word arg1num = strToInt(&arg1buf[1]);
-
-    instr += (arg1num << 8);
-
-    // arg2
-    char arg2buf[16];
-    getArgPos(2, arg2buf);
-    // arg2 should be a reg
-    if (arg2buf[0] != 'r')
-    {
-        BDOS_PrintConsole("BGTS: arg2 not a reg\n");
-        exit(1);
-    }
-    word arg2num = strToInt(&arg2buf[1]);
-
-    instr += (arg2num << 4);
-
-
-    // arg3
-    word arg3num = getNumberAtArg(3);
-
-    // arg3 should fit in 16 bits
-    if (((unsigned)arg3num >> 16) > 0)
-    {
-        BDOS_PrintConsole("BGTS: arg3 is >16 bits\n");
-        exit(1);
-    }
-
-    instr += (arg3num << 12);
-
-    instr ^= 1;
-
-    // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    pass2BranchBase(outputAddr, outputCursor, 0x1, 1);
 }
 
 void pass2Bge(char* outputAddr, char* outputCursor)
 {
-    word instr = 0x30000000;
-
-    // arg1
-    char arg1buf[16];
-    getArgPos(1, arg1buf);
-    // arg1 should be a reg
-    if (arg1buf[0] != 'r')
-    {
-        BDOS_PrintConsole("BGE: arg1 not a reg\n");
-        exit(1);
-    }
-    word arg1num = strToInt(&arg1buf[1]);
-
-    instr += (arg1num << 8);
-
-    // arg2
-    char arg2buf[16];
-    getArgPos(2, arg2buf);
-    // arg2 should be a reg
-    if (arg2buf[0] != 'r')
-    {
-        BDOS_PrintConsole("BGE: arg2 not a reg\n");
-        exit(1);
-    }
-    word arg2num = strToInt(&arg2buf[1]);
-
-    instr += (arg2num << 4);
-
-
-    // arg3
-    word arg3num = getNumberAtArg(3);
-
-    // arg3 should fit in 16 bits
-    if (((unsigned)arg3num >> 16) > 0)
-    {
-        BDOS_PrintConsole("BGE: arg3 is >16 bits\n");
-        exit(1);
-    }
-
-    instr += (arg3num << 12);
-
-    // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    pass2BranchBase(outputAddr, outputCursor, 0x2, 0);
 }
 
 void pass2Bges(char* outputAddr, char* outputCursor)
 {
-    word instr = 0x30000000;
-
-    // arg1
-    char arg1buf[16];
-    getArgPos(1, arg1buf);
-    // arg1 should be a reg
-    if (arg1buf[0] != 'r')
-    {
-        BDOS_PrintConsole("BGES: arg1 not a reg\n");
-        exit(1);
-    }
-    word arg1num = strToInt(&arg1buf[1]);
-
-    instr += (arg1num << 8);
-
-    // arg2
-    char arg2buf[16];
-    getArgPos(2, arg2buf);
-    // arg2 should be a reg
-    if (arg2buf[0] != 'r')
-    {
-        BDOS_PrintConsole("BGES: arg2 not a reg\n");
-        exit(1);
-    }
-    word arg2num = strToInt(&arg2buf[1]);
-
-    instr += (arg2num << 4);
-
-
-    // arg3
-    word arg3num = getNumberAtArg(3);
-
-    // arg3 should fit in 16 bits
-    if (((unsigned)arg3num >> 16) > 0)
-    {
-        BDOS_PrintConsole("BGES: arg3 is >16 bits\n");
-        exit(1);
-    }
-
-    instr += (arg3num << 12);
-
-    instr ^= 1;
-
-    // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    pass2BranchBase(outputAddr, outputCursor, 0x2, 1);
 }
 
 void pass2Bne(char* outputAddr, char* outputCursor)
+{
+    pass2BranchBase(outputAddr, outputCursor, 0x4, 0);
+}
+
+void pass2Blt(char* outputAddr, char* outputCursor)
+{
+    pass2BranchBase(outputAddr, outputCursor, 0x5, 0);
+}
+
+void pass2Blts(char* outputAddr, char* outputCursor)
+{
+    pass2BranchBase(outputAddr, outputCursor, 0x5, 1);
+}
+
+void pass2Ble(char* outputAddr, char* outputCursor)
+{
+    pass2BranchBase(outputAddr, outputCursor, 0x6, 0);
+}
+
+void pass2Bles(char* outputAddr, char* outputCursor)
+{
+    pass2BranchBase(outputAddr, outputCursor, 0x6, 1);
+}
+
+void pass2Savpc(char* outputAddr, char* outputCursor)
 {
     word instr = 0x50000000;
 
@@ -604,78 +428,7 @@ void pass2Bne(char* outputAddr, char* outputCursor)
     // arg1 should be a reg
     if (arg1buf[0] != 'r')
     {
-        BDOS_PrintConsole("BNE: arg1 not a reg\n");
-        exit(1);
-    }
-    word arg1num = strToInt(&arg1buf[1]);
-
-    instr += (arg1num << 8);
-
-    // arg2
-    char arg2buf[16];
-    getArgPos(2, arg2buf);
-    // arg2 should be a reg
-    if (arg2buf[0] != 'r')
-    {
-        BDOS_PrintConsole("BNE: arg2 not a reg\n");
-        exit(1);
-    }
-    word arg2num = strToInt(&arg2buf[1]);
-
-    instr += (arg2num << 4);
-
-
-    // arg3
-    word arg3num = getNumberAtArg(3);
-
-    // arg3 should fit in 16 bits
-    if (((unsigned)arg3num >> 16) > 0)
-    {
-        BDOS_PrintConsole("BNE: arg3 is >16 bits\n");
-        exit(1);
-    }
-
-    instr += (arg3num << 12);
-
-    // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
-}
-
-void pass2Blt(char* outputAddr, char* outputCursor)
-{
-    return;
-}
-
-void pass2Blts(char* outputAddr, char* outputCursor)
-{
-    return;
-}
-
-void pass2Ble(char* outputAddr, char* outputCursor)
-{
-    return;
-}
-
-void pass2Bles(char* outputAddr, char* outputCursor)
-{
-    return;
-}
-
-
-void pass2Savpc(char* outputAddr, char* outputCursor)
-{
-    word instr = 0x20000000;
-
-    // arg1
-    char arg1buf[16];
-    getArgPos(1, arg1buf);
-    // arg1 should be a reg
-    if (arg1buf[0] != 'r')
-    {
-        BDOS_PrintConsole("SAVPC: arg1 not a reg\n");
+        bdos_print("SAVPC: arg1 not a reg\n");
         exit(1);
     }
     word arg1num = strToInt(&arg1buf[1]);
@@ -683,24 +436,30 @@ void pass2Savpc(char* outputAddr, char* outputCursor)
     instr += arg1num;
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Reti(char* outputAddr, char* outputCursor)
 {
-    char instr[4] = {0x10, 0x00, 0x00, 0x00};
-    memcpy((outputAddr + *outputCursor), instr, 4);
-    (*outputCursor) += 4;
+    word instr = 0x40000000;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
+}
+
+void pass2Ccache(char* outputAddr, char* outputCursor)
+{
+    word instr = 0x70000000;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2ArithBase(char* outputAddr, char* outputCursor, word arithOpCode)
 {
     word instr = 0;
 
-    instr += (arithOpCode << 23);
+    // opcode
+    instr += (arithOpCode << 24);
 
     // arg1
     char arg1buf[16];
@@ -708,12 +467,12 @@ void pass2ArithBase(char* outputAddr, char* outputCursor, word arithOpCode)
     // arg1 should be a reg
     if (arg1buf[0] != 'r')
     {
-        BDOS_PrintConsole("ARITH: arg1 not a reg\n");
+        bdos_print("ARITH: arg1 not a reg\n");
         exit(1);
     }
     word arg1num = strToInt(&arg1buf[1]);
 
-    instr += (arg1num << 8);
+    // Add arg1num when arg2 is known to be a const or not
 
     // arg2
     char arg2buf[16];
@@ -724,20 +483,28 @@ void pass2ArithBase(char* outputAddr, char* outputCursor, word arithOpCode)
     {
         arg2num= getNumberAtArg(2);
 
-        // arg1 should fit in 11 bits
-        if (((unsigned)arg2num >> 11) > 0)
+        // arg2 should fit in 16 bits (signed numbers have 1 bit less)
+        word bitsCheck = 16;
+        if (arg2num < 0)
         {
-            BDOS_PrintConsole("ARITH: const is >11 bits\n");
+            bitsCheck = 15;
+        }
+        if ((MATH_abs(arg2num) >> bitsCheck) > 0)
+        {
+            bdos_print("ARITH: arg2 is >16 bits\n");
             exit(1);
         }
 
-        instr += (arg2num << 12);
-        instr ^= (1 << 27); // set constant bit
+        word mask = 0xffff;
+        instr += ((arg2num & mask) << 8);
+        instr ^= (1 << 28); // set constant bit
+        instr += (arg1num << 4);
     }
     else // arg2 is a reg
     {
         arg2num = strToInt(&arg2buf[1]);
         instr += (arg2num << 4);
+        instr += (arg1num << 8);
     }
 
     // arg3
@@ -746,7 +513,7 @@ void pass2ArithBase(char* outputAddr, char* outputCursor, word arithOpCode)
     // arg3 should be a reg
     if (arg3buf[0] != 'r')
     {
-        BDOS_PrintConsole("ARITH: arg3 not a reg\n");
+        bdos_print("ARITH: arg3 not a reg\n");
         exit(1);
     }
     word arg3num = strToInt(&arg3buf[1]);
@@ -754,10 +521,8 @@ void pass2ArithBase(char* outputAddr, char* outputCursor, word arithOpCode)
     instr += arg3num;
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Or(char* outputAddr, char* outputCursor)
@@ -797,48 +562,82 @@ void pass2Shiftr(char* outputAddr, char* outputCursor)
 
 void pass2Shiftrs(char* outputAddr, char* outputCursor)
 {
-    pass2ArithBase(outputAddr, outputCursor, 0x0);
+    pass2ArithBase(outputAddr, outputCursor, 0xe);
 }
 
 void pass2Mults(char* outputAddr, char* outputCursor)
 {
-    pass2ArithBase(outputAddr, outputCursor, 0x7);
+    pass2ArithBase(outputAddr, outputCursor, 0x8);
 }
 
 void pass2Multu(char* outputAddr, char* outputCursor)
 {
-    pass2ArithBase(outputAddr, outputCursor, 0x7);
+    pass2ArithBase(outputAddr, outputCursor, 0x9);
+}
+
+void pass2Multfp(char* outputAddr, char* outputCursor)
+{
+    pass2ArithBase(outputAddr, outputCursor, 0xf);
 }
 
 void pass2Slt(char* outputAddr, char* outputCursor)
 {
-    pass2ArithBase(outputAddr, outputCursor, 0x7);
+    pass2ArithBase(outputAddr, outputCursor, 0xa);
 }
 
 void pass2Sltu(char* outputAddr, char* outputCursor)
 {
-    pass2ArithBase(outputAddr, outputCursor, 0x7);
+    pass2ArithBase(outputAddr, outputCursor, 0xb);
 }
 
 void pass2Not(char* outputAddr, char* outputCursor)
 {
-    pass2ArithBase(outputAddr, outputCursor, 0x8);
+    word instr = 0x7000000;
+
+    // arg1
+    char arg1buf[16];
+    getArgPos(1, arg1buf);
+    // arg1 should be a reg
+    if (arg1buf[0] != 'r')
+    {
+        bdos_print("ARITH: arg1 not a reg\n");
+        exit(1);
+    }
+    word arg1num = strToInt(&arg1buf[1]);
+    instr += (arg1num << 8);
+
+    // arg2
+    char arg2buf[16];
+    getArgPos(2, arg2buf);
+    // arg2 should be a reg
+    if (arg2buf[0] != 'r')
+    {
+        bdos_print("ARITH: arg2 not a reg\n");
+        exit(1);
+    }
+    word arg2num = strToInt(&arg2buf[1]);
+
+    instr += arg2num;
+
+    // write to mem
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Load(char* outputAddr, char* outputCursor)
 {
-    word instr = 0x70000000;
+    word instr = 0x1C000000;
 
     word arg1num = getNumberAtArg(1);
 
-    // arg1 should fit in 16 bits
+    // arg1 should fit in 16 bits unsigned
     if (((unsigned)arg1num >> 16) > 0)
     {
-        BDOS_PrintConsole("LOAD: arg1 is >16 bits\n");
+        bdos_print("LOAD: arg1 is >16 bits\n");
         exit(1);
     }
 
-    instr += (arg1num << 12);
+    instr += (arg1num << 8);
 
     // arg2
     char arg2buf[16];
@@ -846,34 +645,33 @@ void pass2Load(char* outputAddr, char* outputCursor)
     // arg2 should be a reg
     if (arg2buf[0] != 'r')
     {
-        BDOS_PrintConsole("LOAD: arg2 not a reg\n");
+        bdos_print("LOAD: arg2 not a reg\n");
         exit(1);
     }
     word arg2num = strToInt(&arg2buf[1]);
 
+    instr += (arg2num << 4);
     instr += arg2num;
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Loadhi(char* outputAddr, char* outputCursor)
 {
-    word instr = 0x70000000;
+    word instr = 0x1D000000;
 
     word arg1num = getNumberAtArg(1);
 
-    // arg1 should fit in 16 bits
+    // arg1 should fit in 16 bits unsigned
     if (((unsigned)arg1num >> 16) > 0)
     {
-        BDOS_PrintConsole("LOADHI: arg1 is >16 bits\n");
+        bdos_print("LOADHI: arg1 is >16 bits\n");
         exit(1);
     }
 
-    instr += (arg1num << 12);
+    instr += (arg1num << 8);
 
     // arg2
     char arg2buf[16];
@@ -881,25 +679,22 @@ void pass2Loadhi(char* outputAddr, char* outputCursor)
     // arg2 should be a reg
     if (arg2buf[0] != 'r')
     {
-        BDOS_PrintConsole("LOADHI: arg2 not a reg\n");
+        bdos_print("LOADHI: arg2 not a reg\n");
         exit(1);
     }
     word arg2num = strToInt(&arg2buf[1]);
 
+    instr += (arg2num << 4);
     instr += arg2num;
 
-    instr ^= (1 << 8);
-
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2LoadLabelLow(char* outputAddr, char* outputCursor)
 {
-    word instr = 0x70000000;
+    word instr = 0x1C000000;
 
     char arg1buf[LABEL_NAME_SIZE+1];
     getArgPos(1, arg1buf);
@@ -909,7 +704,7 @@ void pass2LoadLabelLow(char* outputAddr, char* outputCursor)
     arg1num = arg1num << 16;
     arg1num = (unsigned)arg1num >> 16;
 
-    instr += (arg1num << 12);
+    instr += (arg1num << 8);
 
     // arg2
     char arg2buf[16];
@@ -917,23 +712,22 @@ void pass2LoadLabelLow(char* outputAddr, char* outputCursor)
     // arg2 should be a reg
     if (arg2buf[0] != 'r')
     {
-        BDOS_PrintConsole("LOADLABELLOW: arg2 not a reg\n");
+        bdos_print("LOADLABELLOW: arg2 not a reg\n");
         exit(1);
     }
     word arg2num = strToInt(&arg2buf[1]);
 
+    instr += (arg2num << 4);
     instr += arg2num;
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2LoadLabelHigh(char* outputAddr, char* outputCursor)
 {
-    word instr = 0x70000000;
+    word instr = 0x1D000000;
 
     char arg1buf[LABEL_NAME_SIZE+1];
     getArgPos(1, arg1buf);
@@ -942,7 +736,7 @@ void pass2LoadLabelHigh(char* outputAddr, char* outputCursor)
     // only use the highest 16 bits
     arg1num = (unsigned)arg1num >> 16;
 
-    instr += (arg1num << 12);
+    instr += (arg1num << 8);
 
     // arg2
     char arg2buf[16];
@@ -950,27 +744,24 @@ void pass2LoadLabelHigh(char* outputAddr, char* outputCursor)
     // arg2 should be a reg
     if (arg2buf[0] != 'r')
     {
-        BDOS_PrintConsole("LOADLABELHIGH: arg2 not a reg\n");
+        bdos_print("LOADLABELHIGH: arg2 not a reg\n");
         exit(1);
     }
     word arg2num = strToInt(&arg2buf[1]);
 
+    instr += (arg2num << 4);
     instr += arg2num;
 
-    instr ^= (1 << 8);
-
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(instr, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Nop(char* outputAddr, char* outputCursor)
 {
-    char instr[4] = {0x00, 0x00, 0x00, 0x00};
-    memcpy((outputAddr + *outputCursor), instr, 4);
-    (*outputCursor) += 4;
+    word instr = 0;
+    outputAddr[*outputCursor] = instr;
+    (*outputCursor) += 1;
 }
 
 void pass2Dw(char* outputAddr, char* outputCursor)
@@ -978,10 +769,8 @@ void pass2Dw(char* outputAddr, char* outputCursor)
     word dwValue = getNumberAtArg(1);
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(dwValue, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = dwValue;
+    (*outputCursor) += 1;
 }
 
 void pass2Dl(char* outputAddr, char* outputCursor)
@@ -991,10 +780,8 @@ void pass2Dl(char* outputAddr, char* outputCursor)
     word dlValue = getNumberForLabel(arg1buf);
 
     // write to mem
-    char byteInstr[4];
-    instrToByteArray(dlValue, byteInstr);
-    memcpy((outputAddr + *outputCursor), byteInstr, 4);
-    (*outputCursor) += 4;
+    outputAddr[*outputCursor] = dlValue;
+    (*outputCursor) += 1;
 }
 
 

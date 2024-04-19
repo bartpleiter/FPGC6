@@ -20,12 +20,10 @@
 
 #define word char
 
-#define STDIO_FBUF_ADDR 0x440000
-
 #include "lib/math.c"
 #include "lib/sys.c"
 #include "lib/stdlib.c"
-#include "lib/fs.c"
+#include "lib/brfs.c"
 #include "lib/stdio.c"
 
 #define USERBDOS_OFFSET 0x400000 // applied offset to all labels
@@ -39,7 +37,13 @@
 #define LABELLIST_ADDR 0x660000
 
 #define LINEBUFFER_ADDR 0x4C0000
-char infilename[96];
+
+word fd_input = -1;
+word fd_output = -1;
+
+char absolute_path_in[MAX_PATH_LENGTH];
+word filesize_input = 0;
+
 char *lineBuffer = (char*) LINEBUFFER_ADDR;
 
 word memCursor = 0; // cursor for readMemLine
@@ -65,7 +69,7 @@ word readFileLine()
 
     word outputi = 0;
 
-    char c = fgetc();
+    char c = fgetc(fd_input, filesize_input);
     char cprev = c;
     // stop on EOF or newline
     while (c != EOF && c != '\n')
@@ -108,7 +112,7 @@ word readFileLine()
             
         
         cprev = c;
-        c = fgetc();
+        c = fgetc(fd_input, filesize_input);
     }
 
     lineBuffer[outputi] = 0; // terminate
@@ -118,9 +122,9 @@ word readFileLine()
         if (lineBuffer[0] != 0)
         {
             // all code after the last \n is ignored!
-            BDOS_PrintConsole("Skipped: ");
-            BDOS_PrintConsole(lineBuffer);
-            BDOS_PrintConsole("\n");
+            bdos_print("Skipped: ");
+            bdos_print(lineBuffer);
+            bdos_print("\n");
         }
         return EOF;
     }
@@ -167,7 +171,7 @@ word readMemLine(char* memAddr)
     // if empty line, read next line
     if (outputi == 0)
     {
-        BDOS_PrintConsole("Empty string in readMemLine!!!\n");
+        bdos_print("Empty string in readMemLine!!!\n");
         return EOF;
     }
 
@@ -192,7 +196,7 @@ void getArgPos(word argi, char* bufOut)
     }
     if (linei == 0)
     {
-        BDOS_PrintConsole("getArgPos error");
+        bdos_print("getArgPos error");
         exit(1);
     }
     // copy until space or \n
@@ -227,7 +231,7 @@ word getNumberAtArg(word argi)
     }
     if (linei == 0)
     {
-        BDOS_PrintConsole("NumberAtArg error");
+        bdos_print("NumberAtArg error");
         exit(1);
     }
 
@@ -463,7 +467,7 @@ word Pass1Dw(char* outputAddr, char* outputCursor)
 
 void Pass1Db(char* outputAddr, char* outputCursor)
 {
-    BDOS_PrintConsole(".db is not yet implemented!\n");
+    bdos_print(".db is not yet implemented!\n");
     exit(1);
 }
 
@@ -524,7 +528,7 @@ void LinePass1(char* outputAddr, char* outputCursor)
 
 void doPass1()
 {
-    BDOS_PrintConsole("Doing pass 1\n");
+    bdos_print("Doing pass 1\n");
 
     memCursor = 0; // reset cursor for readMemLine
     globalLineCursor = 0; // keep track of the line number for the labels
@@ -534,9 +538,10 @@ void doPass1()
     word filePass1Cursor = 0;
 
     // add userBDOS header instructions
-    memcpy(outfilePass1Addr, "jump Main\njump Int\njump Main\njump Main\n", 39);
-    filePass1Cursor += 39;
-    globalLineCursor += 5;
+    char* userBDOSHeader = "jump Main\njump Int\njump Main\njump Main\n";
+    memcpy(outfilePass1Addr, userBDOSHeader, strlen(userBDOSHeader));
+    filePass1Cursor += strlen(userBDOSHeader);
+    globalLineCursor += 4;
 
     while (readMemLine(outfileCodeAddr) != EOF)
     {
@@ -596,6 +601,8 @@ void LinePass2(char* outputAddr, char* outputCursor)
         pass2Savpc(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "reti", 4))
         pass2Reti(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "ccache", 6))
+        pass2Ccache(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "or ", 3))
         pass2Or(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "and ", 4))
@@ -618,6 +625,8 @@ void LinePass2(char* outputAddr, char* outputCursor)
         pass2Mults(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "multu ", 6))
         pass2Multu(outputAddr, outputCursor);
+    else if (memcmp(lineBuffer, "multfp ", 7))
+        pass2Multfp(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "slt ", 4))
         pass2Slt(outputAddr, outputCursor);
     else if (memcmp(lineBuffer, "sltu ", 5))
@@ -638,9 +647,9 @@ void LinePass2(char* outputAddr, char* outputCursor)
         pass2Dl(outputAddr, outputCursor);
     else
     {
-        BDOS_PrintConsole("Unknown instruction!\n");
-        BDOS_PrintConsole(lineBuffer);
-        BDOS_PrintConsole("\n");
+        bdos_print("Unknown instruction!\n");
+        bdos_print(lineBuffer);
+        bdos_print("\n");
         exit(1);
     }
 }
@@ -649,7 +658,7 @@ void LinePass2(char* outputAddr, char* outputCursor)
 // returns the length of the binary
 word doPass2()
 {
-    BDOS_PrintConsole("Doing pass 2\n");
+    bdos_print("Doing pass 2\n");
 
     memCursor = 0; // reset cursor for readMemLine
 
@@ -676,7 +685,15 @@ void moveDataDown()
     *outfileCodeAddr = 0; // initialize to 0
     word fileCodeCursor = 0;
 
-    BDOS_PrintConsole("Looking for .data and .code sections\n");
+    bdos_print("Looking for .data and .code sections\n");
+
+    // Open file
+    fd_input = fs_open(absolute_path_in);
+    if (fd_input == -1)
+    {
+        bdos_print("UNEXPECTED: Could not open input file.\n");
+        exit(1);
+    }
 
     // .data, also do pass one on the code
     word inDataSection = 0;
@@ -735,11 +752,16 @@ void moveDataDown()
     *(outfileCodeAddr+fileCodeCursor) = 0; // terminate code section
     // do not increment the codeCursor, because we will append the data section
 
-    BDOS_PrintConsole("Looking for .rdata and .bss sections\n");
+    bdos_print("Looking for .rdata and .bss sections\n");
 
     // reopen file to reiterate
-    fclose();
-    fopenRead(infilename);
+    fs_close(fd_input);
+    fd_input = fs_open(absolute_path_in);
+    if (fd_input == -1)
+    {
+        bdos_print("UNEXPECTED: Could not open input file.\n");
+        exit(1);
+    }
 
     //.rdata and .bss at the same time
     inDataSection = 0;
@@ -781,145 +803,113 @@ void moveDataDown()
     *(outfileDataAddr+fileDataCursor) = 0; // terminate data section
     fileDataCursor++;
 
-    BDOS_PrintConsole("Appending all to .code section\n");
+    bdos_print("Appending all to .code section\n");
 
     // append data section to code section, including \0
     memcpy((outfileCodeAddr+fileCodeCursor), outfileDataAddr, fileDataCursor);
+
+    fs_close(fd_input);
 }
 
 
 int main() 
 {
-    BDOS_PrintConsole("B322 Assembler\n");
+    bdos_print("B322 Assembler\n");
 
-    // output file
-
-    char outfilename[96];
-    BDOS_GetArgN(2, outfilename);
-
-    // Default to a.out
-    if (outfilename[0] == 0)
+    // Read number of arguments
+    word argc = shell_argc();
+    if (argc < 3)
     {
-        strcat(outfilename, BDOS_GetPath());
-        if (outfilename[strlen(outfilename)-1] != '/')
-        {
-            strcat(outfilename, "/");
-        }
-        strcat(outfilename, "A.OUT");
-    }
-
-    // Make full path if it is not already
-    if (outfilename[0] != '/')
-    {
-        char bothPath[96];
-        bothPath[0] = 0;
-        strcat(bothPath, BDOS_GetPath());
-        if (bothPath[strlen(bothPath)-1] != '/')
-        {
-            strcat(bothPath, "/");
-        }
-        strcat(bothPath, outfilename);
-        strcpy(outfilename, bothPath);
-    }
-
-    // create output file, test if it can be created/opened
-    if (!fopenWrite(outfilename))
-    {
-        BDOS_PrintConsole("Could not open outfile\n");
-        return 0;
-    }
-    fclose();
-
-
-
-    // input file
-
-    BDOS_GetArgN(1, infilename);
-
-    // Default to out.asm
-    if (infilename[0] == 0)
-    {
-        strcat(infilename, BDOS_GetPath());
-        if (infilename[strlen(infilename)-1] != '/')
-        {
-            strcat(infilename, "/");
-        }
-        strcat(infilename, "OUT.ASM");
-    }
-
-    // Make full path if it is not already
-    if (infilename[0] != '/')
-    {
-        char bothPath[96];
-        bothPath[0] = 0;
-        strcat(bothPath, BDOS_GetPath());
-        if (bothPath[strlen(bothPath)-1] != '/')
-        {
-            strcat(bothPath, "/");
-        }
-        strcat(bothPath, infilename);
-        strcpy(infilename, bothPath);
-    }
-
-    // Open the input file
-    if (!fopenRead(infilename))
-    {
-        BDOS_PrintConsole("Cannot open input file\n");
+        bdos_print("Usage: asm <source file> <output file>\n");
         return 1;
     }
 
-    moveDataDown(); // move all data sections below the code sections
+    // Get input filename
+    char** args = shell_argv();
+    char* filename = args[1];
 
-    fclose(); // done reading file, everything else can be done in memory
+    // Check if absolute path
+    if (filename[0] != '/')
+    {
+        strcpy(absolute_path_in, fs_getcwd());
+        strcat(absolute_path_in, "/");
+        strcat(absolute_path_in, filename);
+    }
+    else
+    {
+        strcpy(absolute_path_in, filename);
+    }
 
+    fd_input = fs_open(absolute_path_in);
+    if (fd_input == -1)
+    {
+        bdos_print("Could not open input file.\n");
+        return 1;
+    }
+    // Get file size
+    struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(absolute_path_in);
+    filesize_input = entry->filesize;
+    fs_close(fd_input); // Close so we can reopen it later when needed
+
+    // Get output filename
+    args = shell_argv();
+    filename = args[2];
+
+    char absolute_path_out[MAX_PATH_LENGTH];
+    // Check if absolute path
+    if (filename[0] != '/')
+    {
+        strcpy(absolute_path_out, fs_getcwd());
+        strcat(absolute_path_out, "/");
+        strcat(absolute_path_out, filename);
+    }
+    else
+    {
+        strcpy(absolute_path_out, filename);
+    }
+
+    // (re)create file for output
+    fs_delete(absolute_path_out);
+    fs_mkfile(absolute_path_out);
+    fd_output = fs_open(absolute_path_out);
+    if (fd_output == -1)
+    {
+        bdos_print("Could not create/open output file.\n");
+        return 1;
+    }
+    fs_close(fd_output); // Close so we can reopen it later when needed
+
+
+
+    moveDataDown(); // Move all data sections below the code sections
+    // done reading file, everything else can be done in memory
     doPass1();
-
     word pass2Length = doPass2();
 
-    BDOS_PrintConsole("Writing to file\n");
 
-    // write binary to output file
-    if (!fopenWrite(outfilename))
+    bdos_print("Writing to file\n");
+    fd_output = fs_open(absolute_path_out);
+    if (fd_output == -1)
     {
-        BDOS_PrintConsole("Could not open outfile\n");
-        return 0;
+        bdos_print("UNEXPECTED: Could not open output file.\n");
+        return 1;
     }
+    
     char* outfilePass2Addr = (char*) OUTFILE_PASS2_ADDR;
-    fputData(outfilePass2Addr, pass2Length-1);
-    fclose();
+    fs_write(fd_output, outfilePass2Addr, pass2Length);
+    fs_close(fd_output);
     
     return 0;
 }
 
 void interrupt()
 {
-  // handle all interrupts
-  word i = getIntID();
+  // Handle all interrupts
+  word i = get_int_id();
   switch(i)
   {
     case INTID_TIMER1:
-      timer1Value = 1; // notify ending of timer1
-      break;
-
-    case INTID_TIMER2:
-      break;
-
-    case INTID_UART0:
-      break;
-
-    case INTID_GPU:
-      break;
-
-    case INTID_TIMER3:
-      break;
-
-    case INTID_PS2:
-      break;
-
-    case INTID_UART1:
-      break;
-
-    case INTID_UART2:
+      timer1Value = 1;  // Notify ending of timer1
       break;
   }
 }

@@ -11,7 +11,7 @@ echo "cd /" | python3 "$MAINPATH/../Programmer/sendCommand.py"
 sh uploadToBDOS.sh userBDOS/mkdir.c mkdir
 echo "mkdir /bin" | python3 "$MAINPATH/../Programmer/sendCommand.py"
 echo "cd /bin" | python3 "$MAINPATH/../Programmer/sendCommand.py"
-sleep 0.5
+#sleep 0.5
 
 # Upload all the programs in a very hardcoded way given the directory structure of the project
 cd userBDOS
@@ -24,7 +24,7 @@ do
     # Remove leading ./
     j="${j#./}"
     bash uploadToBDOS.sh userBDOS/$j $FNAME
-    sleep 0.5
+    #sleep 0.5
 done
 
 echo "rm /mkdir" | python3 "$MAINPATH/../Programmer/sendCommand.py"

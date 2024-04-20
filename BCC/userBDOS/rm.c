@@ -110,7 +110,7 @@ int main()
     // File
     if (fs_delete(absolute_path))
     {
-      fs_syncflash();
+      //fs_syncflash();
     }
     else
     {
@@ -121,7 +121,7 @@ int main()
   {
     // Directory
     remove_dir(absolute_path);
-    fs_syncflash();
+    //fs_syncflash();
   }
 
   return 'q';

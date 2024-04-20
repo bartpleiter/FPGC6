@@ -31,8 +31,8 @@ do
     cd $MAINPATH/../Programmer
     sh sendTextFile.sh $MAINPATH/userBDOS/$i
 
-    echo "sync" | python3 "$MAINPATH/../Programmer/sendCommand.py"
+    #echo "sync" | python3 "$MAINPATH/../Programmer/sendCommand.py"
 
-    sleep 2
+    #sleep 2
 
 done

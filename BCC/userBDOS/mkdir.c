@@ -36,7 +36,7 @@ int main()
   // Create directory
   if (fs_mkdir(absolute_path))
   {
-    fs_syncflash();
+    //fs_syncflash();
   }
   else
   {

@@ -36,7 +36,7 @@ int main()
   // Create file
   if (fs_mkfile(absolute_path))
   {
-    fs_syncflash();
+    //fs_syncflash();
   }
   else
   {

@@ -28,15 +28,15 @@
 
 #define USERBDOS_OFFSET 0x400000 // applied offset to all labels
 
-#define OUTFILE_DATA_ADDR 0x500000
-#define OUTFILE_CODE_ADDR 0x540000
-#define OUTFILE_PASS1_ADDR 0x580000
-#define OUTFILE_PASS2_ADDR 0x600000
+#define OUTFILE_DATA_ADDR 0x420000
+#define OUTFILE_CODE_ADDR 0x4A0000
+#define OUTFILE_PASS1_ADDR 0x520000
+#define OUTFILE_PASS2_ADDR 0x610000
 
-#define LABELLISTLINENR_ADDR 0x65F000
-#define LABELLIST_ADDR 0x660000
+#define LABELLISTLINENR_ADDR 0x6F0000
+#define LABELLIST_ADDR 0x700000
 
-#define LINEBUFFER_ADDR 0x4C0000
+#define LINEBUFFER_ADDR 0x6E0000
 
 word fd_input = -1;
 word fd_output = -1;
@@ -528,7 +528,7 @@ void LinePass1(char* outputAddr, char* outputCursor)
 
 void doPass1()
 {
-    bdos_print("Doing pass 1\n");
+    bdos_print("Performing pass 1\n");
 
     memCursor = 0; // reset cursor for readMemLine
     globalLineCursor = 0; // keep track of the line number for the labels
@@ -658,7 +658,7 @@ void LinePass2(char* outputAddr, char* outputCursor)
 // returns the length of the binary
 word doPass2()
 {
-    bdos_print("Doing pass 2\n");
+    bdos_print("Performing pass 2\n");
 
     memCursor = 0; // reset cursor for readMemLine
 
@@ -685,7 +685,7 @@ void moveDataDown()
     *outfileCodeAddr = 0; // initialize to 0
     word fileCodeCursor = 0;
 
-    bdos_print("Looking for .data and .code sections\n");
+    bdos_print("Reading .data and .code sections\n");
 
     // Open file
     fd_input = fs_open(absolute_path_in);
@@ -752,7 +752,7 @@ void moveDataDown()
     *(outfileCodeAddr+fileCodeCursor) = 0; // terminate code section
     // do not increment the codeCursor, because we will append the data section
 
-    bdos_print("Looking for .rdata and .bss sections\n");
+    bdos_print("Reading .rdata and .bss sections\n");
 
     // reopen file to reiterate
     fs_close(fd_input);
@@ -887,7 +887,7 @@ int main()
     word pass2Length = doPass2();
 
 
-    bdos_print("Writing to file\n");
+    bdos_print("Writing binary file\n");
     fd_output = fs_open(absolute_path_out);
     if (fd_output == -1)
     {

@@ -78,6 +78,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SYNSTACK1_ADDR 0x470000
 #define INPUTBUFFER_ADDR 0x480000
 #define FILENAMES_ADDR 0x490000
+#define OUTFILE_DATA_ADDR 0x500000
 
 #include "lib/math.c"
 #include "lib/sys.c"
@@ -857,6 +858,8 @@ word GetNextChar(void)
       fs_close(Files[FileCnt - 1]);
       Files[FileCnt - 1] = NULL;
 
+      bdos_println(" Done");
+
       // store the last line/pos, they may still be needed later
       LineNos[FileCnt - 1] = LineNo;
       LinePoss[FileCnt - 1] = LinePos;
@@ -945,7 +948,7 @@ void IncludeFile(word quot)
     Files[FileCnt] = fs_open(cFileDir);
 
     bdos_print("- Compiling: ");
-    bdos_println(cFileDir);
+    bdos_print(basename(cFileDir));
 
     // Get file size
     struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(cFileDir);
@@ -982,7 +985,7 @@ void IncludeFile(word quot)
           if ((Files[FileCnt] = fs_open(FileNames[FileCnt])) != NULL)
           {
             bdos_print("- Compiling: ");
-            bdos_println(FileNames[FileCnt]);
+            bdos_println(basename(FileNames[FileCnt]));
             // Get file size
             struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(FileNames[FileCnt]);
             word filesize = entry->filesize;
@@ -7871,7 +7874,7 @@ int main()
     Files[0] = fs_open(FileNames[0]);
 
     bdos_print("Compiling: ");
-    bdos_println(FileNames[0]);
+    bdos_println(basename(FileNames[0]));
 
     // Get file size
     struct brfs_dir_entry* entry = (struct brfs_dir_entry*)fs_stat(FileNames[0]);
@@ -7954,7 +7957,9 @@ int main()
   */
 
   //GenStartCommentLine(); 
-  printf("Finished compiling\n");
+
+  printf("Writing to file\n");
+  stdio_flush(OutFile);
 
   if (OutFile)
     fs_close(OutFile);

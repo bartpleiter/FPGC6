@@ -627,13 +627,13 @@ void GenWriteFrameSize(void) //WORDSIZE
 void GenUpdateFrameSize(void)
 {
   word curpos = 0;
-  curpos = fs_getcursor(OutFile);
+  curpos = stdio_getcursor(OutFile);
   //printf("cur: ");
   //printd(curpos);
   //printf("\ngoto: ");
   //printd(GenPrologPos);
   //printf("\n");
-  fs_setcursor(OutFile, GenPrologPos);
+  stdio_setcursor(OutFile, GenPrologPos);
   GenWriteFrameSize();
 
   //printf("back to cur: ");
@@ -641,7 +641,7 @@ void GenUpdateFrameSize(void)
   //printf("\n");
   //printf("\n");
 
-  fs_setcursor(OutFile, curpos);
+  stdio_setcursor(OutFile, curpos);
 }
 
 void GenFxnProlog(void)
@@ -664,7 +664,7 @@ void GenFxnProlog(void)
 
   GenLeaf = 1; // will be reset to 0 if a call is generated
 
-  GenPrologPos = fs_getcursor(OutFile);
+  GenPrologPos = stdio_getcursor(OutFile);
   
   // write an empty space for the frame size
   word x;

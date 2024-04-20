@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "$1" == "" ]
+if [ $# -eq 0 ]
 then
     echo "No file to send"
     exit 1

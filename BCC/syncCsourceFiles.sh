@@ -13,13 +13,13 @@ echo "clear" | python3 "$MAINPATH/../Programmer/sendCommand.py"
 echo "cd /" | python3 "$MAINPATH/../Programmer/sendCommand.py"
 
 # Create directories
-echo "mkdir c" | python3 "$MAINPATH/../Programmer/sendCommand.py"
-echo "mkdir c/src" | python3 "$MAINPATH/../Programmer/sendCommand.py"
+echo "mkdir src" | python3 "$MAINPATH/../Programmer/sendCommand.py"
+echo "mkdir src/c" | python3 "$MAINPATH/../Programmer/sendCommand.py"
 
 for i in $(find . -type f -print)
 do
     FNAME=$(basename $i)
-    DIR="/c/src$(dirname $i | cut -c 2-)"
+    DIR="/src/c$(dirname $i | cut -c 2-)"
 
     # Create directory
     echo "mkdir $DIR" | python3 "$MAINPATH/../Programmer/sendCommand.py"
@@ -30,5 +30,9 @@ do
     # Send file
     cd $MAINPATH/../Programmer
     sh sendTextFile.sh $MAINPATH/userBDOS/$i
+
+    echo "sync" | python3 "$MAINPATH/../Programmer/sendCommand.py"
+
+    sleep 2
 
 done

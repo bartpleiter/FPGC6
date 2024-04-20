@@ -141,7 +141,7 @@ word shell_run_program(word run_from_path)
   word fp = brfs_open_file(absolute_path);
   if (fp == -1)
   {
-    GFX_PrintConsole("Could not open file\n");
+    // No warning as a local dir could have the same name as a program in SHELL_BIN_PATH
     return 0;
   }
 

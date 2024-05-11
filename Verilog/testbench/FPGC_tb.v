@@ -10,8 +10,8 @@
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/FPGC6.v"
 
 // other logic
-`include "/home/bart/Documents/FPGA/FPGC5/Verilog/modules/MultiStabilizer.v"
-`include "/home/bart/Documents/FPGA/FPGC5/Verilog/modules/DtrReset.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/MultiStabilizer.v"
+`include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/DtrReset.v"
 
 // cpu
 `include "/home/bart/Documents/FPGA/FPGC6/Verilog/modules/CPU/CPU.v"

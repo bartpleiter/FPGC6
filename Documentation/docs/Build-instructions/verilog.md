@@ -1,6 +1,6 @@
 # Verilog build/simulate instructions
 
-To simulate the design, iverilog is used. You might need to compile the latest version yourself.
+To simulate the design, iverilog is used. Use version >= 12.0
 
 To run the simulation (in this case a testbench of the entire FPGC), run 
 
@@ -10,6 +10,18 @@ iverilog -o /home/bart/Documents/FPGA/FPGC6/Verilog/output/output \
   && vvp /home/bart/Documents/FPGA/FPGC6/Verilog/output/output
 ```
 
-Assuming the testbench generates a `wave.vcd`, run `GTKWave` with this file as argument (or open the file within the program).
+Display statements will be printed to the terminal by `vvp`.
+
+![vvp](../images/vvp.png)
+
+## Waveform viewer
+
+Assuming the testbench generates a `wave.vcd`, you can use `GTKWave` to view the waveform.
+
+```bash
+gtkwave /home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw --dark
+```
+
+![GTKwave](../images/gtkwave.png)
 
 Tip: use `ctrl+shft+b` to reload the waveform when overwritten by a new simulation.

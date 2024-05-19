@@ -24,4 +24,4 @@ gtkwave /home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw --dark
 
 ![GTKwave](../images/gtkwave.png)
 
-Tip: use `ctrl+shft+b` to reload the waveform when overwritten by a new simulation.
+Tip: use `ctrl+shft+r` to reload the waveform when overwritten by a new simulation.

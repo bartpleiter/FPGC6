@@ -32,20 +32,13 @@ module CPU(
     input [31:0]  bus_q,
     input         bus_done,
 
-    // sdram bus
-    output [23:0] sdc_addr,     // bus_addr
-    output [31:0] sdc_data,     // bus_data
-    output        sdc_we,       // bus_we
-    output        sdc_start,    // bus_start
-    input [31:0]  sdc_q,        // bus_q
-    input         sdc_done,     // bus_done
-
     input int1, int2, int3, int4, int5, int6, int7, int8, int9, int10,
 
-    output [26:0] PC
+    output reg    led
 );
 
-parameter PCstart = 27'hC02522; // internal ROM addr 0 //27'hC02522;
+parameter PCstart = 27'h000000; // internal SRAM addr 0 //27'h000000;
+parameter PCinterruptValidFrom = 27'd100; // interrupt valid after address 100
 parameter PCincrease = 1'b1; // number of addresses to increase the PC with after each instruction
 parameter InterruptJumpAddr = 27'd1;
 
@@ -75,18 +68,14 @@ wire [31:0] arbiter_bus_q;        // bus_q
 wire        arbiter_bus_done;     // bus_done
 
 // bus splitter
-assign sdc_addr =   (arbiter_bus_addr < 27'h800000) ? arbiter_bus_addr: 24'd0;
-assign sdc_data =   (arbiter_bus_addr < 27'h800000) ? arbiter_bus_data: 32'd0;
-assign sdc_we =     (arbiter_bus_addr < 27'h800000) ? arbiter_bus_we: 1'b0;
-assign sdc_start =  (arbiter_bus_addr < 27'h800000) ? arbiter_bus_start: 1'b0;
 
-assign bus_addr =   (arbiter_bus_addr < 27'h800000) ? 27'd0: arbiter_bus_addr;
-assign bus_data =   (arbiter_bus_addr < 27'h800000) ? 32'd0: arbiter_bus_data;
-assign bus_we =     (arbiter_bus_addr < 27'h800000) ? 1'b0: arbiter_bus_we;
-assign bus_start =  (arbiter_bus_addr < 27'h800000) ? 1'b0: arbiter_bus_start;
+assign bus_addr =   arbiter_bus_addr;
+assign bus_data =   arbiter_bus_data;
+assign bus_we =     arbiter_bus_we;
+assign bus_start =  arbiter_bus_start;
 
-assign arbiter_bus_q =      (arbiter_bus_addr < 27'h800000) ? sdc_q: bus_q;
-assign arbiter_bus_done =   (arbiter_bus_addr < 27'h800000) ? sdc_done: bus_done;
+assign arbiter_bus_q =      bus_q;
+assign arbiter_bus_done =   bus_done;
 
 Arbiter arbiter (
 .clk(clk),
@@ -169,7 +158,6 @@ reg [31:0]  pc_FE_backup = 32'd0;
 wire [31:0] pc4_FE;
 assign pc4_FE = pc_FE + 1'b1;
 
-assign PC = pc_FE;
 
 wire [31:0] PC_backup_current;
 assign PC_backup_current = pc4_EX - PCincrease;
@@ -179,7 +167,7 @@ assign PC_backup_current = pc4_EX - PCincrease;
 assign interruptValid = (
     intCPU && 
     !intDisabled && 
-    PC_backup_current < PCstart && 
+    PC_backup_current >= PCinterruptValidFrom && 
     (
         branch_MEM || jumpr_MEM || jumpc_MEM || halt_MEM
     )
@@ -224,38 +212,6 @@ begin
 end
 
 
-//------------L1i Cache--------------
-//CPU bus
-wire [31:0]      l1i_addr;  // address to write or to start reading from
-wire [31:0]      l1i_data;  // data to write
-wire             l1i_we;    // write enable
-wire             l1i_start; // start trigger
-wire [31:0]      l1i_q;     // memory output
-wire             l1i_done;  // output ready
-
-L1Icache l1icache(
-.clk            (clk),
-.reset          (reset),
-.cache_reset    (clearCache_EX | clearCache_MEM),
-
-// CPU bus
-.l2_addr       (l1i_addr),
-.l2_data       (l1i_data),
-.l2_we         (l1i_we),
-.l2_start      (l1i_start),
-.l2_q          (l1i_q),
-.l2_done       (l1i_done),
-
-// sdram bus
-.sdc_addr       (addr_a),
-.sdc_data       (data_a),
-.sdc_we         (we_a),
-.sdc_start      (start_a),
-.sdc_q          (arbiter_q),
-.sdc_done       (done_a)
-);
-
-
 // Instruction Memory
 //  should eventually become a memory with variable latency
 // writes directly to next stage
@@ -269,12 +225,12 @@ InstrMem instrMem(
 .hit(instr_hit_FE),
 
 // bus
-.bus_addr(l1i_addr),
-.bus_data(l1i_data),
-.bus_we(l1i_we),
-.bus_start(l1i_start),
-.bus_q(l1i_q),
-.bus_done(l1i_done),
+.bus_addr(addr_a),
+.bus_data(data_a),
+.bus_we(we_a),
+.bus_start(start_a),
+.bus_q(arbiter_q),
+.bus_done(done_a),
 
 .hold(stall_FE),
 .clear(flush_FE)
@@ -659,36 +615,7 @@ begin
     endcase
 end
 
-//------------L1d Cache--------------
-//CPU bus
-wire [31:0]      l1d_addr;  // address to write or to start reading from
-wire [31:0]      l1d_data;  // data to write
-wire             l1d_we;    // write enable
-wire             l1d_start; // start trigger
-wire [31:0]      l1d_q;     // memory output
-wire             l1d_done;  // output ready
 
-L1Dcache l1dcache(
-.clk            (clk),
-.reset          (reset),
-.cache_reset    (clearCache_EX | clearCache_MEM),
-
-// CPU bus
-.l2_addr       (l1d_addr),
-.l2_data       (l1d_data),
-.l2_we         (l1d_we),
-.l2_start      (l1d_start),
-.l2_q          (l1d_q),
-.l2_done       (l1d_done),
-
-// sdram bus
-.sdc_addr       (addr_b),
-.sdc_data       (data_b),
-.sdc_we         (we_b),
-.sdc_start      (start_b),
-.sdc_q          (arbiter_q),
-.sdc_done       (done_b)
-);
 
 
 // Data Memory
@@ -709,12 +636,12 @@ DataMem dataMem(
 .busy(datamem_busy_MEM),
 
 // bus
-.bus_addr(l1d_addr),
-.bus_data(l1d_data),
-.bus_we(l1d_we),
-.bus_start(l1d_start),
-.bus_q(l1d_q),
-.bus_done(l1d_done),
+.bus_addr(addr_b),
+.bus_data(data_b),
+.bus_we(we_b),
+.bus_start(start_b),
+.bus_q(arbiter_q),
+.bus_done(done_b),
 
 .hold(stall_MEM),
 .clear(flush_MEM)
@@ -905,5 +832,10 @@ begin
         
 end
 
+
+always @(posedge clk)
+begin
+    led <= pc_FE[0];
+end
 
 endmodule

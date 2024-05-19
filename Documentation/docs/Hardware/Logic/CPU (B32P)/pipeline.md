@@ -7,6 +7,9 @@ The B32P has a 5-stage pipeline, very similar to a MIPS CPU. The stages are as f
 - MEM (memory access): Stack access and memory bus access
 - WB (write back): Write to register bank
 
+A full schematic overview of how all the CPU components fall within this pipeline can be seen in this image. (You might want to right-click the image and open in a new tab to zoom in)
+![CPU architecture](../../../images/CPU_arch.jpg)
+
 ## Hazard detection and branch prediction
 The CPU detects pipeline hazards, removing the need for the programmer to account for this, by doing the following things depending on the situation:
 

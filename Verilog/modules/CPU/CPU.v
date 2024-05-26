@@ -705,7 +705,6 @@ Regr #(.N(3)) regr_cuflags_MEM_WB(
 /*
 * WRITE BACK (WB)
 */
-wire [15:0] const16u_WB;
 
 InstructionDecoder instrDec_WB(
 .instr(instr_WB),
@@ -715,7 +714,7 @@ InstructionDecoder instrDec_WB(
 
 .constAlu(),
 .const16(),
-.const16u(const16u_WB),
+.const16u(),
 .const27(),
 
 .areg(),
@@ -835,7 +834,7 @@ end
 
 always @(posedge clk)
 begin
-    led <= pc_FE[0];
+    led <= (pc_FE != 27'd8);
 end
 
 endmodule

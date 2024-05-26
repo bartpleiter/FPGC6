@@ -1,0 +1,26 @@
+
+
+/home/bart/Documents/FPGA/FPGC6/Quartus/mainpll.v
+
+May 19 05PM:00:55>: Megafunction PLL Intel FPGA IP v23.1 is not listed in any 
+wizard.lst file in the specified library path(s).Wizard launch aborted
+
+/home/bart/Documents/FPGA/FPGC6/Quartus/mainpll.v
+
+May 19 05PM:00:57>: Megafunction PLL Intel FPGA IP v23.1 is not listed in any 
+wizard.lst file in the specified library path(s).Wizard launch aborted
+
+/home/bart/Documents/FPGA/FPGC6/Quartus/mainpll.v
+
+May 19 05PM:23:59>: Megafunction PLL Intel FPGA IP v23.1 is not listed in any 
+wizard.lst file in the specified library path(s).Wizard launch aborted
+
+/home/bart/Documents/FPGA/FPGC6/Quartus/mainpll.v
+
+May 19 05PM:24:01>: Megafunction PLL Intel FPGA IP v23.1 is not listed in any 
+wizard.lst file in the specified library path(s).Wizard launch aborted
+
+/home/bart/Documents/FPGA/FPGC6/Quartus/mainpll.v
+
+May 19 05PM:24:03>: Megafunction PLL Intel FPGA IP v23.1 is not listed in any 
+wizard.lst file in the specified library path(s).Wizard launch aborted

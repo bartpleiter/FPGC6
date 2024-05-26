@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] Sun May 19 13:59:52 2024
+[*] Sun May 19 14:25:27 2024
 [*]
 [dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
-[dumpfile_mtime] "Sun May 19 13:56:54 2024"
-[dumpfile_size] 757561
+[dumpfile_mtime] "Sun May 19 14:24:28 2024"
+[dumpfile_size] 753014
 [savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/FPGC.gtkw"
 [timestart] 0
 [size] 2560 1361
 [pos] -1 -1
-*-5.400000 121 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-5.400000 122 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] FPGC_tb.
 [treeopen] FPGC_tb.fpgc.
 [treeopen] FPGC_tb.fpgc.cpu.
@@ -25,19 +25,10 @@ FPGC_tb.led
 -
 -Fetch
 @24
-FPGC_tb.fpgc.cpu.pc4_FE[31:0]
-@200
--
-@25
-FPGC_tb.fpgc.cpu.addr_a[31:0]
-@24
-FPGC_tb.fpgc.cpu.data_a[31:0]
-FPGC_tb.fpgc.cpu.we_a
-FPGC_tb.fpgc.cpu.start_a
+FPGC_tb.fpgc.cpu.pc_FE[31:0]
 @28
-FPGC_tb.fpgc.cpu.arbiter_q[31:0]
-@24
-FPGC_tb.fpgc.cpu.done_a
+FPGC_tb.fpgc.cpu.instr_hit_FE
+FPGC_tb.fpgc.cpu.instr_DE[31:0]
 @200
 -
 @28
@@ -46,6 +37,34 @@ FPGC_tb.fpgc.cpu.flush_FE
 @200
 -
 -Decode
+@28
+FPGC_tb.fpgc.cpu.instr_DE[31:0]
+FPGC_tb.fpgc.cpu.instrOP_DE[3:0]
+@24
+FPGC_tb.fpgc.cpu.areg_DE[3:0]
+FPGC_tb.fpgc.cpu.breg_DE[3:0]
+@28
+FPGC_tb.fpgc.cpu.he_DE
+FPGC_tb.fpgc.cpu.oe_DE
+FPGC_tb.fpgc.cpu.sig_DE
+@200
+-
+@28
+FPGC_tb.fpgc.cpu.alu_use_const_DE
+FPGC_tb.fpgc.cpu.push_DE
+FPGC_tb.fpgc.cpu.pop_DE
+FPGC_tb.fpgc.cpu.dreg_we_DE
+FPGC_tb.fpgc.cpu.mem_write_DE
+FPGC_tb.fpgc.cpu.mem_read_DE
+FPGC_tb.fpgc.cpu.jumpc_DE
+FPGC_tb.fpgc.cpu.jumpr_DE
+FPGC_tb.fpgc.cpu.halt_DE
+FPGC_tb.fpgc.cpu.reti_DE
+FPGC_tb.fpgc.cpu.branch_DE
+FPGC_tb.fpgc.cpu.getIntID_DE
+FPGC_tb.fpgc.cpu.getPC_DE
+FPGC_tb.fpgc.cpu.clearCache_DE
+@200
 -
 @28
 FPGC_tb.fpgc.cpu.stall_DE
@@ -53,6 +72,31 @@ FPGC_tb.fpgc.cpu.flush_DE
 @200
 -
 -Execute
+@28
+FPGC_tb.fpgc.cpu.instr_EX[31:0]
+FPGC_tb.fpgc.cpu.aluOP_EX[3:0]
+@420
+FPGC_tb.fpgc.cpu.alu_const16_EX[31:0]
+@25
+FPGC_tb.fpgc.cpu.alu_const16u_EX[31:0]
+@24
+FPGC_tb.fpgc.cpu.areg_EX[3:0]
+FPGC_tb.fpgc.cpu.breg_EX[3:0]
+FPGC_tb.fpgc.cpu.dreg_EX[3:0]
+@200
+-
+@24
+FPGC_tb.fpgc.cpu.alu_input_b_EX[31:0]
+FPGC_tb.fpgc.cpu.fw_data_a_EX[31:0]
+FPGC_tb.fpgc.cpu.fw_data_b_EX[31:0]
+FPGC_tb.fpgc.cpu.alu_result_EX[31:0]
+FPGC_tb.fpgc.cpu.execute_result_EX[31:0]
+@200
+-
+@24
+FPGC_tb.fpgc.cpu.forward_a[1:0]
+FPGC_tb.fpgc.cpu.forward_b[1:0]
+@200
 -
 @28
 FPGC_tb.fpgc.cpu.stall_EX
@@ -60,6 +104,44 @@ FPGC_tb.fpgc.cpu.flush_EX
 @200
 -
 -Memory
+@28
+FPGC_tb.fpgc.cpu.instr_MEM[31:0]
+FPGC_tb.fpgc.cpu.branchOP_MEM[2:0]
+@24
+FPGC_tb.fpgc.cpu.const16_MEM[31:0]
+FPGC_tb.fpgc.cpu.const27_MEM[26:0]
+FPGC_tb.fpgc.cpu.dreg_MEM[3:0]
+@28
+FPGC_tb.fpgc.cpu.oe_MEM
+FPGC_tb.fpgc.cpu.sig_MEM
+@200
+-
+@24
+FPGC_tb.fpgc.cpu.jump_addr_MEM[31:0]
+FPGC_tb.fpgc.cpu.branch_MEM
+@28
+FPGC_tb.fpgc.cpu.branch_passed_MEM
+@200
+-
+@24
+FPGC_tb.fpgc.cpu.dataMem_addr_MEM[31:0]
+@28
+FPGC_tb.fpgc.cpu.mem_write_MEM
+FPGC_tb.fpgc.cpu.mem_read_MEM
+@24
+FPGC_tb.fpgc.cpu.data_b_MEM[31:0]
+FPGC_tb.fpgc.cpu.dataMem_q_WB[31:0]
+@28
+FPGC_tb.fpgc.cpu.datamem_busy_MEM
+@200
+-
+@28
+FPGC_tb.fpgc.cpu.push_MEM
+FPGC_tb.fpgc.cpu.pop_MEM
+@24
+FPGC_tb.fpgc.cpu.data_b_MEM[31:0]
+FPGC_tb.fpgc.cpu.stack_q_WB[31:0]
+@200
 -
 @28
 FPGC_tb.fpgc.cpu.stall_MEM
@@ -67,9 +149,51 @@ FPGC_tb.fpgc.cpu.flush_MEM
 @200
 -
 -Write Back
+@28
+FPGC_tb.fpgc.cpu.instr_WB[31:0]
+@200
+-
+@24
+FPGC_tb.fpgc.cpu.dreg_WB[3:0]
+FPGC_tb.fpgc.cpu.data_d_WB[31:0]
+FPGC_tb.fpgc.cpu.dreg_we_WB
+@200
 -
 @28
 FPGC_tb.fpgc.cpu.stall_WB
 FPGC_tb.fpgc.cpu.flush_WB
+@200
+-
+-
+-Arbiter
+@24
+FPGC_tb.fpgc.cpu.addr_a[31:0]
+FPGC_tb.fpgc.cpu.data_a[31:0]
+FPGC_tb.fpgc.cpu.we_a
+FPGC_tb.fpgc.cpu.start_a
+FPGC_tb.fpgc.cpu.done_a
+@200
+-
+@24
+FPGC_tb.fpgc.cpu.addr_b[31:0]
+FPGC_tb.fpgc.cpu.data_b[31:0]
+FPGC_tb.fpgc.cpu.we_b
+FPGC_tb.fpgc.cpu.start_b
+FPGC_tb.fpgc.cpu.done_b
+@200
+-
+@24
+FPGC_tb.fpgc.cpu.arbiter_q[31:0]
+@200
+-
+@24
+FPGC_tb.fpgc.cpu.arbiter_bus_addr[26:0]
+FPGC_tb.fpgc.cpu.arbiter_bus_data[31:0]
+FPGC_tb.fpgc.cpu.arbiter_bus_we
+FPGC_tb.fpgc.cpu.arbiter_bus_start
+FPGC_tb.fpgc.cpu.arbiter_bus_done
+FPGC_tb.fpgc.cpu.arbiter_bus_q[31:0]
+@200
+-
 [pattern_trace] 1
 [pattern_trace] 0

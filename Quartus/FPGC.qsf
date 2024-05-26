@@ -42,10 +42,10 @@ set_global_assignment -name DEVICE 5CEFA5F23I7
 set_global_assignment -name TOP_LEVEL_ENTITY FPGC
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 21.1.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "16:46:59  DECEMBER 09, 2022"
-set_global_assignment -name LAST_QUARTUS_VERSION "21.1.1 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "23.1std.0 Lite Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
-set_global_assignment -name MIN_CORE_JUNCTION_TEMP "-40"
-set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 256
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
@@ -223,12 +223,14 @@ set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to GPI[0]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to GPI[1]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to GPI[2]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to GPI[3]
-set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
+set_global_assignment -name OPTIMIZATION_MODE BALANCED
 set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
 set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 set_global_assignment -name ALM_REGISTER_PACKING_EFFORT LOW
 set_global_assignment -name SDC_FILE FPGC.sdc
 set_global_assignment -name VERILOG_FILE modules/FPGC.v
+set_global_assignment -name QIP_FILE lpmmults.qip
+set_global_assignment -name QIP_FILE lpmmult.qip
 set_global_assignment -name VERILOG_FILE modules/IO/MillisCounter.v
 set_global_assignment -name VERILOG_FILE modules/IO/IDivider.v
 set_global_assignment -name VERILOG_FILE modules/IO/FPDivider.v

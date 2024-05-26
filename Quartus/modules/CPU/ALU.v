@@ -3,10 +3,13 @@
 */
 
 module ALU(
-    input       [31:0]  a, b,
+	input clk,
+    input       [31:0]  ax, bx,
     input       [3:0]   opcode,
     output reg  [31:0]  y
 );
+
+reg [31:0] a, b;
 
 // Opcodes
 localparam 
@@ -29,6 +32,21 @@ localparam
 
 reg signed [63:0] ab; // result for FPMULTS
 
+reg [3:0] opcode_reg;
+
+always @(posedge clk)
+begin
+	opcode_reg <= opcode;
+	a <= ax;
+	b <= bx;
+end
+
+wire [31:0] multu_out;
+wire signed [63:0] mults_out;
+
+assign multu_out = a + b;
+assign mults_out = a - b;
+
 always @ (*) 
 begin
     case (opcode)
@@ -40,8 +58,8 @@ begin
         OP_SHIFTL:  y = a << b;
         OP_SHIFTR:  y = a >> b;
         OP_NOTA:    y = ~a;
-        OP_MULTS:   y = $signed(a) * $signed(b);
-        OP_MULTU:   y = a * b;
+        OP_MULTS:   y = mults_out;
+        OP_MULTU:   y = multu_out;
         OP_SLT:     y = {{31{1'b0}}, ($signed(a) < $signed(b))};
         OP_SLTU:    y = {{31{1'b0}}, (a < b)};
         OP_LOAD:    y = b;
@@ -49,8 +67,7 @@ begin
         OP_SHIFTRS: y = $signed(a) >>> b;
         OP_FPMULTS:
         begin
-            ab  = $signed(a) * $signed(b);
-            y   = ab[47:16];
+            y   = mults_out[47:16];
         end      
     endcase
 end

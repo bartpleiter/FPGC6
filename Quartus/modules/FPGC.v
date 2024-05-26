@@ -131,12 +131,14 @@ clock_pll clkPll(
 );
 */
 
+assign clk = clk_SDRAM;
+
 mainpll mainClkPll(
 .refclk      (clock),
 .rst  		 (1'b0),
 .outclk_0     (clk_SDRAM),
 .outclk_1     (SDRAM_CLK),
-.outclk_2     (clk),
+.outclk_2     (),
 .outclk_3     (clkPixel),
 .outclk_4     (clkTMDShalf)
 );

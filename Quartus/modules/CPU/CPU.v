@@ -474,9 +474,10 @@ begin
 end
 
 ALU alu(
+.clk(clk),
 .opcode(aluOP_EX),
-.a(fw_data_a_EX),
-.b(fw_data_b_EX),
+.ax(fw_data_a_EX),
+.bx(fw_data_b_EX),
 .y(alu_result_EX)
 );
 

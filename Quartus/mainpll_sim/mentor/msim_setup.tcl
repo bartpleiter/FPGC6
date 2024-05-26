@@ -1,5 +1,5 @@
 
-# (C) 2001-2023 Altera Corporation. All rights reserved.
+# (C) 2001-2024 Altera Corporation. All rights reserved.
 # Your use of Altera Corporation's design tools, logic functions and 
 # other software and tools, and its AMPP partner logic functions, and 
 # any output files any of the foregoing (including device programming 
@@ -94,7 +94,7 @@
 # within the Quartus project, and generate a unified
 # script which supports all the Altera IP within the design.
 # ----------------------------------------
-# ACDS 21.1 850 linux 2023.09.03.15:07:27
+# ACDS 23.1 991 linux 2024.05.19.19:48:27
 
 # ----------------------------------------
 # Initialize variables
@@ -113,7 +113,7 @@ if ![info exists QSYS_SIMDIR] {
 }
 
 if ![info exists QUARTUS_INSTALL_DIR] { 
-  set QUARTUS_INSTALL_DIR "/home/bart/intelFPGA_lite/21.1/quartus/"
+  set QUARTUS_INSTALL_DIR "/home/bart/intelFPGA_lite/23.1std/quartus/"
 }
 
 if ![info exists USER_DEFINED_COMPILE_OPTIONS] { 

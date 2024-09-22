@@ -1,0 +1,38 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Sat Aug 24 20:55:07 2024
+[*]
+[dumpfile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/wave.vcd"
+[dumpfile_mtime] "Sat Aug 24 20:49:42 2024"
+[dumpfile_size] 8928
+[savefile] "/home/bart/Documents/FPGA/FPGC6/Verilog/output/bus.gtkw"
+[timestart] 0
+[size] 1545 1001
+[pos] -1 -1
+*-7.200000 1007 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] busProtocol_tb.
+[sst_width] 278
+[signals_width] 142
+[sst_expanded] 1
+[sst_vpaned_height] 297
+@28
+busProtocol_tb.clk
+busProtocol_tb.reset
+@24
+busProtocol_tb.bus_data[31:0]
+busProtocol_tb.bus_we
+@25
+busProtocol_tb.bus_addr[26:0]
+@24
+busProtocol_tb.bus_q[31:0]
+@200
+-
+@24
+busProtocol_tb.bus_start
+busProtocol_tb.bus_done
+@28
+busProtocol_tb.cpu.bus_ready
+@200
+-
+[pattern_trace] 1
+[pattern_trace] 0

@@ -18,41 +18,39 @@ module DataMem(
     output        bus_start,
     input [31:0]  bus_q,
     input         bus_done,
+    input         bus_ready,
 
     input wire          clear, hold
 );
 
 reg [31:0] qreg = 32'd0;
+reg busy_reg = 1'b0;
+
+wire read_or_write = we || re;
+reg read_or_write_prev = 1'b0;
+wire read_or_write_edge = read_or_write && !read_or_write_prev;
 
 assign bus_addr = addr;
 assign bus_data = data;
 assign bus_we = we;
-assign bus_start = !bus_done && (we || re);
-assign busy = bus_start;
+assign bus_start = read_or_write_edge;
+assign busy = read_or_write && !bus_done;
 assign q = (bus_done) ? bus_q : qreg;
+
+
+
+// Clear and Hold are currently skipped because they are not used in the CPU
 
 always @(posedge clk)
 begin
-    // skip clear, because currently not needed
-    /*if (clear)
-    begin
-        q <= 32'd0;
-    end
-    else */
-    // skip hold, because currently not needed
-    /*
-    if (hold)
-    begin
-        q <= q;
-    end
-    else */
-
     if (reset)
     begin
+        read_or_write_prev <= 1'b0;
         qreg <= 32'd0;
     end
     else
     begin
+        read_or_write_prev <= read_or_write;
         if (bus_done)
         begin
             qreg <= bus_q;

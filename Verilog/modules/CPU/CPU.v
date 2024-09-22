@@ -24,100 +24,36 @@
 */
 
 module CPU(
-    input clk, reset,
-    output [26:0] bus_addr,
-    output [31:0] bus_data,
-    output        bus_we,
-    output        bus_start,
-    input [31:0]  bus_q,
-    input         bus_done,
+    input clk, clk100, reset,
 
-    // sdram bus
-    output [23:0] sdc_addr,     // bus_addr
-    output [31:0] sdc_data,     // bus_data
-    output        sdc_we,       // bus_we
-    output        sdc_start,    // bus_start
-    input [31:0]  sdc_q,        // bus_q
-    input         sdc_done,     // bus_done
+    // SDRAM bus for instruction and data memory
+    output [26:0] bus_i_sdram_addr,
+    output [31:0] bus_i_sdram_data,
+    output        bus_i_sdram_we,
+    output        bus_i_sdram_start,
+    input [31:0]  bus_i_sdram_q,
+    input         bus_i_sdram_done,
+    input         bus_i_sdram_ready,
 
-    input int1, int2, int3, int4, int5, int6, int7, int8, int9, int10,
+    output [26:0] bus_d_sdram_addr,
+    output [31:0] bus_d_sdram_data,
+    output        bus_d_sdram_we,
+    output        bus_d_sdram_start,
+    input [31:0]  bus_d_sdram_q,
+    input         bus_d_sdram_done,
+    input         bus_d_sdram_ready,
 
-    output [26:0] PC
+    // ROM bus for instruction memory
+    output [8:0] bus_i_rom_addr,
+    input [31:0] bus_i_rom_q,
+
+    input int1, int2, int3, int4, int5, int6, int7, int8, int9, int10
 );
 
-parameter PCstart = 27'hC02522; // internal ROM addr 0 //27'hC02522;
+parameter PCstart = 27'h000000; // internal SRAM addr 0 //27'h000000;
+parameter PCinterruptValidFrom = 27'd100; // interrupt valid after address 100
 parameter PCincrease = 1'b1; // number of addresses to increase the PC with after each instruction
 parameter InterruptJumpAddr = 27'd1;
-
-/*
-* CPU BUS
-*/
-
-wire [31:0] arbiter_q;
-
-wire [31:0] addr_a;
-wire [31:0] data_a;
-wire        we_a;
-wire        start_a;
-wire        done_a;
-
-wire [31:0] addr_b;
-wire [31:0] data_b;
-wire        we_b;
-wire        start_b;
-wire        done_b;
-
-wire [26:0] arbiter_bus_addr;     // bus_addr
-wire [31:0] arbiter_bus_data;     // bus_data
-wire        arbiter_bus_we;       // bus_we
-wire        arbiter_bus_start;    // bus_start
-wire [31:0] arbiter_bus_q;        // bus_q
-wire        arbiter_bus_done;     // bus_done
-
-// bus splitter
-assign sdc_addr =   (arbiter_bus_addr < 27'h800000) ? arbiter_bus_addr: 24'd0;
-assign sdc_data =   (arbiter_bus_addr < 27'h800000) ? arbiter_bus_data: 32'd0;
-assign sdc_we =     (arbiter_bus_addr < 27'h800000) ? arbiter_bus_we: 1'b0;
-assign sdc_start =  (arbiter_bus_addr < 27'h800000) ? arbiter_bus_start: 1'b0;
-
-assign bus_addr =   (arbiter_bus_addr < 27'h800000) ? 27'd0: arbiter_bus_addr;
-assign bus_data =   (arbiter_bus_addr < 27'h800000) ? 32'd0: arbiter_bus_data;
-assign bus_we =     (arbiter_bus_addr < 27'h800000) ? 1'b0: arbiter_bus_we;
-assign bus_start =  (arbiter_bus_addr < 27'h800000) ? 1'b0: arbiter_bus_start;
-
-assign arbiter_bus_q =      (arbiter_bus_addr < 27'h800000) ? sdc_q: bus_q;
-assign arbiter_bus_done =   (arbiter_bus_addr < 27'h800000) ? sdc_done: bus_done;
-
-Arbiter arbiter (
-.clk(clk),
-.reset(reset),
-
-// port a (Instr)
-.addr_a(addr_a),
-.data_a(data_a),
-.we_a(we_a),
-.start_a(start_a),
-.done_a(done_a),
-
-// port b (Data)
-.addr_b(addr_b),
-.data_b(data_b),
-.we_b(we_b),
-.start_b(start_b),
-.done_b(done_b),
-
-// output (both ports)
-.q(arbiter_q),
-
-// bus
-.bus_addr(arbiter_bus_addr),
-.bus_data(arbiter_bus_data),
-.bus_we(arbiter_bus_we),
-.bus_start(arbiter_bus_start),
-.bus_q(arbiter_bus_q),
-.bus_done(arbiter_bus_done)
-);
-
 
 /*
 * Interrupts
@@ -147,7 +83,6 @@ IntController intController(
 );
 
 
-
 // Registers for flush, stall and forwarding
 reg flush_FE, flush_DE, flush_EX, flush_MEM, flush_WB;
 reg stall_FE, stall_DE, stall_EX, stall_MEM, stall_WB;
@@ -161,25 +96,24 @@ wire datamem_busy_MEM;
 * FETCH (FE)
 */
 
-// Program Counter, start at ROM[0]
+// Program Counter, initialize to address with initial code
 reg [31:0]  pc_FE = PCstart;
+reg [31:0]  pc_FE_prev;
 
 reg [31:0]  pc_FE_backup = 32'd0;
 
 wire [31:0] pc4_FE;
-assign pc4_FE = pc_FE + 1'b1;
+assign pc4_FE = pc_FE + PCincrease;
 
-assign PC = pc_FE;
 
 wire [31:0] PC_backup_current;
 assign PC_backup_current = pc4_EX - PCincrease;
 
 // branch/jump/halt properly aligns interrupt with pipeline, as if it was a normal jump
-//  this fixed all instability since the addition of caching (because this decreased the time to obtain instructions)
 assign interruptValid = (
     intCPU && 
     !intDisabled && 
-    PC_backup_current < PCstart && 
+    PC_backup_current >= PCinterruptValidFrom && 
     (
         branch_MEM || jumpr_MEM || jumpc_MEM || halt_MEM
     )
@@ -190,11 +124,13 @@ begin
     if (reset)
     begin
         pc_FE <= PCstart;
+        pc_FE_prev <= 32'd0;
         pc_FE_backup <= 32'd0;
         intDisabled <= 1'b0;
     end
     else
     begin
+        pc_FE_prev <= pc_FE;
         // interrupt has highest priority
         if (interruptValid)
         begin
@@ -224,57 +160,31 @@ begin
 end
 
 
-//------------L1i Cache--------------
-//CPU bus
-wire [31:0]      l1i_addr;  // address to write or to start reading from
-wire [31:0]      l1i_data;  // data to write
-wire             l1i_we;    // write enable
-wire             l1i_start; // start trigger
-wire [31:0]      l1i_q;     // memory output
-wire             l1i_done;  // output ready
-
-L1Icache l1icache(
-.clk            (clk),
-.reset          (reset),
-.cache_reset    (clearCache_EX | clearCache_MEM),
-
-// CPU bus
-.l2_addr       (l1i_addr),
-.l2_data       (l1i_data),
-.l2_we         (l1i_we),
-.l2_start      (l1i_start),
-.l2_q          (l1i_q),
-.l2_done       (l1i_done),
-
-// sdram bus
-.sdc_addr       (addr_a),
-.sdc_data       (data_a),
-.sdc_we         (we_a),
-.sdc_start      (start_a),
-.sdc_q          (arbiter_q),
-.sdc_done       (done_a)
-);
-
-
 // Instruction Memory
 //  should eventually become a memory with variable latency
 // writes directly to next stage
 wire [31:0] instr_DE;
+wire [31:0] pc_FE_wire;
+assign pc_FE_wire = (stall_FE) ? pc_FE_prev : pc_FE;
 
 InstrMem instrMem(
-.clk(clk), 
+.clk(clk),
+.clk100(clk100),
 .reset(reset),
-.addr(pc_FE),
+.addr(pc_FE_wire),
 .q(instr_DE),
 .hit(instr_hit_FE),
 
-// bus
-.bus_addr(l1i_addr),
-.bus_data(l1i_data),
-.bus_we(l1i_we),
-.bus_start(l1i_start),
-.bus_q(l1i_q),
-.bus_done(l1i_done),
+// bus_rom
+.bus_i_rom_addr(bus_i_rom_addr),
+.bus_i_rom_q(bus_i_rom_q),
+
+// bus_l1i
+.bus_l1i_addr(addr_a),
+.bus_l1i_start(start_a),
+.bus_l1i_q(arbiter_q),
+.bus_l1i_done(done_a),
+.bus_l1i_ready(ready_a),
 
 .hold(stall_FE),
 .clear(flush_FE)
@@ -659,36 +569,7 @@ begin
     endcase
 end
 
-//------------L1d Cache--------------
-//CPU bus
-wire [31:0]      l1d_addr;  // address to write or to start reading from
-wire [31:0]      l1d_data;  // data to write
-wire             l1d_we;    // write enable
-wire             l1d_start; // start trigger
-wire [31:0]      l1d_q;     // memory output
-wire             l1d_done;  // output ready
 
-L1Dcache l1dcache(
-.clk            (clk),
-.reset          (reset),
-.cache_reset    (clearCache_EX | clearCache_MEM),
-
-// CPU bus
-.l2_addr       (l1d_addr),
-.l2_data       (l1d_data),
-.l2_we         (l1d_we),
-.l2_start      (l1d_start),
-.l2_q          (l1d_q),
-.l2_done       (l1d_done),
-
-// sdram bus
-.sdc_addr       (addr_b),
-.sdc_data       (data_b),
-.sdc_we         (we_b),
-.sdc_start      (start_b),
-.sdc_q          (arbiter_q),
-.sdc_done       (done_b)
-);
 
 
 // Data Memory
@@ -709,12 +590,13 @@ DataMem dataMem(
 .busy(datamem_busy_MEM),
 
 // bus
-.bus_addr(l1d_addr),
-.bus_data(l1d_data),
-.bus_we(l1d_we),
-.bus_start(l1d_start),
-.bus_q(l1d_q),
-.bus_done(l1d_done),
+.bus_addr(addr_b),
+.bus_data(data_b),
+.bus_we(we_b),
+.bus_start(start_b),
+.bus_q(arbiter_q),
+.bus_done(done_b),
+.bus_ready(ready_b),
 
 .hold(stall_MEM),
 .clear(flush_MEM)
@@ -778,7 +660,6 @@ Regr #(.N(3)) regr_cuflags_MEM_WB(
 /*
 * WRITE BACK (WB)
 */
-wire [15:0] const16u_WB;
 
 InstructionDecoder instrDec_WB(
 .instr(instr_WB),
@@ -788,7 +669,7 @@ InstructionDecoder instrDec_WB(
 
 .constAlu(),
 .const16(),
-.const16u(const16u_WB),
+.const16u(),
 .const27(),
 
 .areg(),

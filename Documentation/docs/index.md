@@ -13,20 +13,20 @@ FPGC (FPGA Computer) is my big hobby project. It is a computer where almost ever
 
 TODO: add picture of FPGC running edit on edit.c
 
-## New in version 6
+## New in version 6 and goals
 
-The largest change in the FPGC6 is the complete redesign of the CPU from the [FPGC5](https://github.com/bartpleiter/FPGC5) with more advanced techniques and performance in mind. The new CPU (built from scratch again) is now a pipelined CPU including hazard detection/forwarding with a better architecture for running C code including better signed integer support. It also allows for L1 cache (although currently not implemented). A lot of inspiration for the CPU is taken from MIPS, because many online resources on more advanced CPU techniques like pipelining and caching use MIPS as example. As for implementation specific inspiration, I looked a lot at [mips-cpu by jmahler](https://github.com/jmahler/mips-cpu), since it is a good example of a simple pipelined CPU.
+With FPGC6, the focus is shifting more towards performance improvements. The main new feature of the FPGC6 is a complete redesign of the CPU. Compared to [FPGC5](https://github.com/bartpleiter/FPGC5), the CPU is now 5 stage pipelined including hazard detection/forwarding, has a better architecture for running C code from BCC, has better signed integer and now also fixed point support. For the pipelining, a lot of inspiration is taken from the classic 5 stage MIPS pipeline, because of its simplicity and the availability of educational resources. As for implementation specific inspiration, I looked a lot at [mips-cpu by jmahler](https://github.com/jmahler/mips-cpu).
 
-Version 6 of the FPGC now also contains a better SDRAM controller and cache, which greatly reduces the SDRAM bottleneck.
-Aside from this and the CPU, all other parts of the system are mostly identical to the FPGC5, and the CPU itself still has all old instructions implemented (although using different opcodes and argument placement) except for COPY. Therefore, after updating the Assembler, almost all code will still work meaning I do not have to rewrite most of my code base.
+Version 6 of the FPGC now also contains a better SDRAM controller and cache, which greatly reduces the SDRAM bottleneck. Still, the SDRAM remains a huge bottleneck as the pipeline can never achieve its full potential because of constant instruction and data memory stalls. This brings us to the following goals of the FPGC6:
 
-## Current state
+- [ ] Average amount of cycles per instruction < 2, which requires a redesign of the bus protocol, direct connections to the SDRAM controller, and of course caching
+- [ ] Enough computation speed to run a full resolution (320x240) raycaster at 60 FPS, which requires fast memory copy from SDRAM to VRAM
+- [ ] Improved Verilog testing setup, as designs and testing is becoming complex
+- [ ] Insights of RAM usage gained (e.g. for all software stacks)
+- [x] Use own designed file system, instead of relying on the CH376 chip
+- [x] Write C code, compile and assemble on device without needing a different computer
+- [x] Bitmap (individual pixel) rendering in GPU
 
-- All existing FPGC5 code but the BCC Assembler works with the new CPU
-- FPGA module upgraded to Cyclone V (10x more block RAM!) with double the SDRAM bandwith and capacity
-- Added bitmap GPU layer that allows for accessing individual pixels
-- L2 cache working, no need for L1I cache with the current arbiter implementation
-- Ready to design and add L1D cache
 
 ## Project Links
 
@@ -42,17 +42,10 @@ FPGC5:
 - [Gogs Mirror](https://www.b4rt.nl/git/bart/FPGC5-mirror)
 - [Documentation](https://www.b4rt.nl/fpgc5)
 
-## Next steps
-
-- Create 3D raycaster using new bitmap GPU layer
-- Update BCC assembler for new ISA
-- Add data memory cache (at 100MHz)
-- Implement true GPIO
-- Implement I2S Audio
-
 ## Documentation checklist
 
 - [x] Index page
+- [x] Specs
 - [ ] CPU
 - [ ] GPU
 - [ ] MU
@@ -70,4 +63,5 @@ FPGC5:
 - [ ] BCC programs (EDIT, WEBSERV, etc.)
 - [ ] All programmers (UART, SPI flasher, BDOS send/upload)
 - [ ] BDOS sync files
+- [x] BRFS
 - [ ] Running BCC tests
